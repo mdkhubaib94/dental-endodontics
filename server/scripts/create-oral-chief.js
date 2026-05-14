@@ -11,16 +11,17 @@ const createOralChief = async () => {
     await mongoose.connect(process.env.MONGO_URI);
     console.log('✅ Connected to MongoDB');
 
-    // Check if oral chief already exists
-    const existingChief = await User.findOne({ 
-      role: 'chief_doctor', 
-      department: 'Oral' 
+    // Check if oral doctor already exists
+    const existingDoctor = await User.findOne({ 
+      role: 'doctor', 
+      department: 'Oral',
+      email: 'oral.chief@dental.com'
     });
 
-    if (existingChief) {
+    if (existingDoctor) {
       console.log('⚠️  Oral Chief Doctor already exists:');
-      console.log('   Email:', existingChief.email);
-      console.log('   Identity:', existingChief.Identity);
+      console.log('   Email:', existingDoctor.email);
+      console.log('   Identity:', existingDoctor.Identity);
       return;
     }
 
@@ -28,16 +29,17 @@ const createOralChief = async () => {
     const password = 'Oral@123'; // Default password
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    // Create new chief doctor for Oral department
+    // Create new doctor for Oral department (with chief privileges)
     const oralChief = new User({
       name: 'Dr. Oral Chief',
       email: 'oral.chief@dental.com',
       phone: '9876543210',
       password: hashedPassword,
-      role: 'chief_doctor',
+      role: 'doctor',  // Using doctor role, not chief_doctor
       Identity: 'ORAL_CHIEF_001',
       department: 'Oral',
       specialization: 'Oral and Maxillofacial Surgery',
+      staffId: 'STAFF_ORAL_CHIEF',
       createdAt: new Date()
     });
 
@@ -49,6 +51,7 @@ const createOralChief = async () => {
     console.log('   Password: Oral@123');
     console.log('   Identity: ORAL_CHIEF_001');
     console.log('   Department: Oral');
+    console.log('   Role: doctor');
     console.log('\n⚠️  Please change the password after first login!');
 
   } catch (error) {

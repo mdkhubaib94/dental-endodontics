@@ -2,20 +2,20 @@
 
 ## 🦷 Oral Department Users
 
-### Chief Doctor (Oral Department)
+### Senior Doctor (Oral Department - Chief Level)
 - **Email:** `oral.chief@dental.com`
 - **Password:** `Oral@123`
 - **Identity:** `ORAL_CHIEF_001`
 - **Department:** Oral
 - **Specialization:** Oral and Maxillofacial Surgery
-- **Role:** Chief Doctor
+- **Role:** doctor
+- **Staff ID:** STAFF_ORAL_CHIEF
 
 **Permissions:**
-- View all Oral department cases
-- Approve/Reject Oral cases
-- Request Redo for cases
-- Manage doctors in Oral department
-- View department analytics
+- Create Oral case sheets
+- View own cases
+- Update case information
+- Submit cases for approval
 
 ---
 
@@ -26,15 +26,33 @@
 - **Department:** Oral
 - **Specialization:** Oral Surgery
 - **Staff ID:** `STAFF_ORAL_001`
-- **Role:** Doctor
+- **Role:** doctor
 
 **Permissions:**
 - Create Oral case sheets
 - View own cases
 - Update case information
-- Submit cases for chief approval
+- Submit cases for approval
 
 ---
+
+## 📝 Important Notes
+
+### Roles in the System
+The system has these fixed roles:
+- **doctor** - Regular doctors
+- **pg** - Postgraduate students
+- **ug** - Undergraduate students  
+- **chief_doctor** - Chief doctors (department heads who manage other doctors)
+- **patient** - Patients
+
+### Chief Doctor Dashboard Access
+To view Oral department cases in the Chief Doctor Dashboard, you need to:
+1. Login as a user with **chief_doctor** role
+2. Have **Oral** as your department
+3. The Chief Doctor Dashboard will show all cases from the Oral department
+
+The users created above are **doctors** in the Oral department, not chief doctors. They can create and manage cases but cannot access the Chief Doctor Dashboard.
 
 ## 🔐 Security Notes
 
