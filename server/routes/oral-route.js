@@ -1,12 +1,12 @@
 import express from 'express';
 import OralCase from '../models/Oral-model.js';
-import { authenticateToken } from '../middleware/auth.js';
-import { authorizeRoles } from '../middleware/role.js';
+import auth from '../middleware/auth.js';
+import requireRole from '../middleware/role.js';
 
 const router = express.Router();
 
 // ==================== CREATE ORAL CASE ====================
-router.post('/', authenticateToken, async (req, res) => {
+router.post('/', auth, async (req, res) => {
   try {
     const oralCase = new OralCase(req.body);
     await oralCase.save();
@@ -26,7 +26,7 @@ router.post('/', authenticateToken, async (req, res) => {
 });
 
 // ==================== GET ALL ORAL CASES (FOR DOCTOR) ====================
-router.get('/doctor/:doctorId', authenticateToken, async (req, res) => {
+router.get('/doctor/:doctorId', auth, async (req, res) => {
   try {
     const { doctorId } = req.params;
     const cases = await OralCase.find({ doctorId }).sort({ createdAt: -1 });
@@ -45,7 +45,7 @@ router.get('/doctor/:doctorId', authenticateToken, async (req, res) => {
 });
 
 // ==================== GET ALL ORAL CASES (FOR CHIEF) ====================
-router.get('/chief/all-cases', authenticateToken, authorizeRoles('chief_doctor'), async (req, res) => {
+router.get('/chief/all-cases', auth, requireRole('chief_doctor'), async (req, res) => {
   try {
     const cases = await OralCase.find().sort({ createdAt: -1 });
     res.status(200).json({
@@ -63,7 +63,7 @@ router.get('/chief/all-cases', authenticateToken, authorizeRoles('chief_doctor')
 });
 
 // ==================== GET ORAL CASE BY ID ====================
-router.get('/:id', authenticateToken, async (req, res) => {
+router.get('/:id', auth, async (req, res) => {
   try {
     const { id } = req.params;
     const oralCase = await OralCase.findById(id);
@@ -90,7 +90,7 @@ router.get('/:id', authenticateToken, async (req, res) => {
 });
 
 // ==================== GET ORAL CASES BY PATIENT ID ====================
-router.get('/patient/:patientId', authenticateToken, async (req, res) => {
+router.get('/patient/:patientId', auth, async (req, res) => {
   try {
     const { patientId } = req.params;
     const cases = await OralCase.find({ patientId }).sort({ createdAt: -1 });
@@ -109,7 +109,7 @@ router.get('/patient/:patientId', authenticateToken, async (req, res) => {
 });
 
 // ==================== UPDATE ORAL CASE ====================
-router.put('/:id', authenticateToken, async (req, res) => {
+router.put('/:id', auth, async (req, res) => {
   try {
     const { id } = req.params;
     const updatedCase = await OralCase.findByIdAndUpdate(
@@ -141,7 +141,7 @@ router.put('/:id', authenticateToken, async (req, res) => {
 });
 
 // ==================== APPROVE/REJECT ORAL CASE (CHIEF DOCTOR) ====================
-router.patch('/:id/approve', authenticateToken, authorizeRoles('chief_doctor'), async (req, res) => {
+router.patch('/:id/approve', auth, requireRole('chief_doctor'), async (req, res) => {
   try {
     const { id } = req.params;
     const { chiefApproval, approvedBy, approvedAt } = req.body;
@@ -179,7 +179,7 @@ router.patch('/:id/approve', authenticateToken, authorizeRoles('chief_doctor'), 
 });
 
 // ==================== DELETE ORAL CASE ====================
-router.delete('/:id', authenticateToken, authorizeRoles('chief_doctor', 'doctor'), async (req, res) => {
+router.delete('/:id', auth, requireRole(['chief_doctor', 'doctor']), async (req, res) => {
   try {
     const { id } = req.params;
     const deletedCase = await OralCase.findByIdAndDelete(id);
