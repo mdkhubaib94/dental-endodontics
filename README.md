@@ -94,39 +94,24 @@ node Server.js
 ```
 
 👥 Sample User Accounts
+```
+Doctors
+1.DNT01,password:123456 (prostho doctor)
+2.DNT02,password:123456(general)
+3.DNT03,DNT04 password:123456(pedo)
+4.PGDNT01,password:123456(DNT01's PG)
+5. PGDNT010, password: 123456
 
-Admin
-```Username: Admin
-Password: Admin123!
-Email: s.m.charu03@gmail.com
-Phone Number: 9025186840
-Unique ID: AD100
-```
+ADMIN
+Id:AD100,password:123456
+Patients
+2603016,2603017 password:Patient123
 
-Doctor
-```Username: Doctor
-Password: Doctor123!
-Email: gowsisubbian@gmail.com
-Phone Number: 9789809707
-Unique ID: DNT6000
-```
 
-Chief Doctor
-```
-Username: Chief Doctor
-Password: Chief123!
-Email: charusubbian@gmail.com
-Phone Number: 1234567890
-Unique ID: CDNT01
-```
 
-Patient
-```
-Username: Patient
-Password: Patient123!
-Email: -
-Phone Number: 9444478860
-Unique ID: -
+
+CDNT01,password:123456 (protho's HOD)
+CDNT02,password:123456(pedo's HOD)
 ```
 
 # 🦷 SRM Dental Web App  
