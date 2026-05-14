@@ -17,6 +17,7 @@ import FpdRoutes from './routes/fpd-route.js';
 import implantRoutes from './routes/Implant-route.js';  
 import implantPatientRoute from './routes/ImplantPatient-route.js';
 import partialRoute from './routes/partial-route.js';
+import oralRoutes from './routes/oral-route.js';
 import generalCaseRoutes from './routes/general-case.js';
 import consentFormRoutes from './routes/consent-form.js';
 import caseDraftRoutes from './routes/case-draft.js';
@@ -240,6 +241,9 @@ console.log('✓ ImplantPatient routes registered at /api/ImplantPatient');
 
 app.use('/api/partial', partialRoute);
 console.log('✓ Partial Denture routes registered at /api/partial');
+
+app.use('/api/oral', oralRoutes);
+console.log('✓ Oral routes registered at /api/oral');
 
 app.use('/api/general', generalCaseRoutes);
 console.log('✓ General Case Sheet routes registered at /api/general');
