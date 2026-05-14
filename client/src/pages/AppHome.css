@@ -1,0 +1,662 @@
+/* AppHome.css - Fixed Version */
+
+html, body {
+  margin: 0;
+  padding: 0;
+  font-family: 'Inter', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  line-height: 1.6;
+  color: #333;
+  overflow-x: hidden;
+  height: 100%;
+}
+
+/* Fixed header */
+.dental-app {
+  background-color: #25286b;
+  color: #fff;
+  padding: 15px 0;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 1000;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.15);
+}
+
+.dental-app .container-main {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  height: 60px;
+  gap: 20px;
+  max-width: 80%;
+  margin: 0 auto;
+  padding: 0 20px;
+}
+
+/* Logo */
+.logo-main {
+  font-size: 22px;
+  font-weight: bold;
+  color: white;
+  text-decoration: none;
+  display: flex;
+  align-items: center;
+  white-space: nowrap;
+  flex-shrink: 0;
+  gap: 10px;
+}
+
+.logo-main img {
+  height: 40px;
+  border-radius: 4px;
+}
+
+/* Navigation */
+nav {
+  flex: 1;
+  margin: 0 30px;
+  display: flex;
+  justify-content: center;
+}
+
+nav ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  gap: 25px;
+  white-space: nowrap;
+}
+
+nav ul li a {
+  color: white;
+  text-decoration: none;
+  font-weight: 500;
+  padding: 8px 12px;
+  border-radius: 4px;
+  transition: all 0.3s ease;
+  position: relative;
+}
+
+nav ul li a:hover {
+  color: #7ed6df;
+}
+
+/* Auth Buttons */
+.auth-buttons button {
+  background-color: white;
+  color: #25286b;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 5px;
+  cursor: pointer;
+  font-weight: bold;
+  transition: all 0.3s ease;
+}
+
+.auth-buttons button:hover {
+  background-color: #7ed6df;
+  color: white;
+}
+
+/* Main content - FIXED SCROLLING ISSUE */
+main {
+  padding-top: 90px; /* Account for fixed header */
+  min-height: calc(100vh - 90px);
+  width: 100%;
+}
+
+/* Container for all sections */
+.container-main {
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 20px;
+  box-sizing: border-box;
+}
+
+/* Anchor scroll offset for fixed header */
+section,
+[id] {
+  scroll-margin-top: 100px;
+}
+
+/* Hero section */
+.hero {
+  background:
+    linear-gradient(rgba(37,40,107,0.7), rgba(37,40,107,0.7)),
+    url('/images/campus.png') center/cover no-repeat;
+  color: #fff;
+  text-align: center;
+  padding: 100px 20px;
+  min-height: 400px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.hero .container-main {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.hero h1 {
+  font-size: 48px;
+  font-weight: 700;
+  margin-bottom: 20px;
+  text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+}
+
+.hero p {
+  font-size: 20px;
+  margin-bottom: 40px;
+  max-width: 700px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.cta-buttons {
+  display: flex;
+  gap: 20px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.cta-buttons a {
+  padding: 15px 35px;
+  border-radius: 8px;
+  text-decoration: none;
+  font-weight: 600;
+  font-size: 16px;
+  transition: all 0.3s ease;
+  min-width: 180px;
+  text-align: center;
+}
+
+.cta-buttons a.secondary {
+  background-color: transparent;
+  color: white;
+  border: 2px solid white;
+}
+
+.cta-buttons a.book-slot {
+  background-color: #7ed6df;
+  color: #25286b;
+  border: 2px solid #7ed6df;
+}
+
+.cta-buttons a:hover {
+  transform: translateY(-2px);
+}
+
+.cta-buttons a.secondary:hover {
+  background-color: white;
+  color: #25286b;
+}
+
+.cta-buttons a.book-slot:hover {
+  background-color: #5cb85c;
+  color: white;
+  border-color: #5cb85c;
+}
+
+/* Section Styling */
+
+section h2 {
+  font-size: 36px;
+  font-weight: 700;
+  margin-bottom: 50px;
+  color: #25286b;
+  text-align: center;
+  position: relative;
+}
+
+section h2::after {
+  content: '';
+  position: absolute;
+  bottom: -10px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 80px;
+  height: 4px;
+  background-color: #7ed6df;
+  border-radius: 2px;
+}
+
+/* Welcome Section */
+.welcome {
+  text-align: center;
+}
+
+.welcome p {
+  font-size: 18px;
+  color: #666;
+  max-width: 800px;
+  margin: 0 auto 50px;
+  line-height: 1.7;
+}
+
+.highlights {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 30px;
+}
+
+.highlight-item {
+  text-align: center;
+  padding: 30px 20px;
+  background-color: white;
+  border-radius: 12px;
+  box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+  transition: transform 0.3s ease;
+}
+
+.highlight-item:hover {
+  transform: translateY(-5px);
+}
+
+.highlight-item .icon {
+  font-size: 50px;
+  color: #7ed6df;
+  margin-bottom: 20px;
+}
+
+.highlight-item h3 {
+  font-size: 18px;
+  font-weight: 600;
+  color: #25286b;
+  margin: 0;
+}
+
+/* Services Section */
+.services-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 30px;
+}
+
+.service-card {
+  background-color: white;
+  padding: 30px;
+  border-radius: 12px;
+  box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+  text-align: center;
+  transition: all 0.3s ease;
+  display: flex;
+  flex-direction: column;
+  height: auto;
+}
+
+.service-card:hover {
+  transform: translateY(-8px);
+  box-shadow: 0 15px 40px rgba(0,0,0,0.15);
+}
+
+.service-card .icon-or-image {
+  height: 60px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.service-card .icon-or-image .icon {
+  font-size: 50px;
+  color: #25286b;
+}
+
+.service-card h3 {
+  font-size: 20px;
+  color: #25286b;
+  font-weight: 600;
+  margin-bottom: 15px;
+}
+
+.service-card p {
+  color: #666;
+  font-size: 15px;
+  line-height: 1.6;
+  margin-bottom: 25px;
+  flex-grow: 1;
+}
+
+.service-card a {
+  background-color: #7ed6df;
+  color: #25286b;
+  padding: 12px 25px;
+  border-radius: 6px;
+  text-decoration: none;
+  font-weight: 600;
+  transition: all 0.3s ease;
+  margin-top: auto;
+}
+
+.service-card a:hover {
+  background-color: #5cb85c;
+  color: white;
+}
+
+/* Testimonial Section */
+.testimonial-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 30px;
+}
+
+.testimonial-card {
+  background-color: white;
+  padding: 35px 30px;
+  border-radius: 12px;
+  box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+  position: relative;
+  transition: all 0.3s ease;
+}
+
+.testimonial-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 15px 35px rgba(0,0,0,0.15);
+}
+
+/* Blog Section */
+.blog-posts-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 30px;
+}
+
+.blog-post-card {
+  background-color: white;
+  border-radius: 12px;
+  box-shadow: 0 5px 20px rgba(0,0,0,0.08);
+  overflow: hidden;
+  transition: all 0.3s ease;
+}
+
+.blog-post-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 10px 30px rgba(0,0,0,0.12);
+}
+
+.blog-post-card img {
+  width: 100%;
+  height: 200px;
+  object-fit: cover;
+}
+
+.blog-post-content {
+  padding: 25px;
+}
+
+.blog-post-content h3 {
+  font-size: 18px;
+  color: #25286b;
+  font-weight: 600;
+  margin: 0 0 15px 0;
+}
+
+.blog-post-content p {
+  color: #666;
+  font-size: 14px;
+  line-height: 1.6;
+  margin-bottom: 20px;
+}
+
+.blog-post-content a {
+  color: #7ed6df;
+  text-decoration: none;
+  font-weight: 600;
+  transition: color 0.3s ease;
+}
+
+.blog-post-content a:hover {
+  color: #25286b;
+}
+
+/* Contact Section */
+.contact-info {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 30px;
+  margin: 40px 0;
+}
+
+.contact-item {
+  background-color: white;
+  padding: 30px 20px;
+  border-radius: 12px;
+  box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+  transition: transform 0.3s ease;
+  text-align: center;
+}
+
+.contact-item:hover {
+  transform: translateY(-5px);
+}
+
+.contact-item .icon {
+  font-size: 40px;
+  color: #7ed6df;
+  margin-bottom: 15px;
+}
+
+.contact-item h3 {
+  font-size: 18px;
+  font-weight: 600;
+  color: #25286b;
+  margin-bottom: 10px;
+}
+
+.contact-item p {
+  font-size: 15px;
+  color: #666;
+  margin: 0;
+}
+
+.contact-item a {
+  color: #25286b;
+  text-decoration: none;
+  font-weight: 500;
+  transition: color 0.3s ease;
+}
+
+.contact-item a:hover {
+  color: #7ed6df;
+}
+
+.social-media {
+  margin-top: 40px;
+  display: flex;
+  justify-content: center;
+  gap: 20px;
+}
+
+.social-media a {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 50px;
+  height: 50px;
+  background-color: white;
+  color: #25286b;
+  border-radius: 50%;
+  font-size: 20px;
+  transition: all 0.3s ease;
+  box-shadow: 0 3px 10px rgba(0,0,0,0.1);
+}
+
+.social-media a:hover {
+  background-color: #7ed6df;
+  color: white;
+  transform: translateY(-3px);
+}
+
+/* Footer */
+footer {
+  background-color: #25286b;
+  color: white;
+  padding: 40px 0 30px;
+  text-align: center;
+}
+
+footer .container-main {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 20px;
+}
+
+footer p {
+  margin: 0;
+  font-size: 14px;
+}
+
+.footer-links {
+  display: flex;
+  gap: 25px;
+  flex-wrap: wrap;
+}
+
+.footer-links a {
+  color: white;
+  text-decoration: none;
+  font-size: 14px;
+  transition: color 0.3s ease;
+}
+
+.footer-links a:hover {
+  color: #7ed6df;
+}
+
+/* Responsive Design */
+@media (max-width: 1024px) {
+  nav ul {
+    gap: 20px;
+  }
+  
+  nav ul li a {
+    font-size: 14px;
+    padding: 6px 10px;
+  }
+}
+
+@media (max-width: 768px) {
+  .dental-app .container-main {
+    flex-direction: column;
+    height: auto;
+    padding: 15px 20px;
+    gap: 15px;
+  }
+
+  .logo-main {
+    order: 1;
+  }
+
+  nav {
+    margin: 0;
+    width: 100%;
+    order: 2;
+    justify-content: center;
+  }
+
+  nav ul {
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 15px;
+    margin: 0;
+  }
+
+  .auth-buttons {
+    order: 3;
+    margin: 0;
+  }
+
+  main {
+    padding-top: 130px; /* Increased for taller mobile header */
+  }
+
+  section {
+    padding: 60px 0;
+  }
+
+  .hero {
+    padding: 80px 20px;
+    min-height: 400px;
+  }
+
+  .hero h1 {
+    font-size: 32px;
+  }
+
+  .hero p {
+    font-size: 18px;
+  }
+
+  .cta-buttons {
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .cta-buttons a {
+    width: 100%;
+    max-width: 280px;
+  }
+
+  .services-grid,
+  .testimonial-grid,
+  .blog-posts-grid {
+    grid-template-columns: 1fr;
+    gap: 25px;
+  }
+}
+
+@media (max-width: 480px) {
+  .container-main {
+    padding: 0 15px;
+  }
+
+  .dental-app .container-main {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  
+  nav {
+    order: 2;
+  }
+  
+  .auth-buttons {
+    order: 3;
+    margin-top: 15px;
+    align-self: center;
+  }
+
+  main {
+    padding-top: 150px; /* Even more space for mobile */
+  }
+
+  .hero h1 {
+    font-size: 28px;
+  }
+
+  section {
+    padding: 50px 0;
+  }
+
+  section h2 {
+    font-size: 24px;
+  }
+
+  .service-card,
+  .testimonial-card,
+  .contact-item {
+    padding: 25px 20px;
+  }
+  
+  footer .container-main {
+    flex-direction: column;
+    text-align: center;
+  }
+}

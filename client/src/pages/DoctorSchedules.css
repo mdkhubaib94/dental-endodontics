@@ -1,0 +1,546 @@
+/* PAGE */
+.DoctorSchedule-page {
+  padding: 20px;
+  background: #f7f9ff;
+  min-height: 100vh;
+}
+
+/* HEADER */
+.schedule-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.header {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+.schedule-container h1,
+.schedule-container h2 {
+  margin: 5px 0;
+}
+
+/* VIEW TOGGLE BUTTONS */
+.view-toggle {
+  margin-top: 10px;
+  display: flex;
+  gap: 8px;
+}
+
+.view-toggle button {
+  padding: 6px 12px;
+  border-radius: 16px;
+  border: 1px solid #0f3c9c;
+  background: #ffffff;
+  color: #0f3c9c;
+  font-size: 13px;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.view-toggle button.active {
+  background: #0f3c9c;
+  color: #ffffff;
+}
+
+/* LOGO */
+.logo {
+  width: 70px;
+  margin-bottom: 10px;
+  display: block;
+}
+
+/* TABLE */
+.appointments-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 20px;
+  background: rgb(255, 255, 255);
+}
+
+/* HEADERS */
+.appointments-table thead th {
+  background: #0f3c9c;
+  color: #f7f7f7;
+  padding: 10px;
+  text-align: left;
+  font-size: 14px;
+  font-weight: 600;
+  white-space: nowrap;
+  border-right: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.appointments-table thead th:last-child {
+  border-right: none;
+}
+
+/* BODY CELLS */
+.appointments-table td {
+  padding: 12px 10px; 
+  text-align: left;
+  font-size: 14px;
+  vertical-align: middle;
+  color: #1f2937;
+  border-right: 1px solid #e5e7eb;
+}
+
+.appointments-table td:last-child {
+  border-right: none;
+}
+
+/* ROW STRIPES (NO OPACITY – FIXED) */
+.appointments-table tbody tr {
+  background: #ffffff;
+}
+
+.appointments-table tbody tr:nth-child(even) {
+  background: #f5f7ff;
+}
+
+/* DATE & TIME – ENLARGED */
+.date-time-cell .date-line,
+.date-time-cell .time-line {
+  font-size: 15px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+/* ================= COLUMN WIDTHS (EDIT THESE) ================= */
+
+/* Column 1: S.No */
+.appointments-table td:nth-child(1),
+.appointments-table th:nth-child(1) {
+  width: 45px;
+}
+
+/* Column 2: Booking ID */
+.appointments-table td:nth-child(2),
+.appointments-table th:nth-child(2) {
+  width: 125px;
+}
+
+/* Column 3: Patient Name */
+.appointments-table td:nth-child(3),
+.appointments-table th:nth-child(3) {
+  width: 150px;
+}
+
+/* Column 4: Patient ID */
+.appointments-table td:nth-child(4),
+.appointments-table th:nth-child(4) {
+  width: 100px;
+}
+
+/* Column 5: Email */
+.appointments-table td:nth-child(5),
+.appointments-table th:nth-child(5) {
+  width: 240px;
+}
+
+/* Column 6: Date & Time */
+.appointments-table td:nth-child(6),
+.appointments-table th:nth-child(6) {
+  width: 150px;
+}
+
+/* Column 7: Complaint */
+.appointments-table td:nth-child(7),
+.appointments-table th:nth-child(7) {
+  width: 190px;
+}
+
+/* Column 8: Status */
+.appointments-table td:nth-child(8),
+.appointments-table th:nth-child(8) {
+  width: 120px;
+  text-align: center;
+}
+
+/* Column 9: Actions */
+.appointments-table td:nth-child(9),
+.appointments-table th:nth-child(9) {
+  width: 190px;
+  text-align: center;
+}
+
+/* STATUS BADGES */
+.status-badge {
+  display: inline-block;
+  padding: 6px 10px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 700;
+  white-space: nowrap;
+  text-transform: capitalize; /* 🔥 First letter caps only */
+}
+
+/* STATUS COLORS */
+.status-pending {
+  background: #ffe082;
+  color: #8d6e00;
+}
+
+.status-confirmed {
+  background: #c8f7dc;
+  color: #006b3c;
+}
+
+.status-rescheduled {
+  background: #e3dcff;
+  color: #4a3cb0;
+}
+
+.status-cancelled {
+  background: #ffd6d6;
+  color: #b71c1c;
+}
+
+.status-expired {
+  background: #fecaca;
+  color: #991b1b;
+}
+
+/* ACTIONS COLUMN */
+/* Column 10 width is defined above with other column widths */
+
+/* Action Status Text (for non-pending appointments) */
+.action-status {
+  font-size: 13px;
+  font-weight: 600;
+  color: #6b7280;
+  display: inline-block;
+}
+
+
+/* ACTION BUTTONS ALIGNMENT */
+.actions-wrapper {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+/* BUTTON SIZE CONSISTENCY */
+.btn-approve,
+.btn-reschedule {
+  min-width: 90px;
+  height: 34px;
+  font-size: 13px;
+  font-weight: 600;
+  border-radius: 6px;
+  border: none;
+  cursor: pointer;
+} 
+
+/* BUTTON COLORS */
+.btn-approve {
+  background: #2ecc71;
+  color: rgb(255, 255, 255);
+}
+
+.btn-reschedule {
+  background: #4285f4;
+  color: white;
+}
+
+/* MESSAGE BOX (centered toast for approvals/reschedules) */
+.DoctorSchedule-page .message-box {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 1200;
+  padding: 12px 16px;
+  border-radius: 10px;
+  min-width: min(420px, 92vw);
+  text-align: center;
+  font-weight: 700;
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.25);
+  pointer-events: none;
+}
+
+.DoctorSchedule-page .message-box.success {
+  background: #d4edda;
+  color: #155724;
+}
+
+.DoctorSchedule-page .message-box.error {
+  background: #f8d7da;
+  color: #721c24;
+}
+
+/* MODAL */
+.modal-overlay {
+  position: fixed; 
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.reschedule-modal {
+  background: white;
+  padding: 0;
+  border-radius: 16px;
+  width: 90%;
+  max-width: 550px;
+  max-height: 85vh;
+  overflow: hidden;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+  display: flex;
+  flex-direction: column;
+  /* Ensure readable default text color even if other pages inject global label styles. */
+  color: #1f2937;
+}
+
+/* MODAL HEADER */
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  padding: 28px 28px 16px;
+  background: linear-gradient(135deg, #3559a8 0%, #4a68c4 100%);
+  color: white;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+.modal-header > div {
+  flex: 1;
+}
+
+.modal-header h3 {
+  margin: 0 0 6px 0;
+  font-size: 22px;
+  font-weight: 700;
+  color: white;
+}
+
+.modal-subtitle {
+  margin: 0;
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.9);
+  font-weight: 400;
+}
+
+/* CLOSE BUTTON */
+.btn-close-modal {
+  background: rgba(255, 255, 255, 0.2);
+  border: none;
+  font-size: 20px;
+  cursor: pointer;
+  color: white;
+  padding: 0;
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+}
+
+.btn-close-modal:hover {
+  background: rgba(255, 255, 255, 0.3);
+  transform: scale(1.05);
+}
+
+/* MODAL BODY */
+.modal-body {
+  flex: 1;
+  padding: 24px;
+  overflow-y: auto;
+}
+
+.form-group {
+  margin-bottom: 24px;
+}
+
+.form-group:last-child {
+  margin-bottom: 0;
+}
+
+.reschedule-modal .form-group label {
+  display: block;
+  margin-bottom: 10px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #1f2937;
+}
+
+.reschedule-modal .date-input {
+  width: 100%;
+  padding: 12px 14px;
+  font-size: 14px;
+  border: 2px solid #e5e7eb;
+  border-radius: 8px;
+  background: white;
+  color: #1f2937;
+  transition: all 0.2s ease;
+  box-sizing: border-box;
+}
+
+.date-input:hover {
+  border-color: #3559a8;
+}
+
+.date-input:focus {
+  outline: none;
+  border-color: #3559a8;
+  box-shadow: 0 0 0 3px rgba(53, 89, 168, 0.1);
+}
+
+.btn-close-modal:hover {
+  background: rgba(255, 255, 255, 0.3);
+  transform: scale(1.05);
+}
+
+/* TIME SLOTS */
+.time-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 10px;
+  margin-top: 0;
+}
+
+.time-slot {
+  padding: 12px 8px;
+  background: #f3f4f6;
+  text-align: center;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 700;
+  color: #374151;
+  border: 2px solid transparent;
+  transition: all 0.2s ease;
+}
+
+.time-slot:hover:not(.booked) {
+  background: #e5e7eb;
+  border-color: #3559a8;
+}
+
+.time-slot.selected {
+  background: linear-gradient(135deg, #3559a8 0%, #4a68c4 100%);
+  color: white;
+  border-color: #3559a8;
+  box-shadow: 0 4px 12px rgba(53, 89, 168, 0.3);
+}
+
+.time-slot.booked {
+  background: #f3f4f6;
+  color: #9ca3af;
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.time-slot-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+}
+
+.slot-badge {
+  font-size: 11px;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: rgba(239, 68, 68, 0.15);
+  color: #b91c1c;
+  border: 1px solid rgba(239, 68, 68, 0.25);
+}
+
+/* APPOINTMENT SUMMARY */
+.appointment-summary {
+  background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+  border: 1px solid #bae6fd;
+  border-radius: 10px;
+  padding: 16px;
+  margin-top: 16px;
+}
+
+.appointment-summary h4 {
+  margin: 0 0 12px 0;
+  font-size: 13px;
+  font-weight: 700;
+  color: #0369a1;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.summary-item {
+  display: flex;
+  justify-content: right;
+  padding: 8px 0;
+  font-size: 13px;
+}
+
+.summary-label {
+  color: #0369a1;
+  font-weight: 600;
+}
+
+.summary-value {
+  color: #075985;
+  font-weight: 700;
+}
+
+/* MODAL FOOTER */
+.modal-footer {
+  display: flex;
+  gap: 12px;
+  padding: 20px 24px;
+  background: #f9fafb;
+  border-top: 1px solid #e5e7eb;
+}
+
+.btn-modal-cancel,
+.btn-modal-submit {
+  flex: 1;
+  padding: 12px 20px;
+  font-size: 14px;
+  font-weight: 600;
+  border-radius: 8px;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-modal-cancel {
+  background: #e5e7eb;
+  color: #374151;
+}
+
+.btn-modal-cancel:hover {
+  background: #d1d5db;
+}
+
+.btn-modal-submit {
+  background: linear-gradient(135deg, #3559a8 0%, #4a68c4 100%);
+  color: white;
+  box-shadow: 0 4px 12px rgba(53, 89, 168, 0.3);
+}
+
+.btn-modal-submit:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(53, 89, 168, 0.4);
+}
+
+.btn-modal-submit:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* 🔥 HARD FIX – REMOVE ANY OPACITY GLITCH */
+.appointments-table,
+.appointments-table * {
+  opacity: 1 !important;
+}

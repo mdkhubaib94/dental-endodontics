@@ -1,0 +1,1085 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Admin Dashboard - SRM Dental College</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* hello */
+        body {
+            margin: 0;
+            font-family: 'Inter', sans-serif;
+            background: url('Campus.png') no-repeat center center fixed;
+            /* Placeholder image for campus */
+            background-size: cover;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+
+        .dashboard-container {
+            background-color: rgba(37, 40, 107, 0.85);
+            /* Dark blue background with transparency */
+            border-radius: 1.5rem;
+            /* Rounded corners */
+            padding: 2rem;
+            width: 95%;
+            max-width: 900px;
+            /* Increased max-width to accommodate more fields */
+            box-shadow: 0 0 1rem rgba(0, 0, 0, 0.3);
+            /* Soft shadow for depth */
+            color: white;
+            /* White text for contrast */
+            text-align: center;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+            flex-wrap: wrap;
+            /* Allow items to wrap on smaller screens */
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            font-weight: bold;
+            margin: 0;
+            color: #ffffff;
+        }
+
+        .header .admin-name {
+            font-size: 1.2rem;
+            color: #d0eaff;
+        }
+
+        .section-title {
+            font-size: 1.8rem;
+            font-weight: bold;
+            margin-top: 2rem;
+            margin-bottom: 1.5rem;
+            color: #ffffff;
+            text-align: left;
+            border-bottom: 2px solid #3C8DFF;
+            padding-bottom: 0.5rem;
+        }
+
+        .input-group {
+            margin-bottom: 1.2rem;
+            text-align: left;
+        }
+
+        .input-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            /* Adjusted margin for block labels */
+            font-size: 1rem;
+            color: #e0e0e0;
+        }
+
+        .input-field,
+        select,
+        textarea {
+            width: 100%;
+            /* Full width for input fields */
+            padding: 0.8rem 1rem;
+            font-size: 1rem;
+            border: none;
+            border-radius: 0.5rem;
+            outline: none;
+            box-sizing: border-box;
+            color: #333;
+            background-color: #f0f0f0;
+        }
+
+        .input-field:focus {
+            border-color: #3C8DFF;
+            box-shadow: 0 0 0 3px rgba(60, 141, 255, 0.5);
+        }
+
+        /* Styles for radio and checkbox groups */
+        .radio-group,
+        .checkbox-group {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .radio-group label,
+        .checkbox-group label {
+            display: flex;
+            align-items: center;
+            gap: 0.25rem;
+            font-weight: normal;
+            margin-bottom: 0;
+            /* Override input-group label margin */
+        }
+
+        .radio-group input[type="radio"],
+        .checkbox-group input[type="checkbox"] {
+            width: 20px;
+            height: 20px;
+            accent-color: #3C8DFF;
+            cursor: pointer;
+            margin-bottom: 0;
+            /* Remove default input margin */
+        }
+
+        .button {
+            padding: 0.8rem 1.5rem;
+            font-size: 1rem;
+            background-color: #3C8DFF;
+            color: white;
+            border: none;
+            border-radius: 0.5rem;
+            cursor: pointer;
+            transition: background-color 0.3s ease, transform 0.2s ease;
+            margin-top: 1rem;
+        }
+
+        .button:hover {
+            background-color: #2e7ae6;
+            transform: translateY(-2px);
+        }
+
+        /* Initial patient details display card */
+        .initial-patient-display-card {
+            background-color: rgba(255, 255, 255, 0.1);
+            border-radius: 1rem;
+            padding: 1.5rem;
+            margin-top: 1.5rem;
+            text-align: left;
+            display: none;
+            /* Hidden by default */
+        }
+
+        .initial-patient-display-card p {
+            margin-bottom: 0.5rem;
+            font-size: 1rem;
+        }
+
+        .initial-patient-display-card p strong {
+            color: #d0eaff;
+        }
+
+        .patient-details-card {
+            background-color: rgba(255, 255, 255, 0.1);
+            border-radius: 1rem;
+            padding: 1.5rem;
+            margin-top: 1.5rem;
+            text-align: left;
+            display: none;
+            /* Hidden by default */
+        }
+
+        .patient-details-card p {
+            margin-bottom: 0.5rem;
+            font-size: 1rem;
+        }
+
+        .patient-details-card p strong {
+            color: #d0eaff;
+        }
+
+        .vitals-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1.5rem;
+            margin-top: 1.5rem;
+        }
+
+        /* Custom Message Box Styles */
+        .message-box {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: rgba(0, 0, 0, 0.8);
+            color: white;
+            padding: 20px;
+            border-radius: 10px;
+            z-index: 1000;
+            display: none;
+            /* Hidden by default */
+            text-align: center;
+            box-shadow: 0 0 15px rgba(0, 0, 0, 0.5);
+        }
+
+        .message-box button {
+            background-color: #3B82F6;
+            color: white;
+            padding: 8px 15px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-top: 15px;
+            font-size: 0.9rem;
+        }
+
+        .message-box button:hover {
+            background-color: #2563EB;
+        }
+
+        .section-buttons {
+            display: flex;
+            justify-content: center;
+            gap: 1rem;
+            margin-top: 2rem;
+            flex-wrap: wrap;
+        }
+
+        .section-buttons .button {
+            margin-top: 0;
+            /* Override default button margin */
+        }
+
+        /* Row for input fields */
+        .row {
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .row>div {
+            flex: 1;
+            min-width: 200px;
+            /* Ensure fields don't get too small */
+        }
+
+        /* Specific style for WebKit browsers to invert the color of the
+         * calendar icon within date input fields, making it white.
+         */
+        input[type="date"]::-webkit-calendar-picker-indicator {
+            filter: invert(1);
+            /* Inverts colors */
+        }
+
+        /* Authentication Modal Specific Styles */
+        .auth-modal-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1001;
+            visibility: hidden;
+            opacity: 0;
+            transition: visibility 0s, opacity 0.3s ease;
+        }
+
+        .auth-modal-container.show {
+            visibility: visible;
+            opacity: 1;
+        }
+
+        .auth-modal {
+            background: rgba(37, 40, 107, 0.95);
+            padding: 30px;
+            border-radius: 15px;
+            text-align: center;
+            color: white;
+            box-shadow: 0 5px 25px rgba(0, 0, 0, 0.5);
+            max-width: 450px;
+            width: 90%;
+        }
+
+        .auth-modal h2 {
+            margin-top: 0;
+            font-size: 2rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .auth-modal .input-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .auth-modal .button-group {
+            display: flex;
+            justify-content: center;
+            gap: 1rem;
+            margin-top: 1.5rem;
+        }
+
+        .auth-modal .button-group .button {
+            margin-top: 0;
+        }
+
+
+        @media (max-width: 768px) {
+            .header {
+                flex-direction: column;
+                text-align: center;
+            }
+
+            .header h1 {
+                font-size: 2rem;
+                margin-bottom: 1rem;
+            }
+
+            .header .admin-name {
+                margin-bottom: 1rem;
+            }
+
+            .section-title {
+                font-size: 1.5rem;
+            }
+
+            .vitals-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .section-buttons {
+                flex-direction: column;
+            }
+
+            .row {
+                flex-direction: column;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .dashboard-container {
+                padding: 1.5rem;
+            }
+
+            .header h1 {
+                font-size: 1.8rem;
+            }
+
+            .header .admin-name {
+                font-size: 1rem;
+            }
+
+            .section-title {
+                font-size: 1.3rem;
+            }
+
+            .input-field,
+            .button {
+                font-size: 0.9rem;
+                padding: 0.7rem 1rem;
+            }
+
+            .input-group {
+                flex-direction: column;
+                /* Stack label and input on small screens */
+                align-items: flex-start;
+            }
+
+            .radio-group,
+            .checkbox-group {
+                flex-direction: column;
+                /* Stack Yes/No on small screens */
+                align-items: flex-start;
+                gap: 5px;
+            }
+
+            .auth-modal h2 {
+                font-size: 1.5rem;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="dashboard-container">
+        <div class="header">
+            <h1>Admin Dashboard</h1>
+            <span class="admin-name">Welcome, Ram!</span>
+        </div>
+
+        <div class="patient-fetch-section">
+            <h3 class="section-title">Fetch Patient Details</h3>
+            <div class="input-group">
+                <label for="patientIdFetch">Enter Patient ID:</label>
+                <input type="text" id="patientIdFetch" class="input-field" placeholder="e.g., u001" />
+            </div>
+            <button class="button" onclick="fetchPatientDetails()">Fetch Details</button>
+
+            <div id="initialPatientDisplay" class="initial-patient-display-card">
+                <p><strong>Patient Name:</strong> <span id="initialPatientName"></span></p>
+                <p><strong>Mobile Number:</strong> <span id="initialMobileNumber"></span></p>
+                <p><strong>Email:</strong> <span id="initialPatientContact"></span></p>
+            </div>
+
+            <div id="patientActionButtons" class="section-buttons" style="display: none;">
+                <button class="button" onclick="showPersonalDetailsSection()">Personal Details</button>
+                <button class="button" onclick="showVitalsSection()">Vitals</button>
+                <button class="button" onclick="handleGeneralCaseSheet()">General Case Sheet</button>
+            </div>
+
+            <div id="personalDetailsSection" class="patient-details-card" style="display: none;">
+                <h3 class="section-title">Personal Information</h3>
+                <div class="row">
+                    <div>
+                        <label for="firstName">First Name *</label>
+                        <input type="text" id="firstName" class="input-field" required>
+                    </div>
+                    <div>
+                        <label for="middleName">Middle Name</label>
+                        <input type="text" id="middleName" class="input-field">
+                    </div>
+                    <div>
+                        <label for="lastName">Last Name *</label>
+                        <input type="text" id="lastName" class="input-field" required>
+                    </div>
+                </div>
+
+                <div class="input-group">
+                    <label for="dobInput">Date of Birth *</label>
+                    <input type="date" id="dobInput" class="input-field" required onchange="calculateAge()">
+                </div>
+
+                <div class="input-group">
+                    <label for="age">Age</label>
+                    <input type="text" id="age" class="input-field" readonly>
+                </div>
+
+                <div class="input-group">
+                    <label>Gender *</label>
+                    <div class="radio-group">
+                        <label><input type="radio" name="gender" value="Male" required> Male</label>
+                        <label><input type="radio" name="gender" value="Female"> Female</label>
+                        <label><input type="radio" name="gender" value="Other"> Other</label>
+                    </div>
+                </div>
+
+                <div class="input-group">
+                    <label>Marital Status *</label>
+                    <div class="radio-group">
+                        <label><input type="radio" name="marital" value="Single" required> Single</label>
+                        <label><input type="radio" name="marital" value="Married"> Married</label>
+                        <label><input type="radio" name="marital" value="Other"> Other</label>
+                    </div>
+                </div>
+
+                <div class="input-group">
+                    <label for="language">Preferred Language</label>
+                    <select id="language" class="input-field">
+                        <option value="">Select</option>
+                        <option value="English">English</option>
+                        <option value="Hindi">Hindi</option>
+                        <option value="Tamil">Tamil</option>
+                    </select>
+                </div>
+
+                <h3 class="section-title">Patient Case Entry - Chief Complaint & History</h3>
+
+                <div class="input-group">
+                    <label for="chiefComplaint">Chief Complaint</label>
+                    <select id="chiefComplaint" class="input-field">
+                        <option value="">Select a primary issue</option>
+                        <option value="Pain/Toothache">Pain/Toothache</option>
+                        <option value="Dental Caries (Cavities)">Dental Caries (Cavities)</option>
+                        <option value="Sensitivity">Sensitivity</option>
+                        <option value="Gingivitis and Gum Problems">Gingivitis and Gum Problems</option>
+                        <option value="Aesthetic Concerns">Aesthetic Concerns</option>
+                        <option value="Post-filling Complaints">Post-filling Complaints</option>
+                        <option value="Missing Teeth/Tooth Replacement">Missing Teeth/Tooth Replacement</option>
+                        <option value="Routine Check-up/Cleaning">Routine Check-up/Cleaning</option>
+                        <option value="Oral Ulcers">Oral Ulcers</option>
+                        <option value="Facial/Intra-oral Swelling">Facial/Intra-oral Swelling</option>
+                        <option value="Loose Teeth">Loose Teeth</option>
+                        <option value="Bad Breath (Halitosis)">Bad Breath (Halitosis)</option>
+                        <option value="Temporomandibular Joint (TMJ) Pain/Disorder">Temporomandibular Joint (TMJ)
+                            Pain/Disorder</option>
+                        <option value="Fractured Tooth">Fractured Tooth</option>
+                        <option value="Food Impaction">Food Impaction</option>
+                    </select>
+                </div>
+
+                <h4 class="section-title">History of Present Illness</h4>
+                <div class="checkbox-group">
+                    <label><input type="checkbox" name="hpi" value="Diabetes"> Diabetes</label>
+                    <label><input type="checkbox" name="hpi" value="Hypertension"> Hypertension</label>
+                    <label><input type="checkbox" name="hpi" value="Asthma"> Asthma</label>
+                    <label><input type="checkbox" name="hpi" value="Mypertansion"> Mypertansion</label>
+                    <label><input type="checkbox" name="hpi" value="Hyperlipidemia"> Hyperlipidemia</label>
+                    <label><input type="checkbox" name="hpi" value="Thyroid pois"> Thyroid pois</label>
+                    <label><input type="checkbox" name="hpi" value="None"> None</label>
+                </div>
+
+                <h4 class="section-title">Past Medical History</h4>
+                <div class="checkbox-group">
+                    <label><input type="checkbox" name="pmh" value="Diabetes"> Diabetes</label>
+                    <label><input type="checkbox" name="pmh" value="Hypertension"> Hypertension</label>
+                    <label><input type="checkbox" name="pmh" value="Osteoporosis"> Osteoporosis</label>
+                    <label><input type="checkbox" name="pmh" value="None"> None</label>
+                </div>
+
+                <h4 class="section-title">Personal Habits</h4>
+                <div class="checkbox-group">
+                    <label><input type="checkbox" name="personalHabits" value="Smoking"> Smoking</label>
+                    <label><input type="checkbox" name="personalHabits" value="Alcohol"> Alcohol</label>
+                    <label><input type="checkbox" name="personalHabits" value="Betel Nut"> Betel Nut</label>
+                    <label><input type="checkbox" name="personalHabits" value="None"> None</label>
+                </div>
+
+                <h3 class="section-title">Medical History</h3>
+                <div class="input-group">
+                    <label for="medications">Current Medications</label>
+                    <textarea id="medications" class="input-field" rows="3"></textarea>
+                </div>
+
+                <div class="input-group">
+                    <label for="allergies">Known Allergies (e.g., latex, medications, anesthetics)</label>
+                    <textarea id="allergies" class="input-field" rows="3"></textarea>
+                </div>
+
+                <div class="input-group">
+                    <label for="conditions">Chronic Medical Conditions (e.g., diabetes, heart disease)</label>
+                    <textarea id="conditions" class="input-field" rows="3"></textarea>
+                </div>
+
+                <div class="input-group">
+                    <label for="surgeries">Past Surgeries or Hospitalizations</label>
+                    <textarea id="surgeries" class="input-field" rows="3"></textarea>
+                </div>
+
+                <h3 class="section-title">Dental History</h3>
+                <div class="input-group">
+                    <label for="dentalConcerns">Primary Dental Concerns (e.g., pain, sensitivity, bleeding gums)</label>
+                    <textarea id="dentalConcerns" class="input-field" rows="3"></textarea>
+                </div>
+
+                <div class="input-group">
+                    <label for="lastVisit">Date of Last Dental Visit</label>
+                    <input type="date" id="lastVisit" class="input-field">
+                </div>
+
+                <button class="button" onclick="attemptSavePersonalDetails()">Save Personal Details</button>
+            </div>
+
+            <div id="vitalsEntrySection" class="patient-details-card mt-8" style="display: none;">
+                <h3 class="section-title">Enter Patient Vitals</h3>
+                <div class="vitals-grid">
+                    <div class="input-group">
+                        <label for="bpInput">Blood Pressure (BP):</label>
+                        <input type="text" id="bpInput" class="input-field" placeholder="e.g., 120/80 mmHg" />
+                    </div>
+                    <div class="input-group">
+                        <label for="sugarInput">Sugar Level:</label>
+                        <input type="text" id="sugarInput" class="input-field" placeholder="e.g., 90 mg/dL" />
+                    </div>
+                    <div class="input-group">
+                        <label for="heightInput">Height (in cm or inches):</label>
+                        <input type="number" id="heightInput" class="input-field" placeholder="Enter height in cm or inches" step="0.01" />
+                    </div>
+                    <div class="input-group">
+                        <label for="weightInput">Weight:</label>
+                        <input type="text" id="weightInput" class="input-field" placeholder="e.g., 70 kg" />
+                    </div>
+                </div>
+
+                <button class="button" onclick="attemptSaveVitals()">Save Vitals</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Generic Message Box -->
+    <div id="messageBox" class="message-box">
+        <p id="messageText"></p>
+        <button onclick="hideMessageBox()">OK</button>
+    </div>
+
+    <!-- Staff Authentication Modal -->
+    <div id="authModalContainer" class="auth-modal-container">
+        <div class="auth-modal">
+            <h2 id="authModalTitle">Staff Authentication</h2>
+            <div class="input-group">
+                <label for="authStaffName">Staff Name *</label>
+                <input type="text" id="authStaffName" class="input-field" placeholder="Enter full name" required />
+            </div>
+            <div class="input-group">
+                <label for="authSignatureUpload">Upload Digital Signature *</label>
+                <input type="file" id="authSignatureUpload" class="input-field" accept="image/*"
+                    onchange="previewSignatureInModal()" />
+                <div id="authSignaturePreview" style="margin-top: 1rem;"></div>
+            </div>
+            <div class="button-group">
+                <button class="button" onclick="processAuthAndCallback()">Submit</button>
+                <button class="button" onclick="hideAuthModal()">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Dummy patient data simulating a database with registration details
+        const patients = {
+            'u001': {
+                name: 'Alice Smith',
+                mobileNumber: '9876543210',
+                personalDetailsAuth: null, // To store auth for personal details
+                vitalsAuth: null,          // To store auth for vitals
+                generalCaseAuth: null      // To store auth for general case sheet
+            },
+            'u002': {
+                name: 'Bob Johnson',
+                mobileNumber: '9988776655',
+                personalDetailsAuth: null,
+                vitalsAuth: null,
+                generalCaseAuth: null
+            }
+        };
+
+        let currentAuthCallback = null; // Stores the function to call after successful authentication
+        let currentAuthSection = null; // Stores which section is being authenticated ('personal', 'vitals', 'generalCase')
+
+        // --- Generic Message Box Functions ---
+        function showMessageBox(message) {
+            document.getElementById('messageText').innerText = message;
+            document.getElementById('messageBox').style.display = 'block';
+        }
+
+        function hideMessageBox() {
+            document.getElementById('messageBox').style.display = 'none';
+        }
+
+        // --- Section Visibility Functions ---
+        function hideAllPatientSections() {
+            document.getElementById('initialPatientDisplay').style.display = 'none';
+            document.getElementById('patientActionButtons').style.display = 'none';
+            document.getElementById('personalDetailsSection').style.display = 'none';
+            document.getElementById('vitalsEntrySection').style.display = 'none';
+        }
+
+        // --- Clear Field Functions ---
+        function clearPersonalDetailsFields() {
+            document.getElementById('firstName').value = '';
+            document.getElementById('middleName').value = '';
+            document.getElementById('lastName').value = '';
+            document.getElementById('dobInput').value = '';
+            document.getElementById('age').value = '';
+            document.querySelectorAll('input[name="gender"]').forEach(radio => radio.checked = false);
+            document.querySelectorAll('input[name="marital"]').forEach(radio => radio.checked = false);
+            document.getElementById('language').value = '';
+            document.getElementById('chiefComplaint').value = '';
+            document.querySelectorAll('input[name="hpi"]').forEach(checkbox => checkbox.checked = false);
+            document.querySelectorAll('input[name="pmh"]').forEach(checkbox => checkbox.checked = false);
+            document.querySelectorAll('input[name="personalHabits"]').forEach(checkbox => checkbox.checked = false);
+            document.getElementById('medications').value = '';
+            document.getElementById('allergies').value = '';
+            document.getElementById('conditions').value = '';
+            document.getElementById('surgeries').value = '';
+            document.querySelectorAll('input[name="pregnancyStatus"]').forEach(radio => radio.checked = false);
+            document.getElementById('dentalConcerns').value = '';
+            document.getElementById('lastVisit').value = '';
+        }
+
+        function clearVitalsFields() {
+            document.getElementById('bpInput').value = '';
+            document.getElementById('sugarInput').value = '';
+            document.getElementById('heightInput').value = '';
+            document.getElementById('weightInput').value = '';
+        }
+
+        function clearAuthModalFields() {
+            document.getElementById('authStaffName').value = '';
+            document.getElementById('authSignatureUpload').value = '';
+            document.getElementById('authSignaturePreview').innerHTML = '';
+        }
+
+        // --- Utility Functions ---
+        function calculateAge() {
+            const dobInput = document.getElementById('dobInput').value;
+            if (dobInput) {
+                try {
+                    const birthDate = new Date(dobInput);
+
+                    // Check if the date is valid
+                    if (isNaN(birthDate.getTime())) {
+                        document.getElementById('age').value = '';
+                        return;
+                    }
+
+                    const today = new Date();
+                    let age = today.getFullYear() - birthDate.getFullYear();
+                    const monthDiff = today.getMonth() - birthDate.getMonth();
+
+                    // If the current month is before the birth month, or
+                    // if it's the same month but the current day is before the birth day
+                    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
+                        age--;
+                    }
+
+                    // Ensure age is not negative
+                    document.getElementById('age').value = age >= 0 ? age : '';
+                } catch (error) {
+                    console.error('Error calculating age:', error);
+                    document.getElementById('age').value = '';
+                }
+            } else {
+                document.getElementById('age').value = '';
+            }
+        }
+
+        function setRadioChecked(name, value) {
+            const radios = document.querySelectorAll(`input[name="${name}"]`);
+            radios.forEach(radio => {
+                radio.checked = (radio.value === value);
+            });
+        }
+
+        function setCheckboxesChecked(name, values) {
+            const checkboxes = document.querySelectorAll(`input[name="${name}"]`);
+            checkboxes.forEach(checkbox => {
+                checkbox.checked = values.includes(checkbox.value);
+            });
+        }
+
+        // --- Authentication Modal Functions ---
+        function showAuthModal(section, callback) {
+            const patientId = localStorage.getItem('currentPatientId');
+            if (!patientId || !patients[patientId]) {
+                showMessageBox('Please fetch a patient ID first.');
+                return;
+            }
+
+            currentAuthSection = section;
+            currentAuthCallback = callback;
+
+            clearAuthModalFields(); // Clear fields before showing
+
+            // Pre-populate if authentication data exists for this section
+            const patient = patients[patientId];
+            let authData = null;
+            if (section === 'personal' && patient.personalDetailsAuth) {
+                authData = patient.personalDetailsAuth;
+            } else if (section === 'vitals' && patient.vitalsAuth) {
+                authData = patient.vitalsAuth;
+            } else if (section === 'generalCase' && patient.generalCaseAuth) {
+                authData = patient.generalCaseAuth;
+            }
+
+            if (authData) {
+                document.getElementById('authStaffName').value = authData.staffName || '';
+                if (authData.signature) {
+                    const img = document.createElement('img');
+                    img.src = authData.signature;
+                    img.style.maxWidth = '150px';
+                    img.style.maxHeight = '100px';
+                    img.style.marginTop = '10px';
+                    document.getElementById('authSignaturePreview').appendChild(img);
+                }
+            }
+
+            document.getElementById('authModalContainer').classList.add('show');
+        }
+
+        function hideAuthModal() {
+            document.getElementById('authModalContainer').classList.remove('show');
+            currentAuthCallback = null;
+            currentAuthSection = null;
+            clearAuthModalFields(); // Clear fields after hiding
+        }
+
+        function previewSignatureInModal() {
+            const fileInput = document.getElementById('authSignatureUpload');
+            const previewDiv = document.getElementById('authSignaturePreview');
+            previewDiv.innerHTML = ''; // Clear previous preview
+
+            const file = fileInput.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const img = document.createElement('img');
+                    img.src = e.target.result;
+                    img.style.maxWidth = '150px';
+                    img.style.maxHeight = '100px';
+                    img.style.marginTop = '10px';
+                    previewDiv.appendChild(img);
+                };
+                reader.readAsDataURL(file);
+            }
+        }
+
+        function processAuthAndCallback() {
+            const staffName = document.getElementById('authStaffName').value.trim();
+            const signatureFile = document.getElementById('authSignatureUpload').files[0];
+            const patientId = localStorage.getItem('currentPatientId');
+
+            if (!staffName) {
+                showMessageBox('Please enter the Staff Name.');
+                return;
+            }
+            if (!signatureFile) {
+                showMessageBox('Please upload your Digital Signature.');
+                return;
+            }
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const signatureDataUrl = e.target.result;
+
+                // Save authentication data to the patient object for the current section
+                const patient = patients[patientId];
+                if (currentAuthSection === 'personal') {
+                    patient.personalDetailsAuth = { staffName: staffName, signature: signatureDataUrl };
+                } else if (currentAuthSection === 'vitals') {
+                    patient.vitalsAuth = { staffName: staffName, signature: signatureDataUrl };
+                } else if (currentAuthSection === 'generalCase') {
+                    patient.generalCaseAuth = { staffName: staffName, signature: signatureDataUrl };
+                }
+
+                hideAuthModal(); // Hide modal before executing callback
+                if (currentAuthCallback) {
+                    currentAuthCallback(); // Execute the original save/navigate function
+                }
+            };
+            reader.readAsDataURL(signatureFile);
+        }
+
+        // --- Main Section Handlers ---
+        function fetchPatientDetails() {
+            const patientId = document.getElementById('patientIdFetch').value.trim();
+            const patientActionButtons = document.getElementById('patientActionButtons');
+            const initialPatientDisplay = document.getElementById('initialPatientDisplay');
+
+            hideAllPatientSections(); // Hide all sections initially
+
+            if (!patientId) {
+                showMessageBox('Please enter a Patient ID to fetch details.');
+                return;
+            }
+
+            localStorage.setItem('currentPatientId', patientId); // Store current patient ID
+
+            let patient = patients[patientId];
+
+            if (patient) {
+                // Patient found in "database", display registration details
+                document.getElementById('initialPatientName').textContent = patient.name || 'N/A';
+                document.getElementById('initialMobileNumber').textContent = patient.mobileNumber || 'N/A';
+                document.getElementById('initialPatientContact').textContent = patient.contact || 'N/A';
+                initialPatientDisplay.style.display = 'block';
+
+                // Clear all personal details and vitals fields for manual entry
+                clearPersonalDetailsFields();
+                clearVitalsFields();
+
+            } else {
+                // Patient not found in "database", initialize a new patient object for registration data
+                patients[patientId] = {
+                    name: `New Patient (${patientId})`, // Placeholder name for new patient
+                    mobileNumber: 'N/A',
+                    contact: 'N/A',
+                    personalDetailsAuth: null,
+                    vitalsAuth: null,
+                    generalCaseAuth: null
+                };
+                document.getElementById('initialPatientName').textContent = patients[patientId].name;
+                document.getElementById('initialMobileNumber').textContent = patients[patientId].mobileNumber;
+                document.getElementById('initialPatientContact').textContent = patients[patientId].contact;
+                initialPatientDisplay.style.display = 'block';
+
+                // Clear all fields for new patient entry
+                clearPersonalDetailsFields();
+                clearVitalsFields();
+
+                showMessageBox(`Patient ID: ${patientId} not found in database. Ready for new patient entry.`);
+            }
+            patientActionButtons.style.display = 'flex';
+        }
+
+        function showPersonalDetailsSection() {
+            document.getElementById('vitalsEntrySection').style.display = 'none';
+            document.getElementById('personalDetailsSection').style.display = 'block';
+
+            const patientId = localStorage.getItem('currentPatientId');
+            const patient = patients[patientId];
+
+            if (patient) {
+                // Populate Personal Details fields from the 'patients' object if they exist
+                document.getElementById('firstName').value = patient.firstName || '';
+                document.getElementById('middleName').value = patient.middleName || '';
+                document.getElementById('lastName').value = patient.lastName || '';
+                document.getElementById('dobInput').value = patient.dob || '';
+                calculateAge();
+                setRadioChecked('gender', patient.gender || '');
+                setRadioChecked('marital', patient.maritalStatus || '');
+                document.getElementById('language').value = patient.language || '';
+                document.getElementById('chiefComplaint').value = patient.chiefComplaint || '';
+                setCheckboxesChecked('hpi', patient.hpi || []);
+                setCheckboxesChecked('pmh', patient.pmh || []);
+                setCheckboxesChecked('personalHabits', patient.personalHabits || []);
+                document.getElementById('medications').value = patient.medications || '';
+                document.getElementById('allergies').value = patient.allergies || '';
+                document.getElementById('conditions').value = patient.conditions || '';
+                document.getElementById('surgeries').value = patient.surgeries || '';
+                setRadioChecked('pregnancyStatus', patient.pregnancyStatus || '');
+                document.getElementById('dentalConcerns').value = patient.dentalConcerns || '';
+                document.getElementById('lastVisit').value = patient.lastVisit || '';
+            } else {
+                clearPersonalDetailsFields();
+            }
+        }
+
+        function showVitalsSection() {
+            document.getElementById('personalDetailsSection').style.display = 'none';
+            document.getElementById('vitalsEntrySection').style.display = 'block';
+
+            const patientId = localStorage.getItem('currentPatientId');
+            const patient = patients[patientId];
+
+            if (patient && patient.vitals) {
+                // Populate Vitals fields from the 'patients' object if they exist
+                document.getElementById('bpInput').value = patient.vitals.bp || '';
+                document.getElementById('sugarInput').value = patient.vitals.sugar || '';
+                document.getElementById('heightInput').value = patient.vitals.height || '';
+                document.getElementById('weightInput').value = patient.vitals.weight || '';
+            } else {
+                clearVitalsFields();
+            }
+        }
+
+        // --- Save/Navigate Attempt Functions (trigger authentication) ---
+        function attemptSavePersonalDetails() {
+            showAuthModal('personal', savePersonalDetails);
+        }
+
+        function attemptSaveVitals() {
+            showAuthModal('vitals', saveVitals);
+        }
+
+        function handleGeneralCaseSheet() {
+            showAuthModal('generalCase', navigateToGeneralCaseSheet);
+        }
+
+        // --- Actual Save/Navigate Functions (called after authentication) ---
+        function savePersonalDetails() {
+            const patientId = localStorage.getItem('currentPatientId');
+            const patient = patients[patientId];
+
+            // Collect all personal details
+            const firstName = document.getElementById('firstName').value.trim();
+            const middleName = document.getElementById('middleName').value.trim();
+            const lastName = document.getElementById('lastName').value.trim();
+            const dob = document.getElementById('dobInput').value;
+            const age = document.getElementById('age').value;
+            const gender = document.querySelector('input[name="gender"]:checked')?.value || '';
+            const maritalStatus = document.querySelector('input[name="marital"]:checked')?.value || '';
+            const language = document.getElementById('language').value;
+            const chiefComplaint = document.getElementById('chiefComplaint').value;
+
+            const hpi = Array.from(document.querySelectorAll('input[name="hpi"]:checked')).map(cb => cb.value);
+            const pmh = Array.from(document.querySelectorAll('input[name="pmh"]:checked')).map(cb => cb.value);
+            const personalHabits = Array.from(document.querySelectorAll('input[name="personalHabits"]:checked')).map(cb => cb.value);
+
+            const medications = document.getElementById('medications').value.trim();
+            const allergies = document.getElementById('allergies').value.trim();
+            const conditions = document.getElementById('conditions').value.trim();
+            const surgeries = document.getElementById('surgeries').value.trim();
+            const pregnancyStatus = document.querySelector('input[name="pregnancyStatus"]:checked')?.value || '';
+            const dentalConcerns = document.getElementById('dentalConcerns').value.trim();
+            const lastVisit = document.getElementById('lastVisit').value;
+
+            // Basic validation for mandatory fields
+            if (!firstName || !lastName || !dob || !gender || !maritalStatus) {
+                showMessageBox('Please fill all mandatory personal details fields (First Name, Last Name, Date of Birth, Gender, Marital Status).');
+                return;
+            }
+
+            // Save personal details
+            patient.firstName = firstName;
+            patient.middleName = middleName;
+            patient.lastName = lastName;
+            patient.dob = dob;
+            patient.age = age;
+            patient.gender = gender;
+            patient.maritalStatus = maritalStatus;
+            patient.language = language;
+            patient.chiefComplaint = chiefComplaint;
+            patient.hpi = hpi;
+            patient.pmh = pmh;
+            patient.personalHabits = personalHabits;
+            patient.medications = medications;
+            patient.allergies = allergies;
+            patient.conditions = conditions;
+            patient.surgeries = surgeries;
+            patient.pregnancyStatus = pregnancyStatus;
+            patient.dentalConcerns = dentalConcerns;
+            patient.lastVisit = lastVisit;
+
+            showMessageBox(`Personal details for Patient ID: ${patientId} saved successfully!`);
+        }
+
+        function saveVitals() {
+            const patientId = localStorage.getItem('currentPatientId');
+            const patient = patients[patientId];
+
+            const bp = document.getElementById('bpInput').value.trim();
+            const sugar = document.getElementById('sugarInput').value.trim();
+            const height = document.getElementById('heightInput').value.trim();
+            const weight = document.getElementById('weightInput').value.trim();
+
+            if (!bp || !sugar || !height || !weight) {
+                showMessageBox('Please fill in all vital fields.');
+                return;
+            }
+
+            // Update/Create vitals object within the patient
+            if (!patient.vitals) {
+                patient.vitals = {};
+            }
+            patient.vitals.bp = bp;
+            patient.vitals.sugar = sugar;
+            patient.vitals.height = height;
+            patient.vitals.weight = weight;
+
+            showMessageBox(`Vitals for Patient ID: ${patientId} saved successfully!`);
+        }
+
+        function navigateToGeneralCaseSheet() {
+            const patientId = localStorage.getItem('currentPatientId');
+            if (!patientId || !patients[patientId]) {
+                showMessageBox('No patient ID selected. Cannot proceed to General Case Sheet.');
+                return;
+            }
+            // In a real application, you would pass the patientId to general_a.html
+            // For now, we'll navigate to about:blank as a placeholder.
+            window.location.href = 'about:blank';
+        }
+
+        // Setup checkbox disable logic for None options
+        function setupCheckboxLogic() {
+            const setupCheckboxGroup = (groupName) => {
+                const checkboxes = document.querySelectorAll(`input[name="${groupName}"]`);
+                checkboxes.forEach(checkbox => {
+                    checkbox.addEventListener('change', function() {
+                        const isNoneChecked = Array.from(checkboxes).some(cb => cb.value === 'None' && cb.checked);
+                        
+                        checkboxes.forEach(cb => {
+                            if (cb.value !== 'None') {
+                                cb.disabled = isNoneChecked;
+                                if (isNoneChecked) {
+                                    cb.checked = false;
+                                }
+                            }
+                        });
+                    });
+                });
+            };
+
+            setupCheckboxGroup('hpi');
+            setupCheckboxGroup('pmh');
+            setupCheckboxGroup('personalHabits');
+        }
+
+        // Initialize checkbox logic when page loads
+        document.addEventListener('DOMContentLoaded', setupCheckboxLogic);
+
+    </script>
+</body>
+
+</html>

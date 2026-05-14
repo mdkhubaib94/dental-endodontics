@@ -1,0 +1,210 @@
+.case-history-page {
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  min-height: 100vh;
+  width: 100%;
+  padding: 20px;
+  background: linear-gradient(rgba(37, 40, 107, 0.5), rgba(37, 40, 107, 0.5)), 
+                url('/images/campus.png') center/cover no-repeat;
+  box-sizing: border-box;
+  position: relative;
+  overflow: auto;
+}
+
+.case-history-container {
+  background-color: rgba(37, 40, 106, 0.9);
+  border-radius: 1.5rem;
+  padding: 2rem;
+  max-width: 100%;
+  margin: auto;
+  color: white;
+  box-shadow: 0 0 1rem rgba(0, 0, 0, 0.3);
+}
+
+.case-history-container h1 {
+  text-align: center;
+  font-size: 2.5rem;
+  margin-bottom: 2rem;
+  font-weight: bold;
+}
+
+.patient-info-section {
+  background: rgba(255, 255, 255, 0.1);
+  padding: 20px;
+  border-radius: 12px;
+  margin-bottom: 30px;
+  text-align: center;
+}
+
+.patient-name {
+  font-size: 24px;
+  margin: 0 0 10px 0;
+  color: #fff;
+}
+
+.patient-id {
+  font-size: 16px;
+  margin: 0;
+  color: #cbd5e0;
+}
+
+/* Table Styling */
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 2rem;
+}
+
+th, td {
+  padding: 1rem;
+  text-align: center;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  vertical-align: top;
+}
+
+th {
+  background-color: rgba(60, 141, 255, 0.3);
+}
+
+/* Buttons */
+.view-button {
+  background-color: #3C8DFF;
+  color: white;
+  padding: 0.5rem 1rem;
+  border: none;
+  border-radius: 0.5rem;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+  margin: 0.25rem;
+}
+
+.view-button:hover {
+  background-color: #2563EB;
+}
+
+/* Status Badges */
+.status-badge {
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-size: 14px;
+  font-weight: bold;
+  display: inline-block;
+}
+
+.status-badge.approved {
+  background-color: #d4edda;
+  color: #155724;
+}
+
+.status-badge.pending {
+  background-color: #fff3cd;
+  color: #856404;
+}
+
+.status-badge.redo {
+  background-color: #f8d7da;
+  color: #721c24;
+}
+
+/* Error Message */
+.error-message {
+  background: #fee;
+  color: #c53030;
+  padding: 15px;
+  border-radius: 8px;
+  margin-bottom: 20px;
+  border-left: 4px solid #c53030;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.error-message button {
+  background: #c53030;
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+/* Dashboard Header */
+.dashboard-header {
+  background: rgba(255, 255, 255, 0.1);
+  padding: 20px;
+  border-radius: 12px;
+  margin-bottom: 30px;
+  text-align: center;
+}
+
+.doctor-info-name {
+  margin: 0 0 10px 0;
+  font-size: 28px;
+  color: #fff;
+}
+
+.doctor-info-id {
+  margin: 0;
+  color: #cbd5e0;
+  font-size: 16px;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .case-history-page {
+    padding: 10px;
+  }
+  
+  .case-history-container {
+    padding: 1.2rem;
+  }
+  
+  .case-history-container h1 {
+    font-size: 1.8rem;
+  }
+  
+  table {
+    display: block;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+  
+  th, td {
+    padding: 0.6rem;
+    font-size: 14px;
+  }
+  
+  .patient-name {
+    font-size: 20px;
+  }
+  
+  .patient-id {
+    font-size: 14px;
+  }
+}
+
+@media (max-width: 576px) {
+  .case-history-container {
+    padding: 1rem;
+  }
+  
+  .case-history-container h1 {
+    font-size: 1.5rem;
+  }
+  
+  th, td {
+    padding: 0.5rem;
+    font-size: 12px;
+  }
+  
+  .view-button {
+    padding: 0.4rem 0.8rem;
+    font-size: 12px;
+  }
+  
+  .status-badge {
+    padding: 4px 8px;
+    font-size: 12px;
+  }
+}

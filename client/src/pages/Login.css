@@ -1,0 +1,802 @@
+/* Login.css - Refined Styles with Better Visibility and Proper Dimensions */
+
+/* General Reset and Base Styles */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  background: #f0f4f8;
+}
+
+/* Main Login Selection Page Styles */
+.login {
+  margin: 0;
+  font-family: Arial, sans-serif;
+  background: linear-gradient(rgba(37, 40, 107, 0.5), rgba(37, 40, 107, 0.5)),
+    url('/images/campus.png') center/cover no-repeat;
+  background-size: cover;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 40px 20px;
+  min-height: 100vh;
+}
+
+.logincontainer {
+  position: relative;
+  z-index: 1;
+  width: 850px;
+  max-height: 100vh;
+  background: rgba(37, 40, 106, 0.95);
+  backdrop-filter: blur(20px);
+  border: 3px solid rgba(255, 255, 255, 0.25);
+  border-radius: 24px;
+  padding: 3rem;
+  text-align: center;
+  color: white;
+  box-shadow: 0 30px 60px rgba(0, 0, 0, 0.5),
+    0 0 0 1px rgba(255, 255, 255, 0.1),
+    inset 0 1px 0 rgba(255, 255, 255, 0.15);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  overflow-y: auto;
+  scrollbar-width: none;
+}
+
+.logincontainer::-webkit-scrollbar {
+  display: none;
+}
+
+.logincontainer:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 35px 70px rgba(0, 0, 0, 0.6),
+    0 0 0 1px rgba(255, 255, 255, 0.2);
+}
+
+/* Logo styles for dashboard */
+.logincontainer .logo-box-user {
+  text-align: center;
+  margin-bottom: 2rem;
+}
+
+.logincontainer .logo-img-user {
+  width: 120px;
+  height: auto;
+  filter: drop-shadow(0 8px 16px rgba(0, 0, 0, 0.3)) brightness(1.1);
+  transition: transform 0.3s ease;
+}
+
+.logincontainer .logo-img-user:hover {
+  transform: scale(1.05) rotate(2deg);
+}
+
+/* Dashboard title */
+.logincontainer h1 {
+  margin: 0;
+  font-size: 2rem;
+  font-weight: 700;
+  margin-bottom: 0.5rem;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+  letter-spacing: 0.5px;
+  color: white;
+}
+
+.logincontainer p.address {
+  margin: 0.5rem 0 2rem;
+  font-size: 0.95rem;
+  color: rgba(255, 255, 255, 0.9);
+  line-height: 1.4;
+}
+
+/* Button group for role selection */
+.btn-group {
+  display: flex;
+  justify-content: space-around;
+  flex-wrap: wrap;
+  gap: 1.8rem;
+  margin-bottom: 2rem;
+  padding: 1rem 0;
+}
+
+.btn {
+  background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-radius: 16px;
+  padding: 1.5rem 1.2rem;
+  width: 160px;
+  cursor: pointer;
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  color: #26286B;
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+}
+
+.btn::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
+  transition: left 0.5s ease;
+}
+
+.btn:hover::before {
+  left: 100%;
+}
+
+.btn:hover {
+  transform: translateY(-8px) scale(1.05);
+  background: linear-gradient(135deg, #3C8DFF 0%, #4F96FF 100%);
+  color: white;
+  box-shadow: 0 15px 35px rgba(60, 141, 255, 0.4),
+    0 5px 15px rgba(0, 0, 0, 0.2);
+  border-color: rgba(255, 255, 255, 0.5);
+}
+
+.btn:active {
+  transform: translateY(-4px) scale(1.02);
+}
+
+.btn img {
+  width: 50px;
+  height: 50px;
+  margin-bottom: 0.8rem;
+  transition: transform 0.3s ease;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2));
+}
+
+.btn:hover img {
+  transform: scale(1.1);
+  filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.3)) brightness(1.2);
+}
+
+.btn-label {
+  margin-top: 0.5rem;
+  font-size: 0.95rem;
+  font-weight: 600;
+  letter-spacing: 0.3px;
+  transition: color 0.3s ease;
+}
+
+/* Individual Login Pages */
+.login-page {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  width: 100%;
+  padding: 20px;
+  background: linear-gradient(rgba(37, 40, 107, 0.5), rgba(37, 40, 107, 0.5)),
+    url('/images/campus.png') center/cover no-repeat;
+  box-sizing: border-box;
+  position: fixed;
+  top: 0;
+  left: 0;
+  overflow: auto;
+  scrollbar-width: none;
+}
+
+.login-page::-webkit-scrollbar {
+  display: none;
+}
+
+/* Login Form Container */
+.login-box {
+  position: relative;
+  z-index: 1;
+  background: rgba(37, 40, 106, 0.95);
+  backdrop-filter: blur(20px);
+  border: 3px solid rgba(255, 255, 255, 0.25);
+  border-radius: 24px;
+  padding: 3.5rem;
+  width: 100%;
+  max-width: 580px;
+  min-width: 420px;
+  max-height: 90vh;
+  box-shadow: 0 30px 60px rgba(0, 0, 0, 0.5),
+    0 0 0 1px rgba(255, 255, 255, 0.1),
+    inset 0 1px 0 rgba(255, 255, 255, 0.15);
+  color: white;
+  text-align: center;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  overflow-y: auto;
+  scrollbar-width: none;
+}
+
+.login-box::-webkit-scrollbar {
+  display: none;
+}
+
+.login-box:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 35px 70px rgba(0, 0, 0, 0.6),
+    0 0 0 1px rgba(255, 255, 255, 0.2);
+}
+
+/* Logo in login form */
+.login-box .logo {
+  width: 85px;
+  height: auto;
+  margin-bottom: 1.2rem;
+  filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.3));
+  transition: transform 0.3s ease;
+}
+
+.login-box .logo:hover {
+  transform: scale(1.05) rotate(2deg);
+}
+
+.college-name {
+  font-size: 1.6rem;
+  font-weight: 700;
+  margin-bottom: 0.8rem;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+  letter-spacing: 0.5px;
+  color: white;
+}
+
+.login-box h2 {
+  font-size: 1.9rem;
+  font-weight: 600;
+  margin-bottom: 2rem;
+  color: #ffffff;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+/* Form Input Groups */
+.input-group {
+  margin-bottom: 1.8rem;
+  position: relative;
+}
+
+.input-group:focus-within {
+  transform: translateY(-1px);
+}
+
+.input-group input {
+  width: 100%;
+  padding: 1.2rem 1.4rem;
+  padding-right: 3.5rem;
+  font-size: 1rem;
+  font-weight: 400;
+  border: 2px solid rgba(255, 255, 255, 0.15);
+  border-radius: 12px;
+  outline: none;
+  background: rgba(255, 255, 255, 0.98);
+  color: #333;
+  transition: all 0.3s ease;
+  box-shadow: 0 3px 12px rgba(0, 0, 0, 0.15);
+  box-sizing: border-box;
+}
+
+.input-group input:focus {
+  border-color: #3C8DFF;
+  background: rgba(255, 255, 255, 1);
+  box-shadow: 0 0 0 3px rgba(60, 141, 255, 0.15),
+    0 5px 18px rgba(0, 0, 0, 0.2);
+  transform: none;
+}
+
+.input-group input::placeholder {
+  color: #666;
+  font-weight: 400;
+}
+
+/* Password toggle button */
+.toggle-password {
+  position: absolute;
+  right: 1.2rem;
+  top: 50%;
+  transform: translateY(-50%);
+  cursor: pointer;
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: #666;
+  padding: 0.35rem 0.5rem;
+  border-radius: 6px;
+  transition: all 0.2s ease;
+  z-index: 2;
+  line-height: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  text-decoration: none;
+}
+
+.toggle-password:hover {
+  color: #333;
+  background: rgba(0, 0, 0, 0.05);
+  text-decoration: underline;
+}
+
+.toggle-password:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Special input group for role selection */
+.input-group-sign {
+  margin-bottom: 1.8rem;
+  position: relative;
+}
+
+.input-group-sign select {
+  width: 100%;
+  padding: 1.2rem 1.4rem;
+  font-size: 1rem;
+  font-weight: 400;
+  border: 2px solid rgba(255, 255, 255, 0.15);
+  border-radius: 12px;
+  outline: none;
+  background: rgba(255, 255, 255, 0.98);
+  color: #333;
+  transition: all 0.3s ease;
+  box-shadow: 0 3px 12px rgba(0, 0, 0, 0.15);
+  cursor: pointer;
+  box-sizing: border-box;
+}
+
+.input-group-sign select:focus {
+  border-color: #3C8DFF;
+  background: rgba(255, 255, 255, 1);
+  box-shadow: 0 0 0 3px rgba(60, 141, 255, 0.15),
+    0 5px 18px rgba(0, 0, 0, 0.2);
+  transform: translateY(-1px);
+}
+
+.input-group-sign select option[disabled] {
+  color: #999;
+}
+
+.input-group-sign select option {
+  color: #333;
+}
+
+/* Login button */
+.button {
+  width: 100%;
+  padding: 1.2rem;
+  font-size: 1.1rem;
+  font-weight: 600;
+  background: linear-gradient(135deg, #3C8DFF 0%, #4F96FF 100%);
+  color: white;
+  border: none;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  margin-bottom: 1.5rem;
+  box-shadow: 0 5px 18px rgba(60, 141, 255, 0.35);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.button:hover:not(:disabled) {
+  transform: translateY(-2px);
+  background: linear-gradient(135deg, #2563EB 0%, #3C8DFF 100%);
+  box-shadow: 0 8px 25px rgba(60, 141, 255, 0.45);
+}
+
+.button:active:not(:disabled) {
+  transform: translateY(0);
+  box-shadow: 0 4px 15px rgba(60, 141, 255, 0.3);
+}
+
+.button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+  position: relative;
+}
+
+.login-page .button:disabled::after {
+  content: '';
+  position: absolute;
+  width: 20px;
+  height: 20px;
+  margin: auto;
+  border: 2px solid transparent;
+  border-top-color: #fff;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+}
+
+@keyframes spin {
+  0% {
+    transform: translate(-50%, -50%) rotate(0deg);
+  }
+
+  100% {
+    transform: translate(-50%, -50%) rotate(360deg);
+  }
+}
+
+/* Forgot password link */
+.forgot-password-link {
+  text-align: right;
+  margin-top: -0.5rem;
+  margin-bottom: 1.8rem;
+  font-size: 0.9rem;
+}
+
+.forgot-password-link a {
+  color: rgba(255, 255, 255, 0.85);
+  text-decoration: none;
+  transition: color 0.2s ease;
+}
+
+.forgot-password-link a:hover {
+  color: #3C8DFF;
+  text-decoration: underline;
+}
+
+/* Signup link */
+.signup-link {
+  font-size: 0.95rem;
+  color: rgba(255, 255, 255, 0.9);
+  margin-top: 1.5rem;
+  line-height: 1.5;
+}
+
+.signup-link a {
+  color: #3C8DFF;
+  text-decoration: none;
+  font-weight: 600;
+  transition: color 0.2s ease;
+}
+
+.signup-link a:hover {
+  color: #4F96FF;
+  text-decoration: underline;
+}
+
+/*
+  Enhanced Message Box Styling (Login pages)
+  Note: Many other pages define a global `.message-box`.
+  To prevent CSS collisions (which can push the popup to the right as a flex item),
+  scope these rules to the login screen.
+*/
+.login-page .message-box,
+.login-page ~ .message-box {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  right: auto;
+  transform: translate(-50%, -50%);
+  background: linear-gradient(rgba(255, 255, 255, 0.98), rgba(255, 255, 255, 0.98));
+  backdrop-filter: blur(15px);
+  color: #25286b;
+  padding: 1.5rem 2rem;
+  border-radius: 12px;
+  z-index: 2000;
+  text-align: center;
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15),
+    0 0 0 1px rgba(37, 40, 107, 0.15);
+  max-width: 90vw;
+  width: 500px;
+  animation: loginMessageBoxAppear 0.22s ease-out;
+  border: 2px solid rgba(37, 40, 107, 0.2);
+}
+
+.login-page .message-box p,
+.login-page ~ .message-box p {
+  margin: 0 0 2rem 0;
+  font-size: 1.15rem;
+  line-height: 1.5;
+  font-weight: 500;
+  text-align: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+}
+
+.login-page .message-box button,
+.login-page ~ .message-box button {
+  background: linear-gradient(135deg, #3B82F6 0%, #2563EB 100%);
+  color: white;
+  padding: 0.8rem 2.5rem;
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  font-size: 1rem;
+  font-weight: 600;
+  transition: all 0.2s ease;
+  box-shadow: 0 5px 18px rgba(59, 130, 246, 0.35);
+  min-width: 120px;
+}
+
+.login-page .message-box button:hover,
+.login-page ~ .message-box button:hover {
+  background: linear-gradient(135deg, #2563EB 0%, #1d4ed8 100%);
+  transform: translateY(-1px);
+  box-shadow: 0 8px 25px rgba(59, 130, 246, 0.45);
+}
+
+.login-page .message-box button:active,
+.login-page ~ .message-box button:active {
+  transform: translateY(0);
+}
+
+/* Message type variations */
+.login-page .message-box.success,
+.login-page ~ .message-box.success {
+  background: linear-gradient(rgba(255, 255, 255, 0.98), rgba(240, 253, 244, 0.98));
+  border: 2px solid rgba(34, 197, 94, 0.25);
+  box-shadow: 0 25px 50px rgba(0, 0, 0, 0.2),
+    0 0 0 1px rgba(34, 197, 94, 0.15);
+}
+
+.login-page .message-box.success p,
+.login-page ~ .message-box.success p {
+  color: #065f46;
+}
+
+.login-page .message-box.error,
+.login-page ~ .message-box.error {
+  background: linear-gradient(rgba(255, 255, 255, 0.98), rgba(254, 242, 242, 0.98));
+  border: 2px solid rgba(239, 68, 68, 0.25);
+  box-shadow: 0 25px 50px rgba(0, 0, 0, 0.2),
+    0 0 0 1px rgba(239, 68, 68, 0.15);
+}
+
+.login-page .message-box.error p,
+.login-page ~ .message-box.error p {
+  color: #991b1b;
+  text-align: center;
+}
+
+.login-page .message-box.warning,
+.login-page ~ .message-box.warning {
+  background: linear-gradient(rgba(255, 255, 255, 0.98), rgba(255, 251, 235, 0.98));
+  border: 2px solid rgba(245, 158, 11, 0.25);
+  box-shadow: 0 25px 50px rgba(0, 0, 0, 0.2),
+    0 0 0 1px rgba(245, 158, 11, 0.15);
+}
+
+.login-page .message-box.warning p,
+.login-page ~ .message-box.warning p {
+  color: #92400e;
+}
+
+@keyframes loginMessageBoxAppear {
+  from {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.98);
+  }
+
+  to {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+  }
+}
+
+/* Enhanced focus states for accessibility */
+.button:focus-visible,
+.input-group input:focus-visible,
+.input-group-sign select:focus-visible,
+.btn:focus-visible {
+  outline: 3px solid #3C8DFF;
+  outline-offset: 2px;
+}
+
+/* Responsive Design */
+@media screen and (max-width: 768px) {
+
+  .login,
+  .login-page {
+    padding: 15px;
+  }
+
+  .logincontainer {
+    width: calc(100% - 2rem);
+    max-height: 95vh;
+    padding: 2.5rem;
+  }
+
+  .login-box {
+    max-width: calc(100% - 2rem);
+    min-width: 320px;
+    max-height: 95vh;
+    padding: 2.5rem;
+  }
+
+  .btn-group {
+    gap: 1.5rem;
+    justify-content: center;
+  }
+
+  .btn {
+    width: 110px;
+    padding: 1.2rem 1rem;
+  }
+
+  .btn img {
+    width: 45px;
+    height: 45px;
+  }
+
+  .btn-label {
+    font-size: 0.85rem;
+  }
+
+  .logincontainer h1 {
+    font-size: 1.8rem;
+  }
+
+  .college-name {
+    font-size: 1.4rem;
+  }
+
+  .login-box h2 {
+    font-size: 1.6rem;
+  }
+
+  .button {
+    font-size: 1rem;
+    padding: 1.1rem;
+  }
+}
+
+@media screen and (max-width: 600px) {
+  .logincontainer {
+    width: calc(100% - 1rem);
+    margin: 1rem 0.5rem;
+    padding: 2rem;
+  }
+
+  .login-box {
+    min-width: 300px;
+    padding: 2rem;
+  }
+
+  .btn-group {
+    flex-direction: column;
+    align-items: center;
+    gap: 1.2rem;
+  }
+
+  .btn {
+    width: 220px;
+    display: flex;
+    align-items: center;
+    padding: 1.2rem 1.5rem;
+    text-align: left;
+  }
+
+  .btn img {
+    margin-right: 1rem;
+    margin-bottom: 0;
+  }
+
+  .login-page .message-box,
+  .login-page ~ .message-box {
+    padding: 1rem 1.5rem;
+    border-radius: 10px;
+    min-width: 280px;
+    max-width: 90vw;
+  }
+}
+
+@media screen and (max-width: 480px) {
+  .logincontainer {
+    margin: 0.5rem;
+    padding: 1.8rem;
+  }
+
+  .login-box {
+    padding: 1.8rem;
+    margin: 0.5rem;
+    min-width: 280px;
+  }
+
+  .btn {
+    width: 200px;
+    padding: 1rem 1.2rem;
+  }
+
+  .btn img {
+    width: 40px;
+    height: 40px;
+  }
+
+  .btn-label {
+    font-size: 0.8rem;
+  }
+
+  .logincontainer h1 {
+    font-size: 1.6rem;
+  }
+
+  .college-name {
+    font-size: 1.3rem;
+  }
+
+  .login-box h2 {
+    font-size: 1.4rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .login-page .message-box,
+  .login-page ~ .message-box {
+    margin: 0;
+    padding: 1rem;
+    min-width: 260px;
+    max-width: 85vw;
+    border-radius: 10px;
+  }
+}
+
+@media screen and (max-width: 320px) {
+  .logincontainer {
+    padding: 1.5rem;
+  }
+
+  .login-box {
+    padding: 1.5rem;
+    min-width: 260px;
+  }
+
+  .btn {
+    width: 180px;
+    padding: 0.8rem 1rem;
+  }
+
+  .logincontainer h1 {
+    font-size: 1.4rem;
+  }
+
+  .college-name {
+    font-size: 1.2rem;
+  }
+}
+
+/* Smooth scrolling for login pages */
+.login {
+  scroll-behavior: smooth;
+}
+
+/* Custom scrollbar for webkit browsers within login */
+.login ::-webkit-scrollbar {
+  width: 8px;
+}
+
+.login ::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.login ::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.3);
+  border-radius: 4px;
+}
+
+.login ::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.5);
+}
+
+/* Ensure consistent styling across all login forms */
+.login form {
+  width: 100%;
+}
+
+.login .input-group,
+.login .input-group-sign {
+  width: 100%;
+}
+
+/* Enhanced visibility for disabled inputs */ 
+.input-group input:disabled,
+.input-group-sign select:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+  background: rgba(255, 255, 255, 0.8);
+}

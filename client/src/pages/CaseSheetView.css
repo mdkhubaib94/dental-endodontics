@@ -1,0 +1,93 @@
+.digital-doctor-case-sheet {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  background: url('/images/campus.png') no-repeat center center/cover; /* optional bg */
+}
+
+.case-sheet {
+  background: #1c237e; /* same deep blue */
+  color: white;
+  padding: 2rem;
+  border-radius: 20px;
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
+  width: 80%;
+  max-width: 900px;
+  min-height: 600px;
+  display: flex;
+  flex-direction: column;
+}
+
+.case-sheet .header {
+  text-align: center;
+  margin-bottom: 1.5rem;
+}
+
+.case-sheet .header img {
+  width: 70px;
+  margin-bottom: 0.5rem;
+}
+
+.case-sheet .header h1,
+.case-sheet .header h2,
+.case-sheet .header h3 {
+  margin: 0.2rem 0;
+  color: #fff;
+}
+
+.page {
+  flex: 1;
+  display: none;
+}
+
+.page.active {
+  display: block;
+}
+
+.form-group-casesheet {
+  margin-bottom: 1rem;
+}
+
+.form-group-casesheet label {
+  font-weight: 600;
+  display: block;
+  margin-bottom: 0.4rem;
+  color: #f0f0f0;
+}
+
+.readonly-field {
+  background: #f9f9f9;
+  color: #333;
+  padding: 0.75rem;
+  border-radius: 10px;
+  font-size: 0.95rem;
+}
+
+.navigation {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 1.5rem;
+}
+
+.navigation button {
+  padding: 0.75rem 2rem;
+  border: none;
+  border-radius: 10px;
+  background: linear-gradient(to right, #2196f3, #42a5f5);
+  color: white;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: 0.3s ease;
+}
+
+.navigation button:disabled {
+  background: #999;
+  cursor: not-allowed;
+}
+
+.navigation button:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 15px rgba(0, 0, 0, 0.3);
+}

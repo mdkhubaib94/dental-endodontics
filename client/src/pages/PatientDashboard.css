@@ -1,0 +1,236 @@
+/* PatientDashboard.css - Enhanced Styling with Better Logout Button */
+
+.patient-dashboard {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  background: linear-gradient(rgba(37, 40, 107, 0.8), rgba(37, 40, 107, 0.8)),
+    url('/images/campus.png') no-repeat center center fixed;
+  background-size: cover;
+  padding: 20px;
+  position: relative;
+}
+
+.dental-hub-container {
+  position: relative;
+  background: rgba(37, 40, 106, 0.95);
+  backdrop-filter: blur(15px);
+  border: 2px solid rgba(255, 255, 255, 0.15);
+  border-radius: 24px;
+  padding: 3rem;
+  width: 100%;
+  max-width: 500px;
+  text-align: center;
+  color: white;
+  box-shadow: 0 25px 50px rgba(0, 0, 0, 0.4),
+    0 0 0 1px rgba(255, 255, 255, 0.05);
+}
+
+/* Logo Styles */
+.logo-box-user {
+  margin-bottom: 1.5rem;
+}
+
+.logo-img-user {
+  width: 80px;
+  height: auto;
+  filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.3));
+}
+
+/* Enhanced Logout Button */
+.logout-btn {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  background: rgba(239, 68, 68, 0.9);
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  color: white;
+  padding: 10px 18px;
+  border-radius: 12px;
+  cursor: pointer;
+  font-size: 0.95rem;
+  font-weight: 600;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
+  z-index: 10;
+}
+
+.logout-btn:hover {
+  background: rgba(220, 38, 38, 0.95);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 18px rgba(239, 68, 68, 0.4);
+  border-color: rgba(255, 255, 255, 0.4);
+}
+
+.logout-btn:active {
+  transform: translateY(0);
+  box-shadow: 0 3px 10px rgba(239, 68, 68, 0.3);
+}
+
+.logout-btn:focus {
+  outline: 2px solid rgba(255, 255, 255, 0.5);
+  outline-offset: 2px;
+}
+
+/* Dashboard Title */
+.dental-hub-container h1 {
+  font-size: 1.8rem;
+  font-weight: 600;
+  margin-bottom: 1rem;
+  color: #ffffff;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+/* Patient ID */
+.patient-id {
+  font-size: 1rem;
+  color: rgba(255, 255, 255, 0.9);
+  margin: 2rem;
+  padding: 0.8rem;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* Navigation Buttons */
+.dental-hub-container button:not(.logout-btn) {
+  width: 100%;
+  padding: 1rem;
+  font-size: 1rem;
+  font-weight: 600;
+  background: linear-gradient(135deg, #3C8DFF 0%, #4F96FF 100%);
+  color: white;
+  border: none;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  margin-bottom: 1rem;
+  box-shadow: 0 4px 15px rgba(60, 141, 255, 0.3);
+}
+
+.dental-hub-container button:not(.logout-btn):hover {
+  background: linear-gradient(135deg, #2563EB 0%, #3C8DFF 100%);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(60, 141, 255, 0.4);
+}
+
+.dental-hub-container button:not(.logout-btn):active {
+  transform: translateY(0);
+  box-shadow: 0 4px 15px rgba(60, 141, 255, 0.3);
+}
+
+.dental-hub-container button:not(.logout-btn):focus {
+  outline: 2px solid #3C8DFF;
+  outline-offset: 2px;
+}
+
+/* Button Container for better spacing */
+.button-container {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  margin-top: 1.5rem;
+}
+
+/* Responsive Design */
+@media screen and (max-width: 768px) {
+  .dental-hub-container {
+    padding: 2.5rem;
+    margin: 1rem;
+    max-width: calc(100% - 2rem);
+  }
+
+  .dental-hub-container h1 {
+    font-size: 1.6rem;
+  }
+
+  .logo-img-user {
+    width: 70px;
+  }
+
+  .logout-btn {
+    top: 15px;
+    right: 15px;
+    padding: 8px 16px;
+    font-size: 0.9rem;
+  }
+}
+
+@media screen and (max-width: 480px) {
+  .dental-hub-container {
+    padding: 2rem 1.5rem;
+  }
+
+  .dental-hub-container h1 {
+    font-size: 1.4rem;
+  }
+
+  .patient-id {
+    font-size: 0.9rem;
+    padding: 0.6rem;
+  }
+
+  .dental-hub-container button:not(.logout-btn) {
+    padding: 0.9rem;
+    font-size: 0.95rem;
+  }
+
+  .logo-img-user {
+    width: 60px;
+  }
+
+  .logout-btn {
+    top: 12px;
+    right: 12px;
+    padding: 7px 14px;
+    font-size: 0.85rem;
+  }
+}
+
+@media screen and (max-width: 320px) {
+  .dental-hub-container {
+    padding: 1.5rem 1.2rem;
+  }
+
+  .dental-hub-container h1 {
+    font-size: 1.2rem;
+  }
+
+  .dental-hub-container button:not(.logout-btn) {
+    padding: 0.8rem;
+    font-size: 0.9rem;
+  }
+
+  .logout-btn {
+    top: 10px;
+    right: 10px;
+    padding: 6px 12px;
+    font-size: 0.8rem;
+  }
+}
+
+/* Animation for button hover effects */
+@keyframes pulse {
+  0% {
+    transform: scale(1);
+  }
+
+  50% {
+    transform: scale(1.05);
+  }
+
+  100% {
+    transform: scale(1);
+  }
+}
+
+.logout-btn:hover {
+  animation: pulse 0.5s ease-in-out;
+}
+
+/* Enhanced focus states for accessibility */
+button:focus-visible {
+  outline: 2px solid #3C8DFF;
+  outline-offset: 2px;
+}

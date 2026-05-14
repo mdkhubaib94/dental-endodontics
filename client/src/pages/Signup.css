@@ -1,0 +1,1029 @@
+/* Signup.css - Complete styling with fixed notification (NO MOVEMENT) */
+
+/* Signup Page Specific Styles */
+.signup-body {
+  margin: 0;
+  padding: 0;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  background: url('/images/campus.png') no-repeat center center fixed;
+  background-size: cover;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  position: relative;
+  padding: 20px;
+  box-sizing: border-box;
+  overflow-x: hidden;
+}
+
+/* Overlay for signup page */
+.signup-body::before {
+  content: '';
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(rgba(37, 40, 107, 0.7), rgba(37, 40, 107, 0.7)), 
+                url('/images/campus.png') center/cover no-repeat;
+  z-index: 0;
+}
+
+/* Main signup form container */
+.signup-body .signup-box {
+  position: relative;
+  z-index: 1;
+  background: rgba(37, 40, 106, 0.9);
+  backdrop-filter: blur(15px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 24px;
+  padding: 2.5rem;
+  width: 100%;
+  max-width: 450px;
+  box-shadow: 0 25px 50px rgba(0, 0, 0, 0.4),
+              0 0 0 1px rgba(255, 255, 255, 0.05);
+  color: white;
+  text-align: center;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  margin: 0 auto;
+}
+
+.signup-body .signup-box:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 30px 60px rgba(0, 0, 0, 0.5),
+              0 0 0 1px rgba(255, 255, 255, 0.1);
+}
+
+/* Logo styling */
+.signup-body .logo {
+  width: 80px;
+  height: auto;
+  margin-bottom: 1rem;
+  filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.3));
+  transition: transform 0.3s ease;
+}
+
+.signup-body .logo:hover {
+  transform: scale(1.05) rotate(2deg);
+}
+
+/* College name and title */
+.signup-body .college-name {
+  font-size: 1.5rem;
+  font-weight: 700;
+  margin-bottom: 0.5rem;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+  letter-spacing: 0.5px;
+  color: white;
+}
+
+.signup-body .signup-box h2 {
+  font-size: 1.8rem;
+  font-weight: 600;
+  margin-bottom: 2rem;
+  color: #ffffff;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+/* Form styling */
+.signup-body #signupForm {
+  margin-top: 1rem;
+}
+
+/* Input groups */
+.signup-body .input-group,
+.signup-body .input-group-sign {
+  margin-bottom: 1.5rem;
+  position: relative;
+}
+
+.signup-body .input-group input,
+.signup-body .input-group-sign input,
+.signup-body .input-group-sign select {
+  width: 100%;
+  padding: 1rem 1.2rem;
+  font-size: 1rem;
+  font-weight: 400;
+  border: 2px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  outline: none;
+  background: rgba(255, 255, 255, 0.95);
+  color: #333;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  box-sizing: border-box;
+}
+
+.signup-body .input-group input:focus,
+.signup-body .input-group-sign input:focus,
+.signup-body .input-group-sign select:focus {
+  border-color: #3C8DFF;
+  background: rgba(255, 255, 255, 1);
+  box-shadow: 0 0 0 3px rgba(60, 141, 255, 0.1),
+              0 4px 15px rgba(0, 0, 0, 0.15);
+  transform: translateY(-1px);
+}
+
+.signup-body .input-group input::placeholder,
+.signup-body .input-group-sign input::placeholder {
+  color: #666;
+  font-weight: 400;
+}
+
+/* Select dropdown styling */
+.signup-body .input-group-sign select {
+  cursor: pointer;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
+  background-position: right 1rem center;
+  background-repeat: no-repeat;
+  background-size: 1rem;
+  padding-right: 3rem;
+}
+
+/* Password toggle button */
+.signup-body .toggle-password {
+  position: absolute;
+  right: 1rem;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 1.2rem;
+  color: #666;
+  padding: 0.5rem;
+  border-radius: 6px;
+  transition: all 0.2s ease;
+  z-index: 2;
+}
+
+.signup-body .toggle-password:hover {
+  color: #333;
+  background: rgba(0, 0, 0, 0.05);
+}
+
+/* Checkbox/Radio group for OTP method selection */
+.signup-body .checkbox-group {
+  margin-bottom: 1.5rem;
+  display: flex;
+  gap: 2rem;
+  justify-content: center;
+  flex-wrap: wrap;
+  font-size: 1rem;
+}
+
+.signup-body .checkbox-group label {
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-weight: 500;
+  transition: color 0.2s ease;
+  user-select: none;
+  color: white;
+}
+
+.signup-body .checkbox-group label:hover {
+  color: #3C8DFF;
+}
+
+.signup-body .checkbox-group input[type="radio"] {
+  appearance: none;
+  width: 18px;
+  height: 18px;
+  border: 2px solid rgba(255, 255, 255, 0.7);
+  border-radius: 50%;
+  background: transparent;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  margin: 0;
+  position: relative;
+}
+
+.signup-body .checkbox-group input[type="radio"]:checked {
+  background: #3C8DFF;
+  border-color: #3C8DFF;
+  box-shadow: 0 0 0 2px rgba(60, 141, 255, 0.2);
+}
+
+.signup-body .checkbox-group input[type="radio"]:checked::after {
+  content: '';
+  display: block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: white;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+}
+
+/* Password Container with Progress Bar */
+.signup-body .password-container {
+  position: relative;
+  margin-bottom: 1.5rem;
+}
+
+/* Password Strength Progress Bar */
+.signup-body .password-progress {
+  position: absolute;
+  bottom: -8px;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 2px;
+  overflow: hidden;
+  transition: all 0.3s ease;
+}
+
+.signup-body .password-progress-fill {
+  height: 100%;
+  width: 0%;
+  background: linear-gradient(90deg, #ef4444, #f97316, #eab308, #22c55e, #16a34a);
+  border-radius: 2px;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
+}
+
+.signup-body .password-progress-fill::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+  animation: shimmer 1.5s infinite;
+}
+
+@keyframes shimmer {
+  0% { left: -100%; }
+  100% { left: 100%; }
+}
+
+/* Progress fill colors based on strength */
+.signup-body .password-progress-fill.strength-1 {
+  background: #ef4444;
+  width: 20%;
+}
+
+.signup-body .password-progress-fill.strength-2 {
+  background: linear-gradient(90deg, #ef4444, #f97316);
+  width: 40%;
+}
+
+.signup-body .password-progress-fill.strength-3 {
+  background: linear-gradient(90deg, #ef4444, #f97316, #eab308);
+  width: 60%;
+}
+
+.signup-body .password-progress-fill.strength-4 {
+  background: linear-gradient(90deg, #ef4444, #f97316, #eab308, #22c55e);
+  width: 80%;
+}
+
+.signup-body .password-progress-fill.strength-5 {
+  background: linear-gradient(90deg, #ef4444, #f97316, #eab308, #22c55e, #16a34a);
+  width: 100%;
+}
+
+/* Password Hint Text */
+.signup-body .password-hint {
+  position: absolute;
+  bottom: -28px;
+  left: 0;
+  right: 0;
+  font-size: 0.75rem;
+  color: rgba(255, 255, 255, 0.7);
+  text-align: center;
+  transition: all 0.3s ease;
+  opacity: 0;
+  transform: translateY(-5px);
+}
+
+.signup-body .password-container:focus-within .password-hint,
+.signup-body .password-container.has-input .password-hint {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.signup-body .password-hint.strength-weak {
+  color: #A855F7;
+}
+
+.signup-body .password-hint.strength-fair {
+  color: #8B5CF6;
+}
+
+.signup-body .password-hint.strength-good {
+  color: #3C8DFF;
+}
+
+.signup-body .password-hint.strength-strong {
+  color: #4F96FF;
+}
+
+.signup-body .password-hint.strength-excellent {
+  color: #5AA2FF;
+}
+
+/* Button styling */
+.signup-body .button {
+  padding: 1rem;
+  font-size: 1rem;
+  font-weight: 600;
+  background: linear-gradient(135deg, #3C8DFF 0%, #4F96FF 100%);
+  color: white;
+  border: none;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 15px rgba(60, 141, 255, 0.3);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.signup-body .button:hover {
+  transform: translateY(-2px);
+  background: linear-gradient(135deg, #2563EB 0%, #3C8DFF 100%);
+  box-shadow: 0 8px 25px rgba(60, 141, 255, 0.4);
+}
+
+.signup-body .button:active {
+  transform: translateY(0);
+  box-shadow: 0 4px 15px rgba(60, 141, 255, 0.3);
+}
+
+.signup-body .button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* ========== OTP STYLING ========== */
+
+/* OTP Container */
+.signup-body .otp-container {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  grid-template-areas:
+    "otp otp"
+    "send verify";
+  align-items: stretch;
+  gap: 10px;
+  margin-bottom: 1rem;
+}
+
+.signup-body .otp-container .send-otp-btn {
+  grid-area: send;
+}
+
+.signup-body .otp-container .otp-input-wrapper {
+  grid-area: otp;
+}
+
+.signup-body .otp-container .verify-otp-btn {
+  grid-area: verify;
+}
+
+/* OTP Input Wrapper */
+.signup-body .otp-input-wrapper {
+  position: relative;
+  min-width: 0;
+}
+
+/* OTP Input - Enlarged and fixed */
+.signup-body .otp-input {
+  width: 100%;
+  height: 56px;
+  padding: 12px 15px;
+  font-size: 20px;
+  font-weight: 600;
+  letter-spacing: 8px;
+  text-align: center;
+  border: 2px solid rgba(255, 255, 255, 0.2);
+  border-radius: 12px;
+  outline: none;
+  background: rgba(255, 255, 255, 0.95);
+  color: #333;
+  transition: all 0.3s ease;
+  box-sizing: border-box;
+  font-family: 'Courier New', monospace;
+}
+
+.signup-body .otp-input:focus {
+  border-color: #3C8DFF;
+  box-shadow: 0 0 0 3px rgba(60, 141, 255, 0.1);
+  background: rgba(255, 255, 255, 1);
+}
+
+.signup-body .otp-input::placeholder {
+  letter-spacing: normal;
+  font-size: 14px;
+  color: #999;
+  font-weight: normal;
+  font-family: 'Inter', sans-serif;
+}
+
+/* OTP Digits Visual Indicator */
+.signup-body .otp-digits {
+  position: absolute;
+  right: 15px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #3C8DFF;
+  font-size: 22px;
+  letter-spacing: 5px;
+  font-weight: bold;
+  pointer-events: none;
+  opacity: 0.5;
+  font-family: 'Courier New', monospace;
+}
+
+.signup-body .otp-input:focus + .otp-digits,
+.signup-body .otp-input:not(:placeholder-shown) + .otp-digits {
+  display: none;
+}
+
+/* Send OTP and Verify buttons */
+.signup-body .send-otp-btn,
+.signup-body .verify-otp-btn {
+  width: 100%;
+  padding: 12px 16px;
+  font-size: 14px;
+  font-weight: 600;
+  min-width: 132px;
+  white-space: nowrap;
+  border-radius: 10px;
+  height: 56px;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease;
+  flex-shrink: 0;
+  overflow: hidden;
+}
+
+.signup-body .send-otp-btn {
+  background: linear-gradient(135deg, #3C8DFF 0%, #2563EB 100%);
+}
+
+.signup-body .send-otp-btn:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(60, 141, 255, 0.4);
+}
+
+.signup-body .verify-otp-btn {
+  background: linear-gradient(135deg, #10B981 0%, #059669 100%);
+}
+
+.signup-body .verify-otp-btn:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(16, 185, 129, 0.4);
+}
+
+.signup-body .verify-otp-btn:disabled {
+  background: linear-gradient(135deg, #9CA3AF 0%, #6B7280 100%);
+  cursor: not-allowed;
+  opacity: 0.6;
+  transform: none;
+  box-shadow: none;
+}
+
+/* Full-width buttons */
+.signup-body .button[type="submit"] {
+  width: 100%;
+  margin-bottom: 1rem;
+}
+
+/* OTP verification success box */
+.signup-body .verified-box {
+  margin: 1rem 0;
+  background: linear-gradient(135deg, #dcfce7 0%, #f0fdf4 100%);
+  color: #166534;
+  border: 2px solid #22c55e;
+  padding: 1rem;
+  border-radius: 12px;
+  font-weight: 600;
+  text-align: center;
+  box-shadow: 0 4px 15px rgba(34, 197, 94, 0.1);
+  animation: slideInAndFade 0.5s ease-out;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+@keyframes slideInAndFade {
+  from {
+    opacity: 0;
+    transform: translateY(-10px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* ========== TOP NOTIFICATION BANNER - FIXED (NO MOVEMENT) ========== */
+.signup-body .top-notification {
+  position: fixed;
+  top: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 90%;
+  max-width: 500px;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+  z-index: 9999;
+  animation: slideDown 0.3s ease-out;
+  overflow: hidden;
+  pointer-events: all;
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translate(-50%, -20px);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, 0);
+  }
+}
+
+/* Notification types */
+.signup-body .top-notification.success {
+  background: linear-gradient(135deg, #10B981 0%, #059669 100%);
+}
+
+.signup-body .top-notification.error {
+  background: linear-gradient(135deg, #EF4444 0%, #DC2626 100%);
+}
+
+.signup-body .top-notification.info {
+  background: linear-gradient(135deg, #3B82F6 0%, #2563EB 100%);
+}
+
+/* Single close button at top right */
+.signup-body .notification-close {
+  position: absolute;
+  top: 12px;
+  right: 15px;
+  background: rgba(255, 255, 255, 0.25);
+  border: none;
+  color: white;
+  font-size: 28px;
+  font-weight: bold;
+  line-height: 1;
+  cursor: pointer;
+  padding: 0;
+  border-radius: 50%;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 32px;
+  width: 32px;
+  z-index: 10;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.signup-body .notification-close:hover {
+  background: rgba(255, 255, 255, 0.4);
+  transform: scale(1.1);
+}
+
+.signup-body .notification-close:active {
+  transform: scale(0.95);
+}
+
+/* Notification content */
+.signup-body .notification-content {
+  display: flex;
+  align-items: center;
+  padding: 16px 50px 16px 20px;
+  color: white;
+  gap: 12px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.signup-body .notification-icon {
+  font-size: 24px;
+  line-height: 1;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1));
+  flex-shrink: 0;
+}
+
+.signup-body .notification-message {
+  flex: 1;
+  font-size: 15px;
+  font-weight: 500;
+  line-height: 1.5;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+  white-space: pre-line;
+  word-break: break-word;
+}
+
+/* Progress bar animation */
+.signup-body .notification-progress {
+  height: 4px;
+  background: rgba(255, 255, 255, 0.3);
+  width: 100%;
+  animation: progressShrink 5s linear forwards;
+  position: absolute;
+  bottom: 0;
+  left: 0;
+}
+
+@keyframes progressShrink {
+  from {
+    width: 100%;
+  }
+  to {
+    width: 0%;
+  }
+}
+
+/* Signup link */
+.signup-body .signup-link {
+  font-size: 0.95rem;
+  color: rgba(255, 255, 255, 0.9);
+  margin-top: 1.5rem;
+  line-height: 1.5;
+}
+
+.signup-body .signup-link a {
+  color: #3C8DFF;
+  text-decoration: none;
+  font-weight: 600;
+  transition: color 0.2s ease;
+}
+
+.signup-body .signup-link a:hover {
+  color: #4F96FF;
+  text-decoration: underline;
+}
+
+/* Enhanced focus states for accessibility */
+.signup-body .button:focus-visible,
+.signup-body .input-group input:focus-visible,
+.signup-body .input-group-sign input:focus-visible,
+.signup-body .input-group-sign select:focus-visible,
+.signup-body .checkbox-group input:focus-visible {
+  outline: 2px solid #3C8DFF;
+  outline-offset: 2px;
+}
+
+/* Form validation states */
+.signup-body .input-group input:invalid:not(:placeholder-shown),
+.signup-body .input-group-sign input:invalid:not(:placeholder-shown) {
+  border-color: #ef4444;
+  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1);
+}
+
+.signup-body .input-group input:valid:not(:placeholder-shown),
+.signup-body .input-group-sign input:valid:not(:placeholder-shown) {
+  border-color: #22c55e;
+  box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.1);
+}
+
+/* Error message styling */
+.signup-body .error-message {
+  color: #ef4444;
+  font-size: 0.8rem;
+  margin-top: 0.5rem;
+  text-align: left;
+  padding-left: 0.5rem;
+}
+
+/* ========== RESPONSIVE DESIGN ========== */
+@media screen and (max-width: 768px) {
+  .signup-body .signup-box {
+    margin: 2rem 1rem;
+    padding: 2rem;
+    max-width: calc(100% - 2rem);
+  }
+
+  .signup-body .college-name {
+    font-size: 1.3rem;
+  }
+
+  .signup-body .signup-box h2 {
+    font-size: 1.5rem;
+  }
+
+  .signup-body .button {
+    font-size: 0.95rem;
+    padding: 0.9rem;
+  }
+
+  .signup-body .checkbox-group {
+    gap: 1.5rem;
+  }
+
+  /* Responsive OTP container */
+  .signup-body .otp-container {
+    grid-template-columns: 1fr;
+    grid-template-areas:
+      "otp"
+      "send"
+      "verify";
+    gap: 12px;
+  }
+
+  .signup-body .send-otp-btn,
+  .signup-body .verify-otp-btn {
+    min-width: 0;
+  }
+
+  /* Top notification responsive */
+  .signup-body .top-notification {
+    top: 10px;
+    width: 95%;
+  }
+
+  .signup-body .notification-content {
+    padding: 14px 45px 14px 16px;
+    gap: 10px;
+  }
+
+  .signup-body .notification-icon {
+    font-size: 20px;
+  }
+
+  .signup-body .notification-message {
+    font-size: 14px;
+  }
+
+  .signup-body .notification-close {
+    top: 10px;
+    right: 12px;
+    height: 28px;
+    width: 28px;
+    font-size: 24px;
+  }
+}
+
+@media screen and (max-width: 600px) {
+  .signup-body .signup-box {
+    padding: 2rem;
+    max-width: calc(100% - 1rem);
+    margin: 1rem 0.5rem;
+  }
+
+  .signup-body .logo {
+    width: 70px;
+    margin-bottom: 0.8rem;
+  }
+
+  .signup-body .college-name {
+    font-size: 1.2rem;
+    margin-bottom: 0.8rem;
+  }
+
+  .signup-body .signup-box h2 {
+    font-size: 1.4rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .signup-body .input-group input,
+  .signup-body .input-group-sign input,
+  .signup-body .input-group-sign select {
+    font-size: 0.95rem;
+    padding: 0.9rem 1rem;
+  }
+
+  .signup-body .toggle-password {
+    font-size: 1.1rem;
+    right: 0.8rem;
+  }
+
+  .signup-body .checkbox-group {
+    font-size: 0.9rem;
+    gap: 1.2rem;
+  }
+
+  .signup-body .button {
+    font-size: 0.9rem;
+    padding: 0.9rem;
+  }
+}
+
+@media screen and (max-width: 480px) {
+  .signup-body {
+    padding: 0.5rem;
+  }
+
+  .signup-body .signup-box {
+    padding: 1.5rem;
+    margin: 0.5rem;
+  }
+
+  .signup-body .logo {
+    width: 60px;
+    margin-bottom: 0.7rem;
+  }
+
+  .signup-body .college-name {
+    font-size: 1.1rem;
+    margin-bottom: 0.7rem;
+  }
+
+  .signup-body .signup-box h2 {
+    font-size: 1.3rem;
+    margin-bottom: 1.3rem;
+  }
+
+  .signup-body .input-group input,
+  .signup-body .input-group-sign input,
+  .signup-body .input-group-sign select {
+    font-size: 0.9rem;
+    padding: 0.8rem 0.9rem;
+  }
+
+  .signup-body .toggle-password {
+    font-size: 1rem;
+    right: 0.7rem;
+  }
+
+  .signup-body .checkbox-group {
+    font-size: 0.85rem;
+    gap: 1rem;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .signup-body .button {
+    font-size: 0.85rem;
+    padding: 0.8rem;
+  }
+
+  .signup-body .verified-box {
+    font-size: 0.9rem;
+    padding: 0.8rem;
+  }
+
+  /* Mobile OTP styling */
+  .signup-body .otp-container {
+    grid-template-columns: 1fr;
+    grid-template-areas:
+      "otp"
+      "send"
+      "verify";
+    gap: 8px;
+  }
+
+  .signup-body .otp-input-wrapper {
+    width: 100%;
+  }
+
+  .signup-body .otp-input {
+    font-size: 18px;
+    letter-spacing: 0.35em;
+    padding: 10px;
+  }
+
+  .signup-body .send-otp-btn,
+  .signup-body .verify-otp-btn {
+    width: 100%;
+    height: 44px;
+  }
+
+  /* Top notification mobile */
+  .signup-body .notification-content {
+    padding: 12px 40px 12px 14px;
+  }
+
+  .signup-body .notification-message {
+    font-size: 13px;
+  }
+
+  .signup-body .notification-close {
+    top: 8px;
+    right: 10px;
+    height: 26px;
+    width: 26px;
+    font-size: 22px;
+  }
+}
+
+@media screen and (max-width: 320px) {
+  .signup-body .signup-box {
+    padding: 1.2rem;
+    margin: 0.3rem;
+  }
+
+  .signup-body .logo {
+    width: 50px;
+    margin-bottom: 0.5rem;
+  }
+
+  .signup-body .college-name {
+    font-size: 1rem;
+    margin-bottom: 0.5rem;
+  }
+
+  .signup-body .signup-box h2 {
+    font-size: 1.2rem;
+    margin-bottom: 1rem;
+  }
+
+  .signup-body .input-group input,
+  .signup-body .input-group-sign input,
+  .signup-body .input-group-sign select {
+    font-size: 0.85rem;
+    padding: 0.7rem 0.8rem;
+  }
+
+  .signup-body .toggle-password {
+    font-size: 0.9rem;
+    right: 0.6rem;
+  }
+
+  .signup-body .button {
+    font-size: 0.8rem;
+    padding: 0.7rem;
+  }
+
+  .signup-body .verified-box {
+    font-size: 0.85rem;
+    padding: 0.7rem;
+  }
+
+  .signup-body .otp-input {
+    font-size: 16px;
+    letter-spacing: 0.28em;
+  }
+}
+
+/* Smooth scrolling */
+.signup-body {
+  scroll-behavior: smooth;
+}
+
+/* Custom scrollbar for webkit browsers within signup */
+.signup-body ::-webkit-scrollbar {
+  width: 8px;
+}
+
+.signup-body ::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.signup-body ::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.3);
+  border-radius: 4px;
+}
+
+.signup-body ::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.5);
+}
+
+/* Password Show/Hide (link style) */
+.signup-body .has-toggle {
+  position: relative;
+}
+
+.signup-body .has-toggle input {
+  padding-right: 4.5rem;
+}
+
+.signup-body .input-group:focus-within,
+.signup-body .input-group-sign:focus-within {
+  transform: translateY(-1px);
+}
+
+.signup-body .input-group input:focus,
+.signup-body .input-group-sign input:focus,
+.signup-body .input-group-sign select:focus {
+  transform: none;
+}
+
+.signup-body .toggle-password {
+  background: none;
+  border: none;
+  font-size: 0.9rem;
+  font-weight: 700;
+  padding: 0.35rem 0.5rem;
+  line-height: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  text-decoration: none;
+}
+
+.signup-body .toggle-password:hover {
+  text-decoration: underline;
+}

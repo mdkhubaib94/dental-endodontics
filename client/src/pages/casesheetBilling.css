@@ -1,0 +1,196 @@
+/* Wrapper ensures styles only apply here */
+.casesheet-billing-wrapper {
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  background: linear-gradient(rgba(37, 40, 107, 0.7), rgba(37, 40, 107, 0.7)),
+              url('/images/campus.png') center/cover no-repeat;
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem 1rem;
+  overflow-y: auto;
+}
+
+.casesheet-billing-container {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+  background: rgba(37, 40, 106, 0.95);
+  backdrop-filter: blur(15px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 24px;
+  padding: 3rem;
+  color: white;
+  box-shadow: 0 25px 50px rgba(0, 0, 0, 0.4),
+              0 0 0 1px rgba(255, 255, 255, 0.05);
+  animation: fadeIn 0.6s ease-out;
+}
+
+.casesheet-billing-title {
+  text-align: center;
+  margin-bottom: 0.5rem;
+  font-size: 2.5rem;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+  background: linear-gradient(135deg, #fff, #a0c4ff);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.casesheet-billing-department {
+  color: rgba(255, 255, 255, 0.8);
+  text-align: center;
+  margin-bottom: 2rem;
+  font-size: 0.95rem;
+  font-weight: 400;
+  line-height: 1.4;
+}
+
+
+.casesheet-billing-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.casesheet-billing-form input {
+  width: 100%;
+  padding: 1rem 1.2rem;
+  font-size: 1rem;
+  border: 2px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.95);
+  color: #333;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+}
+
+.casesheet-billing-form input:focus {
+  border-color: #3C8DFF;
+  background: white;
+  box-shadow: 0 0 0 3px rgba(60, 141, 255, 0.1),
+              0 4px 15px rgba(0, 0, 0, 0.15);
+  transform: translateY(-1px);
+}
+
+.casesheet-payment-options {
+  margin: 1rem 0;
+  text-align: center;
+}
+
+.casesheet-payment-options h3 {
+  font-size: 1.2rem;
+  margin-bottom: 1rem;
+  font-weight: 600;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.casesheet-payment-buttons {
+  display: flex;
+  justify-content: space-around;
+  flex-wrap: wrap;
+  gap: 1rem;
+  padding: 1rem 0;
+}
+
+.casesheet-pay-option {
+  background: linear-gradient(135deg, #f9f9f9 0%, #ffffff 100%);
+  border: 2px solid rgba(255, 255, 255, 0.2);
+  border-radius: 16px;
+  padding: 1.2rem;
+  width: 120px;
+  text-align: center;
+  cursor: pointer;
+  color: #26286B;
+  font-weight: 600;
+  font-size: 0.9rem;
+  letter-spacing: 0.3px;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+  position: relative;
+  transition: all 0.4s ease;
+}
+
+.casesheet-pay-option:hover {
+  transform: translateY(-8px) scale(1.05);
+  background: linear-gradient(135deg, #3C8DFF 0%, #4F96FF 100%);
+  color: white;
+  box-shadow: 0 15px 35px rgba(60, 141, 255, 0.4),
+              0 5px 15px rgba(0, 0, 0, 0.2);
+}
+
+.casesheet-button-group {
+  margin-top: 1.5rem;
+  display: flex;
+  justify-content: center;
+}
+
+.casesheet-button-group button {
+  width: 100%;
+  padding: 1rem;
+  font-size: 1rem;
+  font-weight: 600;
+  background: linear-gradient(135deg, #3C8DFF 0%, #4F96FF 100%);
+  color: white;
+  border: none;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  text-transform: uppercase;
+}
+
+.casesheet-button-group button:hover {
+  transform: translateY(-2px);
+  background: linear-gradient(135deg, #2563EB 0%, #3C8DFF 100%);
+  box-shadow: 0 8px 25px rgba(60, 141, 255, 0.4);
+}
+
+/* Animations */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(20px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* Responsive tweaks */
+@media (max-width: 768px) {
+  .casesheet-billing-container { padding: 2rem; }
+  .casesheet-payment-buttons { justify-content: center; }
+  .casesheet-pay-option { width: 100px; padding: 1rem; }
+}
+
+@media (max-width: 600px) {
+  .casesheet-payment-buttons { flex-direction: column; align-items: center; }
+  .casesheet-pay-option { width: 200px; }
+}
+
+.casesheet-fetch-row {
+  display: flex;
+  justify-content: center;
+}
+
+.casesheet-fetch-button {
+  margin-top: 0.5rem;
+  padding: 0.75rem 2.5rem;
+  border-radius: 999px;
+  border: none;
+  font-weight: 600;
+  cursor: pointer;
+  background: linear-gradient(135deg, #ffffff 0%, #e5edff 100%);
+  color: #26286B;
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.15);
+  transition: all 0.3s ease;
+}
+
+.casesheet-fetch-button:hover:enabled {
+  transform: translateY(-2px);
+  background: linear-gradient(135deg, #3C8DFF 0%, #4F96FF 100%);
+  color: #fff;
+}
+
+.casesheet-fetch-button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}

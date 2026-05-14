@@ -1,0 +1,165 @@
+/* ===============================
+   Main Page Container
+================================ */
+.case-portal-container {
+  margin: 0;
+  font-family: Arial, sans-serif;
+
+  background: linear-gradient(
+      rgba(37, 40, 107, 0.5),
+      rgba(37, 40, 107, 0.5)
+    ),
+    url('/images/campus.png') center / cover no-repeat;
+
+  display: flex;
+  justify-content: center;
+  align-items: center;
+
+  height: 100vh;
+  overflow: hidden; /* 🚫 No page scroll */
+}
+
+/* ===============================
+   Center Box
+================================ */
+.container-portal {
+  background: rgba(37, 40, 106, 0.9);
+  border-radius: 16px;
+  padding: 2rem;
+
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+
+  max-width: 520px;
+  width: 100%;
+}
+
+/* ===============================
+   Heading
+================================ */
+.heading {
+  font-size: 2rem;
+  font-weight: 700;
+  margin-bottom: 2rem;
+  text-align: center;
+  color: #ffffff;
+}
+
+.portal-general-xray-reflection {
+  margin-bottom: 1rem;
+  padding: 0.8rem;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 10px;
+  background: rgba(15, 23, 42, 0.45);
+  text-align: center;
+  color: #fff;
+}
+
+.portal-general-xray-reflection h4 {
+  margin: 0 0 8px;
+  font-size: 0.95rem;
+}
+
+.portal-general-xray-reflection img {
+  width: 100%;
+  max-width: 300px;
+  max-height: 180px;
+  object-fit: contain;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  background: rgba(255, 255, 255, 0.05);
+}
+
+/* ===============================
+   Button Groups (LINE BY LINE)
+================================ */
+.button-group-portal,
+.sub-options {
+  display: flex;
+  flex-direction: column; /* 🔥 Line by line */
+  gap: 12px;
+}
+
+/* ===============================
+   Buttons
+================================ */
+.button-portal {
+  width: 100%; /* full width */
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: #ffffff;
+
+  padding: 0.85rem;
+  border-radius: 12px;
+
+  cursor: pointer;
+  font-size: 0.95rem;
+  font-weight: 600;
+  text-align: center;
+
+  transition: all 0.3s ease;
+}
+
+.button-portal:hover {
+  background: rgba(255, 255, 255, 0.25);
+  transform: translateY(-2px);
+}
+
+/* ===============================
+   Back Button
+================================ */
+.back-button {
+  width: fit-content;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: #ffffff;
+
+  padding: 0.5rem 1.2rem;
+  border-radius: 8px;
+
+  cursor: pointer;
+  margin-bottom: 1rem;
+
+  font-weight: 600;
+  font-size: 0.9rem;
+
+  transition: all 0.3s ease;
+}
+
+.back-button:hover {
+  background: rgba(255, 255, 255, 0.25);
+}
+
+/* ===============================
+   Animations
+================================ */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ===============================
+   Sub Options Animation
+================================ */
+.sub-options {
+  animation: fadeIn 0.4s ease;
+}
+
+/* ===============================
+   Responsive (Mobile)
+================================ */
+@media (max-width: 480px) {
+  .container-portal {
+    padding: 1.5rem;
+  }
+
+  .heading {
+    font-size: 1.6rem;
+  }
+}

@@ -1,0 +1,380 @@
+/* ImplantPatientView.css - View Only Styles */
+
+/* Container Styles */
+.view-app-container {
+  font-family: sans-serif;
+  background: url('/images/campus.png') no-repeat center center fixed;
+  background-size: cover;
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 2rem;
+  width: 100%;
+}
+
+.view-form-container {
+  background-color: rgba(37, 40, 107, 0.85);
+  border-radius: 2rem;
+  padding: 2rem;
+  width: 90%;
+  max-width: 900px;
+  color: white;
+  box-shadow: 0 0 1rem rgba(0, 0, 0, 0.3);
+  overflow-y: auto;
+  max-height: 95vh;
+  scroll-behavior: smooth;
+  -webkit-overflow-scrolling: touch;
+}
+
+.view-page-content {
+  animation: view-fadeIn 0.3s ease-in;
+}
+
+@keyframes view-fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Header Styles */
+.view-header {
+  text-align: center;
+  margin-bottom: 2rem;
+}
+
+.view-logo-placeholder {
+  width: 6rem;
+  height: 6rem;
+  margin: 0 auto 1rem;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2rem;
+}
+
+.view-h1 {
+  font-size: 2rem;
+  margin-bottom: 1rem;
+  color: #fff;
+}
+
+.view-h2 {
+  color: #fff;
+  margin-bottom: 1rem;
+  text-align: center;
+}
+
+.view-mode-badge {
+  background: rgba(255, 255, 255, 0.1);
+  padding: 0.5rem;
+  border-radius: 0.5rem;
+  display: inline-block;
+  color: #fff;
+}
+
+/* Case Info Header */
+.view-case-info {
+  background: rgba(255, 255, 255, 0.1);
+  padding: 1rem;
+  border-radius: 0.5rem;
+  margin-bottom: 2rem;
+  text-align: center;
+  color: #fff;
+}
+
+.view-case-info p {
+  margin: 0.5rem 0;
+}
+
+/* Form Group Styles */
+.view-form-group {
+  margin-bottom: 1.5rem;
+}
+
+.view-label {
+  display: block;
+  font-weight: bold;
+  margin-bottom: 0.3rem;
+  color: #fff;
+}
+
+.view-field-text,
+.view-field-textarea,
+.view-field-empty {
+  width: 100%;
+  padding: 0.8rem;
+  border-radius: 0.5rem;
+  background: rgba(255, 255, 255, 0.9);
+  color: #333;
+  box-sizing: border-box;
+}
+
+.view-field-text {
+  min-height: 50px;
+  display: flex;
+  align-items: center;
+}
+
+.view-field-textarea {
+  min-height: 50px;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+}
+
+.view-field-empty {
+  color: #999;
+  font-style: italic;
+}
+
+.view-field-image {
+  max-width: 300px;
+  max-height: 200px;
+  border-radius: 0.5rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+/* Checkbox Display */
+.view-checkbox-display {
+  margin-bottom: 1.5rem;
+}
+
+.view-checkbox-label {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: #fff;
+  font-weight: normal;
+}
+
+.view-checkbox-label input[type="checkbox"] {
+  width: auto;
+  cursor: not-allowed;
+}
+
+/* Section Title */
+.view-section-title {
+  color: #fff;
+  text-align: center;
+  margin: 2rem 0 1rem;
+  font-size: 1.5rem;
+}
+
+/* Authentication Section */
+.view-authentication-section {
+  margin-top: 40px;
+  padding-top: 30px;
+  border-top: 3px solid rgba(77, 171, 247, 0.5);
+}
+
+.view-auth-title {
+  color: #fff;
+  text-align: center;
+  margin-bottom: 30px;
+  font-size: 22px;
+  font-weight: bold;
+}
+
+.view-signature-container {
+  margin-top: 20px;
+  padding: 15px;
+  border: 2px solid rgba(77, 171, 247, 0.4);
+  border-radius: 8px;
+  background: rgba(0, 0, 0, 0.2);
+}
+
+.view-signature-label {
+  color: #fff;
+  margin-bottom: 10px;
+  font-weight: bold;
+}
+
+.view-signature-image {
+  max-width: 200px;
+  max-height: 120px;
+  border-radius: 4px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+/* Navigation Buttons */
+.view-nav-buttons {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 2rem;
+}
+
+.view-page-number {
+  color: white;
+  font-size: 1rem;
+  font-weight: 500;
+}
+
+.view-button {
+  padding: 0.8rem 1.5rem;
+  background: #004d99;
+  color: white;
+  border: none;
+  border-radius: 1rem;
+  cursor: pointer;
+  font-size: 1rem;
+  font-weight: bold;
+  transition: background-color 0.3s, transform 0.1s;
+  user-select: none;
+}
+
+.view-button:hover {
+  background: #003366;
+}
+
+.view-button:active {
+  transform: translateY(1px);
+}
+
+.view-button:disabled,
+.view-button-disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+.view-back-button {
+  background: #28a745;
+}
+
+.view-back-button:hover {
+  background: #218838;
+}
+
+/* Footer */
+.view-footer {
+  text-align: center;
+  margin-top: 2rem;
+  padding-top: 2rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+/* Loading State */
+.view-loading-container {
+  font-family: sans-serif;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 2rem;
+}
+
+.view-loading-text {
+  color: #fff;
+  font-size: 1.2rem;
+}
+
+/* Error State */
+.view-error-container {
+  font-family: sans-serif;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 2rem;
+}
+
+.view-error-box {
+  background: rgba(255, 0, 0, 0.1);
+  padding: 2rem;
+  border-radius: 1rem;
+  color: #fff;
+  text-align: center;
+  max-width: 500px;
+}
+
+.view-error-box h2 {
+  margin-top: 0;
+  margin-bottom: 1rem;
+}
+
+.view-error-box p {
+  margin-bottom: 1.5rem;
+}
+
+.view-error-button {
+  margin-top: 1rem;
+}
+
+/* Smooth Scroll */
+html {
+  scroll-behavior: smooth;
+}
+
+/* Media Queries */
+@media (max-width: 768px) {
+  .view-app-container {
+    padding: 1rem;
+  }
+  
+  .view-form-container {
+    padding: 1rem;
+    border-radius: 1rem;
+    width: 95%;
+  }
+  
+  .view-h1 {
+    font-size: 1.5rem;
+  }
+  
+  .view-section-title {
+    font-size: 1.2rem;
+  }
+  
+  .view-auth-title {
+    font-size: 1.2rem;
+  }
+  
+  .view-nav-buttons {
+    flex-direction: column;
+    gap: 1rem;
+  }
+  
+  .view-button {
+    width: 100%;
+  }
+  
+  .view-field-image {
+    max-width: 100%;
+  }
+  
+  .view-case-info {
+    font-size: 0.9rem;
+  }
+  
+  /* Smooth scroll for mobile */
+  .view-form-container {
+    -webkit-overflow-scrolling: touch;
+  }
+}
+
+@media (max-width: 480px) {
+  .view-logo-placeholder {
+    width: 4rem;
+    height: 4rem;
+    font-size: 1.5rem;
+  }
+  
+  .view-h1 {
+    font-size: 1.3rem;
+  }
+  
+  .view-button {
+    padding: 0.6rem 1rem;
+    font-size: 0.9rem;
+  }
+}

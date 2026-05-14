@@ -1,0 +1,726 @@
+/* PartialView.css - View Only Mode Styles */
+
+.case-sheet-container-view {
+  font-family: 'Arial', sans-serif;
+  background-size: cover;
+  background-attachment: fixed;
+  background-position: center center;
+  background-repeat: no-repeat;
+  color: #fff;
+  padding: 20px;
+  margin: 0;
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+}
+
+.case-sheet-wrapper-view {
+  max-width: 1200px;
+  width: 100%;
+  margin: auto;
+  background: rgba(37, 40, 107, 0.9);
+  padding: 30px;
+  border-radius: 15px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(5px);
+}
+
+.logo-container-view {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-bottom: 25px;
+}
+
+.logo-container-view img {
+  max-width: 150px;
+  height: auto;
+  filter: drop-shadow(0 2px 5px rgba(0,0,0,0.3));
+}
+
+.case-sheet-title-view {
+  text-align: center;
+  color: #fff;
+  margin-bottom: 30px;
+  font-size: 32px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+  border-bottom: 3px solid rgba(255, 255, 255, 0.3);
+  padding-bottom: 15px;
+}
+
+/* Patient Info Header */
+.patient-info-header-view {
+  display: flex;
+  justify-content: space-around;
+  background: rgba(0, 0, 0, 0.3);
+  padding: 20px;
+  border-radius: 10px;
+  margin-bottom: 30px;
+  border: 2px solid rgba(255, 255, 255, 0.2);
+}
+
+.patient-info-item-view {
+  color: #fff;
+  font-size: 18px;
+}
+
+.patient-info-item-view strong {
+  color: #4dabf7;
+  margin-right: 10px;
+}
+
+/* Section Titles */
+.case-sheet-section-title-view {
+  margin-top: 25px;
+  color: #fff;
+  border-bottom: 2px solid rgba(255, 255, 255, 0.4);
+  padding-bottom: 8px;
+  margin-bottom: 25px;
+  font-size: 24px;
+  font-weight: bold;
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
+}
+
+.case-sheet-subtitle-view {
+  margin-top: 20px;
+  color: #fff;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.3);
+  padding-bottom: 6px;
+  margin-bottom: 20px;
+  font-size: 20px;
+  font-weight: bold;
+}
+
+.section-description-view {
+  color: rgba(255, 255, 255, 0.9);
+  font-size: 16px;
+  margin-bottom: 20px;
+  font-style: italic;
+}
+
+/* Form Labels */
+.case-sheet-label-view {
+  display: block;
+  margin-top: 15px;
+  font-weight: bold;
+  color: #fff;
+  margin-bottom: 8px;
+  font-size: 16px;
+}
+
+/* Value Display Styles */
+.case-sheet-value {
+  padding: 12px 15px;
+  background-color: rgba(255, 255, 255, 0.15);
+  border: 2px solid rgba(255, 255, 255, 0.2);
+  border-radius: 8px;
+  color: #fff;
+  font-size: 16px;
+  min-height: 45px;
+  display: flex;
+  align-items: center;
+  margin-top: 5px;
+}
+
+.case-sheet-value-box {
+  padding: 15px;
+  background-color: rgba(255, 255, 255, 0.15);
+  border: 2px solid rgba(255, 255, 255, 0.2);
+  border-radius: 8px;
+  color: #fff;
+  font-size: 16px;
+  min-height: 60px;
+  margin-top: 5px;
+  line-height: 1.6;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+}
+
+/* Medical History Conditions Display */
+.medical-history-conditions-view {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+  background: rgba(0, 0, 0, 0.2);
+  padding: 20px;
+  border-radius: 10px;
+  margin-bottom: 20px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.condition-item-view {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 15px;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  transition: background 0.3s ease;
+}
+
+.condition-item-view:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.condition-item-view label {
+  font-weight: bold;
+  color: #fff;
+  flex: 1;
+  margin: 0;
+}
+
+.condition-value {
+  color: #4dabf7;
+  font-weight: bold;
+  padding: 6px 15px;
+  background: rgba(77, 171, 247, 0.2);
+  border-radius: 6px;
+  min-width: 80px;
+  text-align: center;
+}
+
+/* Info Grid Display */
+.info-grid-view {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 20px;
+  margin-top: 15px;
+}
+
+.info-item-view {
+  padding: 15px;
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  transition: all 0.3s ease;
+}
+
+.info-item-view:hover {
+  background: rgba(255, 255, 255, 0.12);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.info-item-view label {
+  display: block;
+  font-weight: bold;
+  color: #4dabf7;
+  margin-bottom: 8px;
+  font-size: 15px;
+}
+
+.info-item-view span {
+  display: block;
+  color: #fff;
+  font-size: 16px;
+  word-wrap: break-word;
+}
+
+/* Form Groups */
+.case-sheet-form-group-view {
+  margin-bottom: 25px;
+  padding: 20px;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.subsection-view {
+  margin-top: 20px;
+  padding: 15px;
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.subsection-view h4 {
+  color: #fff;
+  margin-bottom: 15px;
+  font-size: 18px;
+  font-weight: bold;
+}
+
+/* Score Display */
+.score-display-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 15px;
+  margin-top: 15px;
+  padding: 15px;
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 8px;
+}
+
+.score-item-view {
+  padding: 12px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 6px;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  color: #fff;
+  font-size: 15px;
+  text-align: center;
+}
+
+.score-item-view strong {
+  color: #4dabf7;
+  display: block;
+  margin-bottom: 5px;
+}
+
+.score-result-view {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 15px 20px;
+  background: rgba(77, 171, 247, 0.2);
+  border-radius: 8px;
+  border: 2px solid rgba(77, 171, 247, 0.4);
+  margin-top: 20px;
+}
+
+.score-result-view label {
+  font-weight: bold;
+  color: #fff;
+  font-size: 18px;
+  margin: 0;
+}
+
+.score-value {
+  color: #4dabf7;
+  font-size: 24px;
+  font-weight: bold;
+  padding: 8px 20px;
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: 6px;
+}
+
+.score-calculation-view {
+  padding: 15px;
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 8px;
+  text-align: center;
+  font-size: 18px;
+  margin: 15px 0;
+}
+
+.score-calculation-view span {
+  color: #fff;
+}
+
+.score-calculation-view strong {
+  color: #4dabf7;
+  font-size: 22px;
+}
+
+/* Interpretation Box */
+.interpret-box-view {
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  padding: 15px;
+  margin-top: 15px;
+  max-width: 350px;
+  background-color: rgba(0, 0, 0, 0.3);
+  border-radius: 8px;
+  color: #fff;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.interpret-box-view strong {
+  color: #4dabf7;
+  font-size: 16px;
+  margin-bottom: 10px;
+  display: block;
+}
+
+/* Tables */
+.case-sheet-table-view {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 20px;
+  margin-bottom: 20px;
+  background: rgba(0, 0, 0, 0.3);
+  border-radius: 10px;
+  overflow: hidden;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+}
+
+.case-sheet-table-view th,
+.case-sheet-table-view td {
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  padding: 15px;
+  text-align: left;
+  color: #fff;
+}
+
+.case-sheet-table-view th {
+  background: linear-gradient(135deg, rgba(0, 123, 255, 0.8), rgba(0, 86, 179, 0.8));
+  font-weight: bold;
+  font-size: 16px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.case-sheet-table-view tbody tr:nth-child(even) {
+  background-color: rgba(255, 255, 255, 0.05);
+}
+
+.case-sheet-table-view tbody tr:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+/* Form Page Animation */
+.form-page-view {
+  animation: fadeInView 0.5s ease-in-out;
+  background: rgba(255, 255, 255, 0.05);
+  padding: 25px;
+  border-radius: 12px;
+  margin-bottom: 25px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+}
+
+@keyframes fadeInView {
+  from {
+    opacity: 0;
+    transform: translateY(15px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Navigation Buttons */
+.navigation-buttons-view {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 40px;
+  padding-top: 25px;
+  border-top: 3px solid rgba(255, 255, 255, 0.2);
+}
+
+.page-status-view {
+  font-size: 18px;
+  color: #fff;
+  font-weight: bold;
+  padding: 12px 25px;
+  background: rgba(0, 0, 0, 0.3);
+  border-radius: 8px;
+  border: 2px solid rgba(255, 255, 255, 0.2);
+  text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.5);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+}
+
+/* Buttons */
+.case-sheet-button-view {
+  padding: 12px 25px;
+  background: linear-gradient(135deg, #007BFF, #0056b3);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 16px;
+  font-weight: bold;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
+}
+
+.case-sheet-button-view:hover:not(:disabled) {
+  background: linear-gradient(135deg, #0056b3, #004085);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3);
+}
+
+.case-sheet-button-view:active {
+  transform: translateY(0);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.case-sheet-button-view:disabled {
+  background: linear-gradient(135deg, #6c757d, #545b62);
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+  opacity: 0.6;
+}
+
+/* Action Buttons */
+.action-buttons-view {
+  display: flex;
+  justify-content: center;
+  gap: 20px;
+  margin-top: 30px;
+  padding-top: 20px;
+  border-top: 2px solid rgba(255, 255, 255, 0.1);
+}
+
+.print-button-view {
+  background: linear-gradient(135deg, #28a745, #218838) !important;
+}
+
+.print-button-view:hover:not(:disabled) {
+  background: linear-gradient(135deg, #218838, #1e7e34) !important;
+}
+
+.close-button-view {
+  background: linear-gradient(135deg, #dc3545, #c82333) !important;
+}
+
+.close-button-view:hover:not(:disabled) {
+  background: linear-gradient(135deg, #c82333, #bd2130) !important;
+}
+
+/* Doctor Authentication Display */
+.doctor-auth-view {
+  margin-top: 40px;
+  padding: 25px;
+  background: rgba(0, 0, 0, 0.3);
+  border-radius: 12px;
+  border: 2px solid rgba(255, 255, 255, 0.2);
+}
+
+.signature-display-view {
+  margin-top: 20px;
+  padding: 15px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  border: 2px solid rgba(255, 255, 255, 0.2);
+}
+
+.signature-display-view label {
+  display: block;
+  font-weight: bold;
+  color: #4dabf7;
+  margin-bottom: 15px;
+  font-size: 16px;
+}
+
+.signature-image-view {
+  max-width: 250px;
+  max-height: 150px;
+  border-radius: 8px;
+  background: white;
+  padding: 10px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+/* Info Note */
+.info-note-view {
+  color: rgba(255, 255, 255, 0.8);
+  font-style: italic;
+  font-size: 15px;
+  padding: 12px;
+  background: rgba(77, 171, 247, 0.15);
+  border-left: 4px solid #4dabf7;
+  border-radius: 4px;
+  margin-top: 10px;
+}
+
+/* Responsive Design */
+@media (max-width: 992px) {
+  .case-sheet-wrapper-view {
+    padding: 20px;
+    margin: 10px;
+  }
+  
+  .case-sheet-title-view {
+    font-size: 28px;
+  }
+  
+  .navigation-buttons-view {
+    flex-direction: column;
+    gap: 20px;
+  }
+  
+  .page-status-view {
+    order: -1;
+  }
+
+  .patient-info-header-view {
+    flex-direction: column;
+    gap: 15px;
+  }
+
+  .action-buttons-view {
+    flex-direction: column;
+  }
+
+  .case-sheet-button-view {
+    width: 100%;
+  }
+}
+
+@media (max-width: 768px) {
+  .case-sheet-container-view {
+    padding: 10px;
+  }
+  
+  .case-sheet-wrapper-view {
+    padding: 15px;
+  }
+  
+  .case-sheet-title-view {
+    font-size: 24px;
+  }
+  
+  .case-sheet-section-title-view {
+    font-size: 22px;
+  }
+  
+  .case-sheet-subtitle-view {
+    font-size: 18px;
+  }
+  
+  .info-grid-view {
+    grid-template-columns: 1fr;
+  }
+
+  .score-display-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .condition-item-view {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+  }
+
+  .condition-value {
+    width: 100%;
+  }
+  
+  .case-sheet-table-view {
+    display: block;
+    overflow-x: auto;
+  }
+
+  .score-result-view {
+    flex-direction: column;
+    gap: 10px;
+    text-align: center;
+  }
+}
+
+@media (max-width: 480px) {
+  .case-sheet-title-view {
+    font-size: 20px;
+  }
+  
+  .case-sheet-button-view {
+    padding: 10px 20px;
+    font-size: 14px;
+  }
+  
+  .navigation-buttons-view {
+    gap: 15px;
+  }
+  
+  .page-status-view {
+    font-size: 16px;
+    padding: 10px 20px;
+  }
+
+  .patient-info-item-view {
+    font-size: 16px;
+  }
+}
+
+/* Print Styles */
+@media print {
+  .case-sheet-container-view {
+    background: none !important;
+    padding: 0;
+  }
+  
+  .case-sheet-wrapper-view {
+    background: white;
+    box-shadow: none;
+    max-width: none;
+    padding: 20px;
+  }
+  
+  .case-sheet-title-view,
+  .case-sheet-section-title-view,
+  .case-sheet-subtitle-view,
+  .case-sheet-label-view,
+  .case-sheet-value,
+  .case-sheet-value-box,
+  .info-item-view label,
+  .info-item-view span,
+  .condition-item-view label,
+  .condition-value,
+  .score-item-view,
+  .interpret-box-view,
+  .case-sheet-table-view th,
+  .case-sheet-table-view td {
+    color: #000 !important;
+    border-color: #000 !important;
+  }
+  
+  .navigation-buttons-view,
+  .action-buttons-view,
+  .logo-container-view {
+    display: none !important;
+  }
+  
+  .case-sheet-value,
+  .case-sheet-value-box,
+  .info-item-view,
+  .condition-item-view,
+  .score-item-view {
+    border: 1px solid #000;
+    background: none;
+  }
+
+  .form-page-view,
+  .case-sheet-form-group-view,
+  .subsection-view {
+    border: 1px solid #ccc;
+    background: none;
+    page-break-inside: avoid;
+  }
+
+  .patient-info-header-view {
+    border: 2px solid #000;
+    background: #f0f0f0;
+  }
+
+  .signature-image-view {
+    border: 1px solid #000;
+  }
+
+  /* Ensure tables don't break awkwardly */
+  .case-sheet-table-view {
+    page-break-inside: auto;
+  }
+
+  .case-sheet-table-view tr {
+    page-break-inside: avoid;
+    page-break-after: auto;
+  }
+}
+
+/* Scrollbar Styling */
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 5px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: linear-gradient(135deg, #007BFF, #0056b3);
+  border-radius: 5px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(135deg, #0056b3, #004085);
+}

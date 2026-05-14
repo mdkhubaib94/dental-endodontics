@@ -1,0 +1,133 @@
+/* Container - Covering the screen with that dark dashboard tint */
+.doctor-profile-container {
+  width: 100vw;
+  min-height: 100vh;
+  background: 
+              url('/images/campus.png');
+  background-size: cover;
+  background-position: center;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-family: 'Roboto', Arial, sans-serif;
+  padding: 40px 0;
+}
+
+/* The Big Card */
+.doctor-profile-card {
+  width: 800px; /* Large wide format like Google Account pages */
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 1px 2px 0 rgba(60,64,67,0.3), 0 1px 3px 1px rgba(60,64,67,0.15);
+  overflow: hidden;
+  padding-bottom: 30px;
+}
+
+/* Header Section */
+.google-header {
+  text-align: center;
+  padding: 40px 20px;
+}
+
+.google-header h1 {
+  font-size: 28px;
+  font-weight: 400;
+  color: #202124;
+  margin-bottom: 10px;
+}
+
+.google-header p {
+  color: #5f6368;
+  font-size: 14px;
+}
+
+/* Inner Information Box */
+.profile-section-box {
+  margin: 0 auto;
+  width: 90%;
+  border: 1px solid #dadce0;
+  border-radius: 8px;
+}
+
+.profile-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px 24px;
+  border-bottom: 1px solid #dadce0;
+}
+
+.profile-row h3 {
+  font-size: 22px;
+  font-weight: 400;
+  margin: 0;
+}
+
+.profile-row p {
+  color: #5f6368;
+  font-size: 13px;
+  margin-top: 5px;
+}
+
+.doctor-profile-img {
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  border: 1px solid #dadce0;
+}
+
+/* Grid for the data */
+.info-item {
+  display: grid;
+  grid-template-columns: 200px 1fr;
+  padding: 20px 24px;
+  border-bottom: 1px solid #dadce0;
+  align-items: center;
+}
+
+.info-item .label {
+  font-size: 11px;
+  font-weight: 700;
+  color: #5f6368;
+  letter-spacing: 0.8px;
+}
+
+.info-item .value {
+  font-size: 15px;
+  color: #202124;
+}
+
+/* Google Buttons */
+.google-btn {
+  margin: 20px 24px;
+  padding: 10px 24px;
+  background-color: transparent;
+  color: #1a73e8; /* Google Blue */
+  border: 1px solid #dadce0;
+  border-radius: 4px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.google-btn:hover {
+  background-color: #f6fafe;
+  border-color: #d2e3fc;
+}
+
+.google-btn.save {
+  background-color: #1a73e8;
+  color: white;
+}
+
+.google-btn.save:hover {
+  background-color: #185abc;
+}
+
+/* Input Styles */
+.google-input {
+  border: 1px solid #1a73e8;
+  padding: 8px;
+  border-radius: 4px;
+  width: 80%;
+}

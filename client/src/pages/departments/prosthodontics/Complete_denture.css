@@ -1,0 +1,241 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap');
+
+body {
+  font-family: 'Inter', sans-serif;
+  background: linear-gradient(rgba(194, 46, 46, 0.7), rgba(82, 82, 82, 0)), url('/images/campus.png') no-repeat center center fixed;
+  background-size: cover;
+  overflow-x: hidden;
+  position: relative;
+  scrollbar-gutter: stable;
+}
+
+body::before {
+ display: none;
+}
+
+.case-sheet {
+  background-color: rgba(38, 40, 107, 0.9);
+  border-radius: 12px;
+  padding: 30px;
+  width: 90%;
+  max-width: 900px;
+  color: white;
+  box-shadow: 0 0 25px rgba(0,0,0,0.7);
+  position: relative;
+  overflow: hidden;
+}
+
+h2 {
+  border-bottom: 2px solid white;
+  padding-bottom: 10px;
+  margin-top: 25px;
+  font-size: 1.8rem;
+  font-weight: bold;
+}
+
+.form-group {
+  margin-bottom: 20px;
+}
+
+label {
+  display: block;
+  font-weight: bold;
+  margin-bottom: 8px;
+  font-size: 1.1rem;
+}
+
+input[type="text"], 
+textarea {
+  width: 100%;
+  padding: 10px;
+  border: none;
+  border-radius: 6px;
+  background-color: rgba(255, 255, 255, 0.9);
+  color: #26286b;
+}
+
+input[type="text"]:focus, 
+textarea:focus {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(66, 153, 225, 0.5);
+}
+
+.checkbox-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20px;
+}
+
+.checkbox-group label {
+  font-weight: normal;
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  font-size: 1rem;
+}
+
+.checkbox-group input[type="checkbox"] {
+  margin-right: 8px;
+  transform: scale(1.2);
+}
+
+.navigation {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 40px;
+}
+
+button {
+  padding: 12px 25px;
+  background-color: #fff;
+  color: #26286b;
+  font-weight: bold;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+}
+
+button:hover:not(:disabled) {
+  background-color: #e0e0e0;
+  box-shadow: 0 6px 8px rgba(0,0,0,0.4);
+}
+
+button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+.page {
+  display: none;
+  opacity: 1;
+  transform: translateX(0px);
+}
+
+.page.active {
+  display: block;
+  opacity: 1;
+  transform: translateX(0);
+}
+
+.logo-container {
+  text-align: center;
+  margin-bottom: 30px;
+}
+
+.logo-container img {
+  max-width: 150px;
+  height: auto;
+  margin-bottom: 15px;
+}
+
+.form-group label {
+  opacity: 1;
+}
+
+.form-group input, 
+.form-group textarea {
+  opacity: 1;
+}
+
+@keyframes allergyTextFlow {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(100vw);
+  }
+}
+
+.allergy-alert {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  transform: none;
+  background: #ffffff;
+  color: #111827;
+  padding: 10px 14px;
+  border-radius: 0 0 10px 10px;
+  width: 100%;
+  box-sizing: border-box;
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  box-shadow: 0 6px 18px rgba(0,0,0,0.25);
+  z-index: 2000;
+  border: 1px solid #d5deeb;
+  animation: none;
+}
+
+.allergy-alert .alert-icon {
+  font-size: 18px;
+  color: #d97706;
+  flex-shrink: 0;
+}
+
+.allergy-alert .allergy-flow-window {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+}
+
+.allergy-alert #allergyMessage {
+  display: inline-block;
+  white-space: nowrap;
+  padding-right: 2rem;
+  color: #111827;
+  font-weight: 600;
+  animation: allergyTextFlow 10s linear infinite;
+}
+
+.allergy-alert .close-btn {
+  margin-left: 4px;
+  background: #f3f4f6;
+  border: none;
+  font-size: 18px;
+  color: #111827;
+  padding: 2px 8px;
+  border-radius: 50%;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.allergy-alert .close-btn:hover {
+  background: #e5e7eb;
+}
+
+.digital-doctor-case-sheet .allergy-alert {
+  top: 0;
+  left: 0;
+  right: 0;
+  transform: none;
+  width: 100%;
+  margin: 0;
+}
+
+/* Ensure edge-to-edge allergy banner even if other global .allergy-alert rules load later */
+.digital-doctor-case-sheet #patientAllergyAlert.allergy-alert {
+  left: 0 !important;
+  right: 0 !important;
+  width: 100vw !important;
+  max-width: 100vw !important;
+  min-width: 0 !important;
+  transform: none !important;
+  margin: 0 !important;
+  box-sizing: border-box !important;
+}
+
+/* X-ray preview styles */
+.xray-preview-container {
+  margin-top: 10px;
+}
+.xray-preview {
+  max-width: 100%;
+  max-height: 200px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+}

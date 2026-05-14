@@ -1,0 +1,420 @@
+/* DigitalDoctorCaseSheet.css */
+
+body {
+  scrollbar-gutter: stable;
+}
+
+.digital-doctor-case-sheet {
+  margin: 0;
+  font-family: Arial, sans-serif;
+  background: linear-gradient(rgba(37, 40, 107, 0.5), rgba(37, 40, 107, 0.5)),
+    url('/images/campus.png') center/cover no-repeat;
+  background-size: cover;
+  display: flex;
+  justify-content: center;
+  align-items: start;
+  padding: 40px 20px;
+  min-height: 100vh;
+}
+
+.general-xray-reflection {
+  width: 90%;
+  max-width: 800px;
+  margin: 12px auto;
+  padding: 12px;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  background: rgba(15, 23, 42, 0.55);
+  color: #fff;
+  text-align: center;
+}
+
+.general-xray-reflection h4 {
+  margin: 0 0 10px;
+  font-size: 1rem;
+}
+
+.general-xray-reflection img {
+  width: 100%;
+  max-width: 360px;
+  max-height: 220px;
+  object-fit: contain;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.case-sheet {
+  background-color: rgba(38, 40, 107, 0.85);
+  border-radius: 12px;
+  padding: 30px;
+  width: 90%;
+  max-width: 800px;
+  color: white;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+}
+
+.header {
+  display: flex;
+  flex-direction: column;
+  text-align: center;
+  margin-bottom: 30px;
+}
+
+.header img {
+  max-width: 120px;
+  height: auto;
+  margin-bottom: 10px;
+}
+
+.header h1 {
+  font-size: 29px;
+  /* Increased from 28px */
+  font-weight: bold;
+  margin: 0 0 5px 0;
+}
+
+.header h2 {
+  font-size: 25px;
+  /* Increased from 18px */
+  margin: 0 0 10px 0;
+}
+
+.header h3 {
+  font-size: 20px;
+  /* Increased from 16px */
+  margin: 0;
+}
+
+.form-group-casesheet {
+  margin-bottom: 15px;
+}
+
+.form-row-wide {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 1.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.form-row .form-group-casesheet {
+  flex: 1;
+  margin-bottom: 0;
+}
+
+label {
+  display: block;
+  font-weight: bold;
+  margin-bottom: 5px;
+  font-size: 19px;
+}
+
+textarea {
+  resize: vertical;
+  min-height: 60px;
+  width: 100%;
+}
+
+.checkbox-group {
+  display: flex;
+  gap: 15px;
+  flex-wrap: wrap;
+}
+
+.checkbox-group label {
+  font-weight: normal;
+  display: flex;
+  align-items: center;
+  margin-bottom: 0;
+  font-size: 19px;
+}
+
+.checkbox-group input[type="checkbox"] {
+  margin-right: 5px;
+  width: auto;
+}
+
+.radio-group {
+  display: flex;
+  gap: 15px;
+  flex-wrap: wrap;
+}
+
+.radio-group label {
+  font-weight: normal;
+  display: flex;
+  align-items: center;
+  margin-bottom: 0;
+  font-size: 19px;
+}
+
+.radio-group input[type="radio"] {
+  margin-right: 5px;
+  width: auto;
+}
+
+.case-sheet input {
+  width: 100%;
+  padding: 8px;
+  box-sizing: border-box;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  font-size: 14px;
+}
+
+.case-sheet input[type="text"],
+.case-sheet input[type="number"] {
+  width: 100%;
+  padding: 8px;
+  box-sizing: border-box;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  font-size: 14px;
+}
+
+.navigation {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 30px;
+}
+
+.page {
+  display: none;
+}
+
+.page.active {
+  display: block;
+}
+
+button {
+  padding: 10px 20px;
+  background-color: #fff;
+  color: #26286b;
+  font-weight: bold;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 15px;
+  /* Increased from 14px */
+}
+
+button:hover {
+  background-color: #f0f0f0;
+}
+
+button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.diet-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 10px;
+}
+
+.diet-table th,
+.diet-table td {
+  border: 1px solid white;
+  padding: 8px;
+  text-align: left;
+  font-size: 15px;
+  /* Increased from 14px (implicit for table cells) */
+}
+
+.diet-table th {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+.diet-table input {
+  width: 100%;
+  padding: 4px;
+  margin: 0;
+  font-size: 14px;
+  /* Maintain readability for input fields */
+}
+
+.inline-form {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+.inline-form input {
+  flex: 1;
+}
+
+.treatment-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 10px;
+}
+
+.treatment-table th,
+.treatment-table td {
+  border: 1px solid white;
+  padding: 8px;
+  text-align: left;
+  font-size: 15px;
+  /* Increased from 14px (implicit for table cells) */
+}
+
+.treatment-table th {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+.treatment-table input {
+  width: 100%;
+  padding: 4px;
+  margin: 0;
+  font-size: 14px;
+  /* Maintain readability for input fields */
+}
+
+@keyframes allergyTextFlow {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(100vw);
+  }
+}
+
+.allergy-alert {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  transform: none;
+  background: #ffffff;
+  color: #111827;
+  padding: 10px 14px;
+  border-radius: 0 0 10px 10px;
+  width: 100%;
+  box-sizing: border-box;
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  box-shadow: 0 6px 18px rgba(0,0,0,0.25);
+  z-index: 2000;
+  border: 1px solid #d5deeb;
+  animation: none;
+}
+
+.allergy-alert .alert-icon {
+  font-size: 18px;
+  color: #d97706;
+  flex-shrink: 0;
+}
+
+.allergy-alert .allergy-flow-window {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+}
+
+.allergy-alert #allergyMessage {
+  display: inline-block;
+  white-space: nowrap;
+  padding-right: 2rem;
+  color: #111827;
+  font-weight: 600;
+  animation: allergyTextFlow 10s linear infinite;
+}
+
+.allergy-alert .close-btn {
+  margin-left: 4px;
+  background: #f3f4f6;
+  border: none;
+  font-size: 18px;
+  color: #111827;
+  padding: 2px 8px;
+  border-radius: 50%;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.allergy-alert .close-btn:hover {
+  background: #e5e7eb;
+}
+
+.digital-doctor-case-sheet .allergy-alert {
+  top: 0;
+  left: 0;
+  right: 0;
+  transform: none;
+  width: 100%;
+  margin: 0;
+}
+
+/* Ensure edge-to-edge allergy banner even if other global .allergy-alert rules load later */
+.digital-doctor-case-sheet #patientAllergyAlert.allergy-alert {
+  left: 0 !important;
+  right: 0 !important;
+  width: 100vw !important;
+  max-width: 100vw !important;
+  min-width: 0 !important;
+  transform: none !important;
+  margin: 0 !important;
+  box-sizing: border-box !important;
+}
+
+/* Message box for alerts */
+.message-box-container {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.6);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+  visibility: hidden;
+  opacity: 0;
+  transition: visibility 0s, opacity 0.3s ease;
+}
+
+.message-box-container.show {
+  visibility: visible;
+  opacity: 1;
+}
+
+.message-box {
+  background: white;
+  padding: 30px;
+  border-radius: 10px;
+  text-align: center;
+  color: #333;
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+  max-width: 400px;
+  width: 90%;
+}
+
+.message-box h2 {
+  margin-top: 0;
+  color: #d32f2f;
+  /* Red for error */
+}
+
+.message-box p {
+  margin-bottom: 20px;
+  font-size: 16px;
+}
+
+.message-box button {
+  background-color: #3C8DFF;
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.message-box button:hover {
+  background-color: #2e7ae6;
+}

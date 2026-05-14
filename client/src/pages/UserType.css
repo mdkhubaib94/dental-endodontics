@@ -1,0 +1,83 @@
+.container-body-user {
+  background-image: url('/images/campus.png');   /* <-- REQUIRED */
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  padding: 1rem;
+}
+.container-body-user {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  padding: 1rem;
+}
+
+.container-box-user {
+  background-color: rgba(37, 40, 106, 0.9);
+  padding: 2rem;
+  border-radius: 1rem;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+  width: 100%;
+  max-width: 400px;
+  text-align: center;
+}
+
+.logo-box-user {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 1.5rem;
+}
+
+.logo-img-user {
+  border-radius: 9999px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.heading-user    {
+  font-size: 2rem;
+  font-weight: 700;
+  color: white;
+  margin-bottom: 1.5rem;
+}
+
+.subheading-user {
+  font-size: 1.125rem;
+  color: white;
+  margin-bottom: 2rem;
+}
+
+.option-button {
+  margin: 10px;
+  cursor: pointer;
+  padding: 12px 24px;
+  border-radius: 9999px;
+  background-color: rgba(255, 255, 255, 0.2);
+  color: white;
+  font-size: 1.125rem;
+  font-weight: 500;
+  transition: all 0.3s ease-in-out;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  width: 200px;
+  border: 2px solid transparent;
+}
+
+.option-button:hover {
+  background-color: #3B82F6;
+  border-color: #BFDBFE;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+}
+.option-button:active {
+  background-color: #2563EB;
+  transform: translateY(0);
+  box-shadow: none;
+}
