@@ -12,7 +12,7 @@ import { downloadCsv, getReportFilename } from '../utils/reportExport';
 import { getPatientResumeTarget } from '../utils/caseDraft';
 import { getStoredPatientId, setStoredPatientId } from '../utils/patientIdentity';
 
-const DoctorDashboard = () => {
+const DoctorDashboard = ({ departmentOverride } = {}) => {
   // State for form data
   const navigate = useNavigate();
   const { user, logout } = useAuth();
@@ -417,10 +417,11 @@ const DoctorDashboard = () => {
       .join(' ');
   };
 
+  // Prefer explicit override (prop) for department when provided (used by department-specific wrappers)
   const doctorDepartmentKey = normalizeDepartment(
-    localStorage.getItem('doctorDepartment') || user?.department || ''
+    departmentOverride || localStorage.getItem('doctorDepartment') || user?.department || ''
   );
-  const doctorDepartmentLabel = String(user?.department || localStorage.getItem('doctorDepartment') || '').trim();
+  const doctorDepartmentLabel = String(departmentOverride || user?.department || localStorage.getItem('doctorDepartment') || '').trim();
   const currentRoleKey = String(user?.role || localStorage.getItem('role') || '').trim().toLowerCase();
   const isSpecialistDoctor = Boolean(
     doctorDepartmentKey && doctorDepartmentKey !== 'general' && doctorDepartmentKey !== 'generaldentistry'
@@ -446,7 +447,8 @@ const DoctorDashboard = () => {
     if (departmentKey === 'pedodontics') return '/pedodontics';
     if (departmentKey === 'periodontics') return '/casePortal?dept=periodontics';
     if (departmentKey.includes('oral') || departmentKey.includes('maxillofacial')) return '/casePortal?dept=oral';
-    if (departmentKey.includes('conservative') || departmentKey.includes('endodontic')) return '/casePortal';
+  // Conservative / Endodontics doctors should go directly to the Conservative case sheet
+  if (departmentKey.includes('conservative') || departmentKey.includes('endodontic')) return '/conservative-case';
     if (departmentKey === 'general' || departmentKey === 'generaldentistry') return '/general-case-sheet';
     return '/casePortal?dept=prosthodontics';
   };
@@ -588,17 +590,10 @@ const DoctorDashboard = () => {
       return;
     }
 
-    const patientId = getStoredPatientId();
-    const resumeTarget = patientId ? await getPatientResumeTarget(patientId) : null;
-
-    // If there is an unfinished draft for this patient, resume directly without consent prompt.
-    if (resumeTarget?.routeKey) {
-      navigate(resumeTarget.routeKey);
-      return;
-    }
-
-    // Fresh case entry: request consent before department case sheet.
-    navigate(route, { state: { requestConsentAfterEntry: true } });
+    // Always require consent first. Redirect to consent form with the intended case-sheet route
+    // as the `redirect` query param so consent can return here after submission.
+    const redirectTarget = route;
+    navigate(`/consent-form?redirect=${encodeURIComponent(redirectTarget)}`, { replace: true });
   };
 
   // Load doctor identity for topbar
@@ -1968,9 +1963,8 @@ const DoctorDashboard = () => {
                 type="button"
                 className={`chief-nav-item ${activeView === 'caseFiles' ? 'active' : ''}`}
                 onClick={() => {
-                  setActiveView('caseFiles');
-                  fetchCases({ silent: true });
-                  window.scrollTo({ top: 0, behavior: 'smooth' });
+                  // Immediately require consent before showing case files
+                  navigate('/consent-form');
                 }}
               >
                 <span className="chief-nav-icon">📁</span>
@@ -1995,6 +1989,8 @@ const DoctorDashboard = () => {
                     />
                   )}
               </button>
+
+              {/* Conservative Dentistry button removed from sidebar - moved into Case Files view */}
 
               <button
                 type="button"
@@ -2929,6 +2925,9 @@ const DoctorDashboard = () => {
                       </button>
                     )}
                   </div>
+                </div>
+                <div style={{ marginLeft: 12 }}>
+                  <button type="button" className="view-button" onClick={() => navigate('/conservative-case')}>Conservative Dentistry Case Sheet</button>
                 </div>
               </div>
 

@@ -20,6 +20,7 @@ import partialRoute from './routes/partial-route.js';
 import generalCaseRoutes from './routes/general-case.js';
 import consentFormRoutes from './routes/consent-form.js';
 import caseDraftRoutes from './routes/case-draft.js';
+import conservativeRoutes from './routes/conservative-route.js';
 
 
 import prescriptionRoutes from './routes/prescription.js';
@@ -244,6 +245,9 @@ console.log('✓ Partial Denture routes registered at /api/partial');
 app.use('/api/general', generalCaseRoutes);
 console.log('✓ General Case Sheet routes registered at /api/general');
 
+app.use('/api/conservative', conservativeRoutes);
+console.log('✓ Conservative Dentistry routes registered at /api/conservative');
+
 app.use('/api/case-drafts', caseDraftRoutes);
 console.log('✓ Case draft routes registered at /api/case-drafts');
 
@@ -322,7 +326,6 @@ app.get('/api/debug/patient-details-test', async (req, res) => {
 
     const count = await PatientDetails.countDocuments();
     const sample = await PatientDetails.find({}).limit(2);
-
     res.json({
       success: true,
       message: 'Patient details endpoint is working',
@@ -332,12 +335,8 @@ app.get('/api/debug/patient-details-test', async (req, res) => {
       timestamp: new Date().toISOString()
     });
   } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: 'Error testing patient details',
-      error: error.message,
-      timestamp: new Date().toISOString()
-    });
+    // Return full error info including debug payload if present
+    return res.status(500).json({ success: false, message: 'Debug save failed', error: error?.message || String(error), payload: error?.payload || null });
   }
 });
 

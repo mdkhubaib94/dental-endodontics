@@ -86,12 +86,26 @@ const DoctorLogin = () => {
           department: res.data.department || '',
         });
 
+        const serverRoute = res.data.dashboardRoute;
+
         if (effectiveRole === 'pg') {
           navigate('/pg-dashboard', { replace: true });
         } else if (effectiveRole === 'ug') {
           navigate('/ug-dashboard', { replace: true });
         } else if (effectiveRole === 'doctor') {
-          navigate('/doctor-dashboard', { replace: true });
+          // Prefer server-provided dashboardRoute, otherwise fall back to department checks
+          if (serverRoute) {
+            navigate(serverRoute, { replace: true });
+          } else {
+            const dept = String(res.data.department || '').trim().toLowerCase();
+            if (dept.includes('conservative') || dept.includes('endodontic')) {
+              navigate('/endodontics', { replace: true });
+            } else if (dept.includes('general')) {
+              navigate('/general', { replace: true });
+            } else {
+              navigate('/doctor-dashboard', { replace: true });
+            }
+          }
         } else {
           navigate('/chief-doctor-dashboard', { replace: true });
         }

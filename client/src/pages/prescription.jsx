@@ -691,14 +691,35 @@ const Prescription = () => {
       
       if (!patientId) return;
 
+      const currentCaseId = String(localStorage.getItem('caseId') || '').trim();
+      if (currentCaseId) {
+        try {
+          const conservativeSignatureResponse = await fetch(
+            buildApiUrl(`/api/conservative/${encodeURIComponent(currentCaseId)}/signature`),
+            { headers: token ? { Authorization: `Bearer ${token}` } : {} }
+          );
+
+          if (conservativeSignatureResponse.ok) {
+            const blob = await conservativeSignatureResponse.blob();
+            const signatureDataUrl = URL.createObjectURL(blob);
+            setDoctorSignature(signatureDataUrl);
+            console.log('Doctor signature loaded successfully from Conservative case');
+            return;
+          }
+        } catch (err) {
+          console.log('Signature not found in Conservative case');
+        }
+      }
+
       // Try to fetch the latest case sheet with signature for this patient
       const endpoints = [
         `http://localhost:5000/api/casesheets/patient/${patientId}`,
+        `http://localhost:5000/api/conservative/patient/${patientId}`,
         `http://localhost:5000/api/fpd/patient/${patientId}`,
         `http://localhost:5000/api/partial/patient/${patientId}`,
         `http://localhost:5000/api/complete-denture/patient/${patientId}`,
         `http://localhost:5000/api/implant/patient/${patientId}`,
-        `http://localhost:5000/api/implant-patient/patient/${patientId}`
+        `http://localhost:5000/api/ImplantPatient/patient/${patientId}`
       ];
 
       for (const endpoint of endpoints) {
@@ -733,7 +754,7 @@ const Prescription = () => {
             }
           }
         } catch (err) {
-          console.log(`Signature not found in ${endpoint}`);
+          // Ignore inaccessible specialty routes and continue trying others.
         }
       }
       console.log('No signature found in any case sheet');

@@ -17,6 +17,7 @@ import DoctorSchedule from './pages/DoctorSchedules';
 import CasePortal from './pages/casePortal';
 import Pedodontics from './pages/departments/Pedodontics';
 import ImplantPatient from './pages/departments/prosthodontics/ImplantPatient';
+import ConservativeDentistry from './pages/departments/ConservativeDentistry';
 import { AuthProvider } from './pages/context/AuthContext';
 import ProtectedRoute from './pages/context/ProtectedRoute';
 import Prescription from './pages/prescription';
@@ -39,6 +40,8 @@ import MonthlyReportPage from './pages/MonthlyReportPage';
 import YearlyReportPage from './pages/YearlyReportPage';
 import ChiefDoctorReportsPage from './pages/ChiefDoctorReportsPage';
 import GeneralCaseSheet from './pages/Generalcasesheet';
+import ConservativeCaseSheet from './pages/Conservativecasesheet';
+import EndodonticsPage from './pages/EndodonticsDoctorDashboard';
 import GeneralCaseSheetView from './pages/GeneralCaseSheetView';
 import DoctorProfile from './pages/Doctorprofilepage';
 import PGDashboard from './pages/PGDashboard';
@@ -182,6 +185,15 @@ const AppRoutes = () => {
         />
 
         <Route
+          path="/endodontics"
+          element={
+            <ProtectedRoute allowedRoles={['doctor', 'chief-doctor']} allowedDepartments={['Conservative Dentistry and Endodontics']}>
+              <EndodonticsPage />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
           path="/pg-dashboard"
           element={
             <ProtectedRoute allowedRoles={['pg']}>
@@ -263,6 +275,15 @@ const AppRoutes = () => {
         />
 
         <Route
+          path="/conservative-case"
+          element={
+            <ProtectedRoute allowedRoles={['doctor', 'chief', 'chief-doctor', 'pg', 'ug']}>
+              <ConservativeCaseSheet />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
           path="/general-case-view"
           element={
             <ProtectedRoute allowedRoles={['doctor', 'chief', 'chief-doctor', 'pg', 'ug']}>
@@ -294,6 +315,14 @@ const AppRoutes = () => {
               ]}
             >
               <CasePortal />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/conservative"
+          element={
+            <ProtectedRoute allowedRoles={['doctor', 'chief', 'chief-doctor', 'pg', 'ug']}>
+              <ConservativeDentistry />
             </ProtectedRoute>
           }
         />

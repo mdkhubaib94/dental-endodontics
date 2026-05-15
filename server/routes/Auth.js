@@ -248,14 +248,21 @@ router.get('/patient-basic-details/:patientId', async (req, res) => {
 router.post('/login/doctorlogin', async (req, res) => {
   const { identifier, password } = req.body;
 
+  console.log('[auth] POST /login/doctorlogin received');
+  console.log('[auth] incoming identifier:', String(identifier || '').slice(0, 64));
+
   if (!String(identifier || '').trim() || !String(password || '').trim()) {
+    console.log('[auth] missing identifier or password');
     return res.status(400).json({ message: 'Identifier and password are required.' });
   }
 
   try {
     const user = await findUserByIdentifier(identifier);
-    if (!user)
+    console.log('[auth] findUserByIdentifier result:', user ? { _id: user._id?.toString(), Identity: user.Identity, role: user.role, department: user.department } : null);
+    if (!user) {
+      console.log('[auth] doctor not found for identifier');
       return res.status(404).json({ message: 'User not found' });
+    }
 
       // Verify role = doctor/chief/pg/ug (case-insensitive to support legacy records)
       const normalizedRole = String(user.role || '').trim().toLowerCase();
@@ -269,8 +276,10 @@ router.post('/login/doctorlogin', async (req, res) => {
     const storedPassword = typeof user.password === 'string' ? user.password : '';
     try {
       isMatch = await compare(password, storedPassword);
-    } catch {
+      console.log('[auth] password compare finished, isMatch:', !!isMatch, 'storedPasswordPresent:', !!storedPassword);
+    } catch (err) {
       isMatch = false;
+      console.log('[auth] password compare error:', err && err.message);
     }
 
     // Legacy compatibility: support old plaintext records, then migrate them to bcrypt
@@ -299,6 +308,11 @@ router.post('/login/doctorlogin', async (req, res) => {
       { expiresIn: '2h' }
     );
 
+    // Compute dashboardRoute explicitly so we can log it
+    const d = String(user.department || '').trim().toLowerCase();
+    const dashboardRoute = (!d) ? '/doctor-dashboard' : (d.includes('conservative') || d.includes('endodontic')) ? '/endodontics' : (d.includes('general') ? '/general' : '/doctor-dashboard');
+    console.log('[auth] successful login for', user.Identity, '-> dashboardRoute:', dashboardRoute);
+
     res.json({
       message: 'Login successful',
       token,
@@ -306,7 +320,8 @@ router.post('/login/doctorlogin', async (req, res) => {
       name: user.name,
       Identity: user.Identity,
       email: user.email,
-      department: user.department || ''
+      department: user.department || '',
+      dashboardRoute,
     });
   } catch (err) {
     console.error('Doctor Login Error:', err);

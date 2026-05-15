@@ -841,7 +841,8 @@ const PGDashboard = () => {
     if (departmentKey === 'pedodontics') return '/pedodontics';
     if (departmentKey === 'periodontics') return '/casePortal?dept=periodontics';
     if (departmentKey.includes('oral') || departmentKey.includes('maxillofacial')) return '/casePortal?dept=oral';
-    if (departmentKey.includes('conservative') || departmentKey.includes('endodontic')) return '/casePortal';
+  // Conservative / Endodontics doctors should go directly to the Conservative case sheet
+  if (departmentKey.includes('conservative') || departmentKey.includes('endodontic')) return '/conservative-case';
     if (departmentKey === 'general' || departmentKey === 'generaldentistry') return '/general-case-sheet';
     return '/casePortal?dept=prosthodontics';
   };
@@ -1233,13 +1234,9 @@ const PGDashboard = () => {
 
     const caseRoute = getCaseRouteForDepartment(user?.department || '');
 
-    const resumeTarget = await getPatientResumeTarget(currentPatientId);
-    if (resumeTarget?.routeKey) {
-      navigate(resumeTarget.routeKey);
-      return;
-    }
-
-    navigate(caseRoute, { state: { requestConsentAfterEntry: true } });
+    // Always require consent first. Build redirectTarget from the resolved case route.
+    const redirectTarget = caseRoute;
+    navigate(`/consent-form?redirect=${encodeURIComponent(redirectTarget)}`, { replace: true });
   };
 
   // Close dropdown on outside click

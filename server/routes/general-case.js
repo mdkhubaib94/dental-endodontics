@@ -6,231 +6,28 @@ import GeneralCase from '../models/GeneralCase.js';
 import Appointment from '../models/AppoitmentBooked.js';
 import { User } from '../models/User.js';
 import AssignmentState from '../models/AssignmentState.js';
+import {
+  normalizeDepartment,
+  normalizeRole,
+  XRAY_DATA_URL_PATTERN,
+  MAX_XRAY_DATA_URL_LENGTH,
+  getDepartmentAliases,
+  getSelectedDepartmentLabel,
+  pickSpecialistDoctorForDepartment,
+  pickPgForDoctor,
+  resolveSpecialistDoctorForCase,
+  assignReferralToPg,
+  isGeneralDepartment,
+  normalizeLabelToDepartmentKey,
+} from '../utils/departmentAssignment.js';
+import { saveGeneralCase, ServiceError } from '../services/caseService.js';
 
 const router = express.Router();
 
-const normalizeDepartment = (value) => String(value || '').trim().toLowerCase().replace(/[\s_]+/g, '');
-const normalizeRole = (value) => String(value || '').trim().toLowerCase().replace(/[\s_]+/g, '-');
-const XRAY_DATA_URL_PATTERN = /^data:image\/(png|jpeg|jpg);base64,/i;
-const MAX_XRAY_DATA_URL_LENGTH = 8 * 1024 * 1024;
 
-const GENERAL_DEPARTMENT_KEYS = new Set(['general', 'generaldentistry']);
+// helpers imported from server/utils/departmentAssignment.js
 
-const departmentAliasMap = {
-  prosthodontics: ['prosthodontics', 'prothodontics', 'prosthondontics'],
-  pedodontics: ['pedodontics'],
-  periodontics: ['periodontics'],
-  conservativedentistryandendodontics: ['conservativedentistryandendodontics', 'conservativedentistry', 'endodontics'],
-  oralandmaxillofacial: ['oralandmaxillofacial', 'oralmaxillofacial', 'oralsurgery'],
-  general: ['general', 'generaldentistry'],
-};
-
-const normalizeLabelToDepartmentKey = (departmentLabel) => {
-  const normalized = normalizeDepartment(departmentLabel);
-
-  if (normalized.startsWith('prostho') || normalized.startsWith('protho') || normalized.startsWith('prosth')) {
-    return 'prosthodontics';
-  }
-  if (normalized === 'pedodontics') return 'pedodontics';
-  if (normalized === 'periodontics') return 'periodontics';
-  if (normalized.includes('conservative') || normalized.includes('endodontic')) {
-    return 'conservativedentistryandendodontics';
-  }
-  if (normalized.includes('oral') || normalized.includes('maxillofacial')) {
-    return 'oralandmaxillofacial';
-  }
-  if (GENERAL_DEPARTMENT_KEYS.has(normalized)) return 'general';
-
-  return normalized;
-};
-
-const getDepartmentBucket = (departmentLabel) => {
-  const normalized = normalizeLabelToDepartmentKey(departmentLabel);
-
-  if (!normalized) return 'all';
-  if (normalized === 'pedodontics') return 'pedodontics';
-  if (
-    normalized === 'prosthodontics' ||
-    normalized === 'fpd' ||
-    normalized === 'fixedpartialdenture' ||
-    normalized.includes('implant') ||
-    normalized.includes('partial')
-  ) {
-    return 'prosthodontics';
-  }
-
-  return 'all';
-};
-
-const extractResendReason = (chiefApprovalText) => {
-  const rawText = String(chiefApprovalText || '').trim();
-  if (!rawText) return '';
-
-  const match = rawText.match(/(?:redo|resend)\s*:?\s*(.*)$/i);
-  if (!match) return '';
-
-  return String(match[1] || '').trim();
-};
-
-const isGeneralDepartment = (departmentLabel) => {
-  return GENERAL_DEPARTMENT_KEYS.has(normalizeDepartment(departmentLabel));
-};
-
-const getDepartmentAliases = (departmentLabel) => {
-  const departmentKey = normalizeLabelToDepartmentKey(departmentLabel);
-  return departmentAliasMap[departmentKey] || [departmentKey];
-};
-
-const getSelectedDepartmentLabel = (selectedDepartments) => {
-  if (Array.isArray(selectedDepartments)) {
-    return String(selectedDepartments[0] || '').trim();
-  }
-
-  return String(selectedDepartments || '').trim();
-};
-
-const getNextRoundRobinStartIndex = async (key, length) => {
-  if (!length) return 0;
-
-  const state = await AssignmentState.findOneAndUpdate(
-    { key },
-    {
-      $setOnInsert: { key },
-      $inc: { counter: 1 },
-    },
-    { new: true, upsert: true }
-  ).lean();
-
-  const counter = typeof state?.counter === 'number' ? state.counter : 1;
-  const startCounter = counter - 1;
-  return ((startCounter % length) + length) % length;
-};
-
-const sortUsersForAssignment = (users) => {
-  return users.sort((left, right) => {
-    const leftId = String(left.Identity || '');
-    const rightId = String(right.Identity || '');
-    const byIdentity = leftId.localeCompare(rightId, 'en', { numeric: true, sensitivity: 'base' });
-    if (byIdentity !== 0) return byIdentity;
-    return String(left._id).localeCompare(String(right._id));
-  });
-};
-
-const pickSpecialistDoctorForDepartment = async (departmentLabel) => {
-  const aliases = getDepartmentAliases(departmentLabel);
-  const doctors = await User.find(
-    { role: 'doctor' },
-    { _id: 1, name: 1, Identity: 1, department: 1 }
-  ).lean();
-
-  const eligibleDoctors = sortUsersForAssignment(
-    doctors.filter((doctor) => {
-      const departmentKey = normalizeDepartment(doctor.department);
-      return !GENERAL_DEPARTMENT_KEYS.has(departmentKey) && aliases.includes(departmentKey);
-    })
-  );
-
-  if (!eligibleDoctors.length) {
-    return null;
-  }
-
-  const startIndex = await getNextRoundRobinStartIndex(`specialistReferral:${aliases[0]}`, eligibleDoctors.length);
-  return eligibleDoctors[startIndex];
-};
-
-const pickPgForDoctor = async (doctor) => {
-  const pgs = await User.find(
-    { role: 'pg', createdBy: doctor._id },
-    { _id: 1, name: 1, Identity: 1, department: 1 }
-  ).lean();
-
-  const eligiblePgs = sortUsersForAssignment(pgs);
-  if (!eligiblePgs.length) {
-    return null;
-  }
-
-  const startIndex = await getNextRoundRobinStartIndex(`pgReferral:${String(doctor._id)}`, eligiblePgs.length);
-  return eligiblePgs[startIndex];
-};
-
-const findDoctorByIdentity = async (identity) => {
-  const normalizedIdentity = String(identity || '').trim();
-  if (!normalizedIdentity) {
-    return null;
-  }
-
-  return User.findOne(
-    { role: 'doctor', Identity: normalizedIdentity },
-    { _id: 1, name: 1, Identity: 1, department: 1 }
-  ).lean();
-};
-
-const findPgByIdentity = async (identity) => {
-  const normalizedIdentity = String(identity || '').trim();
-  if (!normalizedIdentity) {
-    return null;
-  }
-
-  return User.findOne(
-    { role: 'pg', Identity: normalizedIdentity },
-    { _id: 1, name: 1, Identity: 1, department: 1 }
-  ).lean();
-};
-
-const resolveSpecialistDoctorForCase = async (caseItem, preferredSpecialistDoctor = null) => {
-  if (preferredSpecialistDoctor?._id) {
-    return preferredSpecialistDoctor;
-  }
-
-  const existingDoctor = await findDoctorByIdentity(caseItem?.specialistDoctorId);
-  if (existingDoctor?._id) {
-    return existingDoctor;
-  }
-
-  const referredDepartment = caseItem?.referredDepartment || getSelectedDepartmentLabel(caseItem?.selectedDepartments);
-  if (!referredDepartment || isGeneralDepartment(referredDepartment)) {
-    return null;
-  }
-
-  return pickSpecialistDoctorForDepartment(referredDepartment);
-};
-
-const assignReferralToPg = async (caseItem, preferredSpecialistDoctor = null) => {
-  const referredDepartment = caseItem?.referredDepartment || getSelectedDepartmentLabel(caseItem?.selectedDepartments);
-  if (!referredDepartment || isGeneralDepartment(referredDepartment)) {
-    return { specialistDoctor: null, assignedPg: null };
-  }
-
-  const specialistDoctor = await resolveSpecialistDoctorForCase(caseItem, preferredSpecialistDoctor);
-  if (!specialistDoctor?._id) {
-    return { specialistDoctor: null, assignedPg: null };
-  }
-
-  let assignedPg = await findPgByIdentity(caseItem?.assignedPgId);
-  if (!assignedPg?._id) {
-    assignedPg = await pickPgForDoctor(specialistDoctor);
-  }
-
-  if (!assignedPg?._id) {
-    return { specialistDoctor, assignedPg: null };
-  }
-
-  const assignmentTimestamp = new Date();
-
-  caseItem.referredDepartment = referredDepartment;
-  caseItem.specialistDoctorId = specialistDoctor.Identity || '';
-  caseItem.specialistDoctorName = specialistDoctor.name || '';
-  caseItem.specialistAssignedAt = caseItem.specialistAssignedAt || assignmentTimestamp;
-  caseItem.specialistStatus = 'approved';
-  caseItem.specialistRescheduleReason = '';
-  caseItem.specialistReviewedBy = 'System Auto-Transfer';
-  caseItem.specialistReviewedAt = assignmentTimestamp;
-  caseItem.assignedPgId = assignedPg.Identity || '';
-  caseItem.assignedPgName = assignedPg.name || assignedPg.Identity || '';
-  caseItem.pgAssignedAt = caseItem.pgAssignedAt || assignmentTimestamp;
-
-  return { specialistDoctor, assignedPg };
-};
+// assignReferralToPg is provided by server/utils/departmentAssignment.js
 
 const autoTransferPendingReferralsToPgQueue = async () => {
   const pendingCases = await GeneralCase.find({
@@ -303,171 +100,14 @@ const assignLegacySpecialistReferrals = async (departmentLabel) => {
 // Create / Save a General Case Sheet
 router.post('/save', auth, requireRole(['doctor', 'chief', 'pg']), async (req, res) => {
   try {
-    const {
-      patientId,
-      patientName,
-      doctorId,
-      doctorName,
-      chiefComplaint,
-      presentIllness,
-      pastMedical,
-      pastDental,
-      personalHistory,
-      familyHistory,
-      clinicalFindings,
-      provisionalDiagnosis,
-      investigations,
-      finalDiagnosis,
-      description,
-      generalDescription,
-      selectedDepartments,
-      treatmentPlan,
-      xrayImage,
-    } = req.body;
-
-    const requesterRole = normalizeRole(req.user?.role);
-    const requesterDepartment = normalizeDepartment(req.user?.department);
-
-    if (requesterRole === 'doctor' && !GENERAL_DEPARTMENT_KEYS.has(requesterDepartment)) {
-      return res.status(403).json({
-        success: false,
-        message: 'Only general doctors can create referral case sheets.'
-      });
-    }
-
-    if (!patientId || !patientName || !doctorId || !doctorName) {
-      return res.status(400).json({
-        success: false,
-        message: 'Patient and Doctor information are required'
-      });
-    }
-
-    if (!treatmentPlan) {
-      return res.status(400).json({
-        success: false,
-        message: 'Treatment plan is required to save the General Case Sheet'
-      });
-    }
-
-    if (!String(chiefComplaint || '').trim()) {
-      return res.status(400).json({
-        success: false,
-        message: 'Chief complaint is required to save the General Case Sheet'
-      });
-    }
-
-    if (!Array.isArray(selectedDepartments) || selectedDepartments.length === 0) {
-      return res.status(400).json({
-        success: false,
-        message: 'Please select a specialist case sheet department.'
-      });
-    }
-
-    const referredDepartment = getSelectedDepartmentLabel(selectedDepartments);
-    const normalizedXrayImage = String(xrayImage || '').trim();
-
-    if (normalizedXrayImage) {
-      if (!XRAY_DATA_URL_PATTERN.test(normalizedXrayImage)) {
-        return res.status(400).json({
-          success: false,
-          message: 'Invalid X-ray image format. Please upload a PNG or JPEG image.'
-        });
-      }
-
-      if (normalizedXrayImage.length > MAX_XRAY_DATA_URL_LENGTH) {
-        return res.status(413).json({
-          success: false,
-          message: 'X-ray image is too large. Please upload a smaller image.'
-        });
-      }
-    }
-
-    if (!referredDepartment || isGeneralDepartment(referredDepartment)) {
-      return res.status(400).json({
-        success: false,
-        message: 'General is not a referral case-sheet department. Please select a specialist department.'
-      });
-    }
-
-    let specialistDoctor = null;
-
-    if (referredDepartment) {
-      specialistDoctor = await pickSpecialistDoctorForDepartment(referredDepartment);
-
-      if (!specialistDoctor) {
-        return res.status(409).json({
-          success: false,
-          message: `No specialist doctor is available in ${referredDepartment}.`
-        });
-      }
-    }
-
-    const generalCase = new GeneralCase({
-      patientId,
-      patientName,
-      doctorId,
-      doctorName,
-      generalDoctorId: doctorId,
-      generalDoctorName: doctorName,
-      chiefComplaint,
-      presentIllness,
-      pastMedical,
-      pastDental,
-      personalHistory,
-      familyHistory,
-      clinicalFindings,
-      provisionalDiagnosis,
-      investigations,
-      finalDiagnosis,
-      description,
-      generalDescription,
-      selectedDepartments,
-      treatmentPlan,
-      xrayImage: normalizedXrayImage,
-      referredDepartment,
-      specialistDoctorId: specialistDoctor?.Identity || '',
-      specialistDoctorName: specialistDoctor?.name || '',
-      specialistAssignedAt: specialistDoctor ? new Date() : null,
-      specialistStatus: specialistDoctor ? 'pending' : 'not-required',
-      chiefApproval: ''
-    });
-
-    const { assignedPg } = await assignReferralToPg(generalCase, specialistDoctor);
-    if (!assignedPg?._id) {
-      return res.status(409).json({
-        success: false,
-        message: `No PG is assigned under ${specialistDoctor?.name || referredDepartment}. Assign a PG before saving this referral.`,
-      });
-    }
-
-    await generalCase.save();
-
-    res.status(201).json({
-      success: true,
-      message: 'General Case Sheet saved successfully',
-      caseId: generalCase._id,
-      data: generalCase,
-      assignment: specialistDoctor
-        ? {
-            referredDepartment,
-            specialistDoctorId: specialistDoctor.Identity,
-            specialistDoctorName: specialistDoctor.name,
-            specialistStatus: generalCase.specialistStatus,
-            assignedPgId: generalCase.assignedPgId,
-            assignedPgName: generalCase.assignedPgName,
-          }
-        : {
-            referredDepartment,
-            specialistStatus: 'not-required'
-          }
-    });
+    const result = await saveGeneralCase({ Model: GeneralCase, payload: req.body, user: req.user });
+    return res.status(result.status).json(result.body);
   } catch (error) {
+    if (error?.httpStatus && error?.payload) {
+      return res.status(error.httpStatus).json(error.payload);
+    }
     console.error('Error saving General Case Sheet:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Server error while saving General Case Sheet',
-      error: error.message
-    });
+    res.status(500).json({ success: false, message: 'Server error while saving General Case Sheet', error: error.message });
   }
 });
 

@@ -36,13 +36,8 @@ const CasePortal = () => {
     if (navState[CASE_CONSENT_NAV_STATE_KEY]) return;
 
     const redirectTarget = `${location.pathname}${location.search}`;
-    const shouldOpenConsent = window.confirm(
-      'Please complete the consent form before proceeding with the department case sheet.'
-    );
-
-    if (shouldOpenConsent) {
-      navigate(`/consent-form?redirect=${encodeURIComponent(redirectTarget)}`, { replace: true });
-    }
+    // Immediately redirect to consent form (no confirm popup)
+    navigate(`/consent-form?redirect=${encodeURIComponent(redirectTarget)}`, { replace: true });
   }, [location.pathname, location.search, location.state, navigate]);
 
   useEffect(() => {
@@ -74,7 +69,7 @@ const CasePortal = () => {
 
 
           <button className="button-portal" onClick={() => setShowPerio(true)}>Periodontics</button>
-          <button className="button-portal" onClick={() => startCaseFlow('/casePortal')}>Conservative Dentistry and Endodontics</button>
+          <button className="button-portal" onClick={() => startCaseFlow('/conservative')}>Conservative Dentistry and Endodontics</button>
           <button className="button-portal" onClick={() => setShowOral(true)}>Oral and Maxillofacial</button>
           <button className="button-portal" onClick={() => startCaseFlow('/casePortal')}>Orthoganthic Case History</button>
           <button className="button-portal" onClick={() => startCaseFlow('/general-case-sheet')}>General</button>

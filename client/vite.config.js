@@ -12,5 +12,15 @@ export default defineConfig({
       protocol: 'ws',
       port: 5173,
     }
+    ,
+    proxy: {
+      // Proxy API requests to the backend server during development
+      '/api': {
+        target: 'http://localhost:5000',
+        changeOrigin: true,
+        secure: false,
+        rewrite: (path) => path.replace(/^\/api/, '/api')
+      }
+    }
   }
 })

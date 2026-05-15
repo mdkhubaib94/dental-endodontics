@@ -11,8 +11,11 @@ const departmentConfig = [
   { key: 'fpd', label: 'Fixed Partial Denture', modelPath: '../models/Fpd-model.js' },
   { key: 'implant', label: 'Implant', modelPath: '../models/Implant-model.js' },
   { key: 'implantPatient', label: 'Implant Patient', modelPath: '../models/ImplantPatient-model.js' },
-  { key: 'partial', label: 'Partial Denture', modelPath: '../models/partial-model.js' }
+  { key: 'partial', label: 'Partial Denture', modelPath: '../models/partial-model.js' },
+  { key: 'conservativedentistryandendodontics', label: 'Conservative Dentistry and Endodontics', modelPath: '../models/ConservativeCase.js' }
 ];
+
+
 
 const normalizeRole = (value) => String(value || '').trim().toLowerCase().replace(/[_\s]+/g, '-');
 const normalizeDepartment = (value) => String(value || '').trim().toLowerCase().replace(/[_\s]+/g, '');
@@ -29,6 +32,8 @@ const chiefDepartmentScopeMap = {
   implantology: ['implant', 'implantPatient'],
   implantpatient: ['implantPatient'],
   partialdenture: ['partial']
+  ,
+  conservativedentistryandendodontics: ['conservativedentistryandendodontics']
 };
 
 const billingDepartmentKeyMap = {
@@ -38,6 +43,7 @@ const billingDepartmentKeyMap = {
   implant: 'implant',
   implantPatient: 'implant_patient',
   partial: 'partial_denture',
+  conservativedentistryandendodontics: 'conservative_endodontics',
 };
 
 const getAllowedDepartmentKeysForUser = (user) => {
