@@ -76,6 +76,51 @@ const applySafeUpdates = (targetDoc, updates) => {
   });
 };
 
+/**
+ * Normalise oral medicine payload — mirrors the logic in oral-route.js so that
+ * redo-edits submitted via the unified PUT endpoint pass Mongoose validation.
+ */
+const normaliseOralPayload = (body) => {
+  const b = { ...body };
+
+  // sex → gender (required enum in OralCase model)
+  if (!b.gender && b.sex) b.gender = b.sex;
+
+  // Short review-of-systems aliases → canonical names
+  if (b.cns)              b.centralNervousSystem       = b.cns;
+  if (b.cvs)              b.cardioVascularSystem        = b.cvs;
+  if (b.respiratory)      b.respiratorySystem           = b.respiratory;
+  if (b.gastrointestinal) b.gastroIntestinalSystem      = b.gastrointestinal;
+  if (b.genitoUrinary)    b.genitoUrinarySystem         = b.genitoUrinary;
+  if (b.skeletal)         b.skeletalSystem              = b.skeletal;
+
+  // missingTeeth → missing
+  if (b.missingTeeth)     b.missing = b.missingTeeth;
+
+  // Mirror investigation checkboxes into legacy free-text fields
+  const invMap = [
+    ['invHematological',    'invHematologicalNotes',     'hematological'],
+    ['invUrine',            'invUrineNotes',              'urine'],
+    ['invBiochemical',      'invBiochemicalNotes',        'bioChemical'],
+    ['invSerological',      'invSerologicalNotes',        'serological'],
+    ['invCytological',      'invCytologicalNotes',        'cytological'],
+    ['invMicrobiological',  'invMicrobiologicalNotes',    'microbiological'],
+    ['invSpecial',          'invSpecialNotes',            'specialInvestigations'],
+    ['invRadiological',     'invRadiologicalNotes',       'radiological'],
+    ['invBiopsy',           'invBiopsyNotes',             'biopsy'],
+    ['invHistopathological','invHistopathologicalNotes',  'histopathologicalExamination'],
+    ['invOthers',           'invOthersNotes',             'otherInvestigations'],
+  ];
+  invMap.forEach(([boolKey, notesKey, legacyKey]) => {
+    if (b[boolKey]) b[legacyKey] = b[notesKey] || 'Yes';
+  });
+
+  // Ensure age is a number
+  if (b.age !== undefined) b.age = Number(b.age) || 0;
+
+  return b;
+};
+
 // GET /api/casesheets/pg/history
 // GET /api/casesheets/pg/history
 // Returns completed case sheets created by the logged-in PG/UG across departments
@@ -281,7 +326,7 @@ router.put('/:caseId', auth, requireRole(['pg']), async (req, res) => {
       });
     }
 
-    applySafeUpdates(caseDoc, req.body);
+    applySafeUpdates(caseDoc, found.departmentKey === 'oral' ? normaliseOralPayload(req.body) : req.body);
 
     // Reset approval status after resubmission
     caseDoc.chiefApproval = '';
