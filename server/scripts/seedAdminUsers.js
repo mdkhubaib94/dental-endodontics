@@ -33,8 +33,8 @@ const users = [
     email: 'admin@srmdental.com',
     phone: '9000000001',
     role: 'admin',
-    Identity: 'ad001',
-    staffId: 'ad001',
+    Identity: 'AD001',
+    staffId: 'AD001',
     password: 'Admin@123',
   },
   {
@@ -42,8 +42,8 @@ const users = [
     email: 'phc1@srmdental.com',
     phone: '9000000002',
     role: 'phc1',
-    Identity: 'phc1001',
-    staffId: 'phc1001',
+    Identity: 'PHC1001',
+    staffId: 'PHC1001',
     password: 'Phc1@123',
   },
   {
@@ -51,8 +51,8 @@ const users = [
     email: 'phc2@srmdental.com',
     phone: '9000000003',
     role: 'phc2',
-    Identity: 'phc2001',
-    staffId: 'phc2001',
+    Identity: 'PHC2001',
+    staffId: 'PHC2001',
     password: 'Phc2@123',
   },
   {
@@ -60,16 +60,25 @@ const users = [
     email: 'camp@srmdental.com',
     phone: '9000000004',
     role: 'c',
-    Identity: 'c001',
-    staffId: 'c001',
+    Identity: 'C001',
+    staffId: 'C001',
     password: 'Camp@123',
   },
 ];
+
+// Old lowercase IDs to clean up
+const oldIds = ['ad001', 'phc1001', 'phc2001', 'c001'];
 
 async function seed() {
   try {
     await mongoose.connect(process.env.MONGO_URI);
     console.log('✅ Connected to MongoDB');
+
+    // Remove old lowercase records if they exist
+    const deleted = await User.deleteMany({ Identity: { $in: oldIds } });
+    if (deleted.deletedCount > 0) {
+      console.log(`🗑️  Removed ${deleted.deletedCount} old lowercase record(s)`);
+    }
 
     for (const u of users) {
       const existing = await User.findOne({ Identity: u.Identity });
