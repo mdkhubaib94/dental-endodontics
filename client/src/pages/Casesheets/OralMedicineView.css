@@ -1,0 +1,38 @@
+﻿/* OralMedicineView.css */
+@import './PedodonticsView.css';
+
+.readonly-field {
+  background-color: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  padding: 8px;
+  border-radius: 4px;
+  min-height: 30px;
+  display: flex;
+  align-items: center;
+  color: white;
+  font-size: 14px;
+}
+
+.readonly-textarea {
+  background-color: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  padding: 8px;
+  border-radius: 4px;
+  min-height: 60px;
+  color: white;
+  font-size: 14px;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+}
+
+.case-sheet h4 {
+  font-size: 16px;
+  margin: 15px 0 10px 0;
+  font-weight: bold;
+}
+
+.case-sheet h5 {
+  font-size: 14px;
+  margin: 10px 0 8px 0;
+  font-weight: bold;
+}

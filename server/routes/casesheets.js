@@ -10,6 +10,7 @@ import Fpd from '../models/Fpd-model.js';
 import Implant from '../models/Implant-model.js';
 import ImplantPatientCase from '../models/ImplantPatient-model.js';
 import PartialDentureCase from '../models/partial-model.js';
+import OralCase from '../models/Oral-model.js';
 
 const router = express.Router();
 
@@ -29,6 +30,12 @@ const doctorDepartmentCaseScope = {
   implantpatient: ['implant_patient'],
   partialdenture: ['partial_denture'],
   partial: ['partial_denture'],
+  oral: ['oral'],
+  oralandmaxillofacial: ['oral'],
+  oralandmaxillofacialsurgery: ['oral'],
+  oralmedicine: ['oral'],
+  oralmedicineandradiology: ['oral'],
+  oralmedicineradiology: ['oral'],
   general: []
 };
 
@@ -98,6 +105,7 @@ router.get('/pg/history', auth, requireRole(['pg', 'ug']), async (req, res) => {
       { model: Implant, department: 'Implant', departmentKey: 'implant' },
       { model: ImplantPatientCase, department: 'Implant Patient Surgery', departmentKey: 'implant_patient' },
       { model: PartialDentureCase, department: 'Partial Denture', departmentKey: 'partial_denture' },
+      { model: OralCase, department: 'Oral Medicine and Radiology', departmentKey: 'oral' },
     ];
 
     const results = await Promise.all(
@@ -203,6 +211,15 @@ router.get('/:caseId', auth, async (req, res) => {
       return res.json({ success: true, data: doc, department: 'partial_denture' });
     }
 
+    // Try oral medicine
+    doc = await OralCase.findById(caseId);
+    if (doc) {
+      if (!canDoctorAccessDepartment(req.user, 'oral')) {
+        return res.status(403).json({ success: false, message: 'Access denied for this department' });
+      }
+      return res.json({ success: true, data: doc, department: 'oral' });
+    }
+
     return res.status(404).json({ success: false, message: 'Case not found' });
   } catch (error) {
     console.error('Error searching casesheets:', error);
@@ -233,6 +250,7 @@ router.put('/:caseId', auth, requireRole(['pg']), async (req, res) => {
       { model: Implant, departmentKey: 'implant' },
       { model: ImplantPatientCase, departmentKey: 'implant_patient' },
       { model: PartialDentureCase, departmentKey: 'partial_denture' },
+      { model: OralCase, departmentKey: 'oral' },
     ];
 
     let found = null;
