@@ -2316,7 +2316,6 @@ const DoctorDashboard = () => {
               ) : (
                 <>
                   <div className="chief-doctor-selector pg-appointment-selector">
-                    <label htmlFor="pg-select" className="pg-appointment-selector-label">Select Doctor:</label>
                       <input
                         type="text"
                         placeholder="Search doctor by name or ID..."
@@ -2379,6 +2378,16 @@ const DoctorDashboard = () => {
                     <tbody>
                       {assignedAppointments
                         .filter((appt) => !selectedAppointmentPG || appt.pgIdentity === selectedAppointmentPG)
+                        .filter((appt) => {
+                          if (!selectedAppointmentPG && pgSearchTerm.trim()) {
+                            const searchLower = pgSearchTerm.toLowerCase();
+                            return (
+                              (appt.pgName || '').toLowerCase().includes(searchLower) ||
+                              (appt.pgIdentity || '').toLowerCase().includes(searchLower)
+                            );
+                          }
+                          return true;
+                        })
                         .filter((appt) => {
                           const from = parseLocalDateInput(pgFromDate, false);
                           const to = parseLocalDateInput(pgToDate, true);
