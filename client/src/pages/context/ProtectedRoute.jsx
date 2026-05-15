@@ -12,7 +12,8 @@ const getDashboardRouteByRole = (role) => {
   if (normalized === 'pg') return '/pg-dashboard';
   if (normalized === 'ug') return '/ug-dashboard';
   if (normalized === 'chief' || normalized === 'chief-doctor') return '/chief-doctor-dashboard';
-  if (normalized === 'admin') return '/admin-dashboard';
+  if (normalized === 'admin' || normalized === 'phc1' || normalized === 'phc2') return '/admin-dashboard';
+  if (normalized === 'c') return '/camp-dashboard';
   return '/';
 };
 

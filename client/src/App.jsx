@@ -44,6 +44,7 @@ import DoctorProfile from './pages/Doctorprofilepage';
 import PGDashboard from './pages/PGDashboard';
 import UGDashboard from './pages/UGDashboard';
 import ConsentForm from './pages/consentform';
+import CampDashboard from './pages/CampDashboard';
 
 const getDashboardRouteByRole = (role) => {
   const normalizedRole = String(role || '').trim().toLowerCase();
@@ -52,7 +53,8 @@ const getDashboardRouteByRole = (role) => {
   if (normalizedRole === 'chief' || normalizedRole === 'chief-doctor') return '/chief-doctor-dashboard';
   if (normalizedRole === 'pg') return '/pg-dashboard';
   if (normalizedRole === 'ug') return '/ug-dashboard';
-  if (normalizedRole === 'admin') return '/admin-dashboard';
+  if (normalizedRole === 'admin' || normalizedRole === 'phc1' || normalizedRole === 'phc2') return '/admin-dashboard';
+  if (normalizedRole === 'c') return '/camp-dashboard';
   return '';
 };
 
@@ -217,7 +219,16 @@ const AppRoutes = () => {
           </ProtectedRoute>
        }
       />
-        <Route path="/admin-dashboard" element={<AdminDashboard />} />
+        <Route path="/admin-dashboard" element={
+          <ProtectedRoute allowedRoles={['admin', 'phc1', 'phc2']}>
+            <AdminDashboard />
+          </ProtectedRoute>
+        } />
+        <Route path="/camp-dashboard" element={
+          <ProtectedRoute allowedRoles={['c']}>
+            <CampDashboard />
+          </ProtectedRoute>
+        } />
         <Route
           path="/chief-doctor-dashboard/weekly-report"
           element={

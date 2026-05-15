@@ -17,6 +17,15 @@ const expandAllowedRoles = (roles) => {
     // Backward-compatible aliases used across routes and user documents.
     if (normalized === 'chief') expanded.add('chief-doctor');
     if (normalized === 'chief-doctor') expanded.add('chief');
+
+    // Admin-portal role aliases: phc1 and phc2 are treated as admin for route access
+    if (normalized === 'admin') {
+      expanded.add('phc1');
+      expanded.add('phc2');
+    }
+    if (normalized === 'phc1' || normalized === 'phc2') {
+      expanded.add('admin');
+    }
   }
 
   return expanded;

@@ -428,7 +428,9 @@ router.post('/login/adminlogin', async (req, res) => {
       return res.status(404).json({ message: 'User not found' });
 
     const normalizedRole = String(user.role || '').trim().toLowerCase();
-    if (normalizedRole !== 'admin') {
+    // Allowed admin-portal roles: admin, phc1, phc2, c (camp)
+    const adminPortalRoles = new Set(['admin', 'phc1', 'phc2', 'c']);
+    if (!adminPortalRoles.has(normalizedRole)) {
       return res.status(403).json({ message: 'Access denied. Not an administrator.' });
     }
 

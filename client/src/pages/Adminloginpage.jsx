@@ -54,7 +54,12 @@ const AdminLogin = () => {
           email: res.data.email || '',
         });
 
-        navigate('/admin-dashboard', { replace: true });
+        const role = String(res.data.role || '').trim().toLowerCase();
+        if (role === 'c') {
+          navigate('/camp-dashboard', { replace: true });
+        } else {
+          navigate('/admin-dashboard', { replace: true });
+        }
       }
     } catch (err) {
       console.error('Login error:', err.response?.data);
@@ -63,7 +68,7 @@ const AdminLogin = () => {
       if (err.response?.status === 404) {
         showMessage('Account not found. Please check your credentials.');
       } else if (err.response?.status === 403) {
-        showMessage('Access denied. Not an administrator account.');
+        showMessage('Access denied. Not an admin/PHC/Camp account.');
       } else if (err.response?.status === 401) {
         showMessage(err.response?.data?.message || 'Invalid password. Please try again.');
       } else if (err.response?.status === 400) {

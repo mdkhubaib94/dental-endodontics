@@ -96,7 +96,8 @@ export const AuthProvider = ({ children }) => {
         setUser({
           id: adminId,
           name: adminName,
-          role: 'admin',
+          email: localStorage.getItem('adminEmail') || '',
+          role: storedRole || 'admin',
           token: token
         });
       } else if (storedRole) {
@@ -161,10 +162,23 @@ export const AuthProvider = ({ children }) => {
     } else if (normalizedRole === 'admin') {
       localStorage.setItem('adminName', name);
       localStorage.setItem('adminId', Identity);
+      if (email) localStorage.setItem('adminEmail', email);
       setUser({
         id: Identity,
         name: name,
+        email: email || '',
         role: 'admin',
+        token: token
+      });
+    } else if (normalizedRole === 'phc1' || normalizedRole === 'phc2' || normalizedRole === 'c') {
+      localStorage.setItem('adminName', name);
+      localStorage.setItem('adminId', Identity);
+      if (email) localStorage.setItem('adminEmail', email);
+      setUser({
+        id: Identity,
+        name: name,
+        email: email || '',
+        role: normalizedRole,
         token: token
       });
     } else if (normalizedRole === 'pg') {
@@ -213,6 +227,7 @@ export const AuthProvider = ({ children }) => {
     localStorage.removeItem('doctorDepartment');
     localStorage.removeItem('adminName');
     localStorage.removeItem('adminId');
+    localStorage.removeItem('adminEmail');
     localStorage.removeItem('pgName');
     localStorage.removeItem('pgId');
     localStorage.removeItem('pgEmail');
