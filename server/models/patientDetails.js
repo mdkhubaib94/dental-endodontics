@@ -159,6 +159,16 @@ const patientDetailsSchema = new Schema({
     }]
   },
 
+  // Clinical Examination
+  clinicalExam: {
+    vitals: { type: String, trim: true, default: '' },
+    constitutionalSigns: { type: String, trim: true, default: '' },
+    extraOralExamination: { type: String, trim: true, default: '' },
+    intraOralFindings: { type: String, trim: true, default: '' },
+    tmjExamination: { type: String, trim: true, default: '' },
+    lymphNodesExamination: { type: String, trim: true, default: '' },
+  },
+
   // System Fields
   status: {
     type: String,

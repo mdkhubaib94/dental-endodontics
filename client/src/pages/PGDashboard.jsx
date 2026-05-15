@@ -35,17 +35,36 @@ const PGDashboard = () => {
     return `${y}-${m}-${day}`;
   };
 
+  const DEPT_LABEL_MAP = {
+    oral: 'Oral Medicine and Radiology',
+    oralmedicine: 'Oral Medicine and Radiology',
+    oralmedicineandradiology: 'Oral Medicine and Radiology',
+    oralmedicineradiology: 'Oral Medicine and Radiology',
+    oralandmaxillofacial: 'Oral and Maxillofacial Surgery',
+    oralandmaxillofacialsurgery: 'Oral and Maxillofacial Surgery',
+    pedodontics: 'Pedodontics',
+    prosthodontics: 'Prosthodontics',
+    periodontics: 'Periodontics',
+    conservative: 'Conservative Dentistry and Endodontics',
+    conservativedentistry: 'Conservative Dentistry and Endodontics',
+    endodontics: 'Conservative Dentistry and Endodontics',
+    implant: 'Implantology',
+    implantology: 'Implantology',
+    general: 'General Dentistry',
+    generaldentistry: 'General Dentistry',
+  };
+
   const formatDepartmentLabel = (value) => {
     const raw = String(value || '').trim();
     if (!raw) return '';
-    return raw
-      .split(/\s+/)
-      .map((word) => {
-        if (!word) return word;
-        if (word.toUpperCase() === word) return word;
-        return word.charAt(0).toUpperCase() + word.slice(1).toLowerCase();
-      })
-      .join(' ');
+    const key = raw.toLowerCase().replace(/[\s_]+/g, '');
+    if (DEPT_LABEL_MAP[key]) return DEPT_LABEL_MAP[key];
+    const small = new Set(['and', 'of', 'the', 'in', 'for', 'or']);
+    return raw.split(/\s+/).map((word, i) => {
+      if (!word) return word;
+      if (i > 0 && small.has(word.toLowerCase())) return word.toLowerCase();
+      return word.charAt(0).toUpperCase() + word.slice(1);
+    }).join(' ');
   };
 
   const pgDepartmentLabel = String(user?.department || localStorage.getItem('pgDepartment') || '').trim();
@@ -86,7 +105,15 @@ const PGDashboard = () => {
     lastDentalVisit: '',
     bloodGroup: '',
     drugAllergies: '',
-    dietAllergies: ''
+    dietAllergies: '',
+    // General Examination
+    vitals: '',
+    constitutionalSigns: '',
+    // Clinical Findings
+    extraOralExamination: '',
+    intraOralFindings: '',
+    tmjExamination: '',
+    lymphNodesExamination: '',
   });
 
   const [showForm, setShowForm] = useState(false);
@@ -113,6 +140,11 @@ const PGDashboard = () => {
   const [pgAppointmentsLoading, setPgAppointmentsLoading] = useState(false);
   const [pgAppointmentsError, setPgAppointmentsError] = useState('');
   const [rescheduleDrafts, setRescheduleDrafts] = useState({});
+  // Patient search
+  const [searchType, setSearchType] = useState('id');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [searchResults, setSearchResults] = useState([]);
+  const [searchLoading, setSearchLoading] = useState(false);
   const [activeRescheduleBookingId, setActiveRescheduleBookingId] = useState('');
   const [rescheduleSubmittingBookingId, setRescheduleSubmittingBookingId] = useState('');
   const [bookedSlotsByDate, setBookedSlotsByDate] = useState({});
@@ -1291,7 +1323,13 @@ const PGDashboard = () => {
       lastDentalVisit: patientData.medicalInfo?.lastDentalVisit ? new Date(patientData.medicalInfo.lastDentalVisit).toISOString().split('T')[0] : '',
       bloodGroup: patientData.vitals?.bloodGroup || '',
       drugAllergies: patientData.vitals?.drugAllergies?.join(', ') || '',
-      dietAllergies: patientData.vitals?.dietAllergies?.join(', ') || ''
+      dietAllergies: patientData.vitals?.dietAllergies?.join(', ') || '',
+      vitals: patientData.clinicalExam?.vitals || '',
+      constitutionalSigns: patientData.clinicalExam?.constitutionalSigns || '',
+      extraOralExamination: patientData.clinicalExam?.extraOralExamination || '',
+      intraOralFindings: patientData.clinicalExam?.intraOralFindings || '',
+      tmjExamination: patientData.clinicalExam?.tmjExamination || '',
+      lymphNodesExamination: patientData.clinicalExam?.lymphNodesExamination || '',
     });
 
     setHpiSelections(patientData.medicalInfo?.hpi || []);
@@ -1332,6 +1370,30 @@ const PGDashboard = () => {
 
     setFieldErrors(errors);
     return Object.keys(errors).length === 0;
+  };
+
+  // Multi-criteria patient search (ID / phone / name)
+  const handlePatientSearch = async (query) => {
+    const q = String(query || '').trim();
+    setSearchQuery(q);
+    if (!q) { setSearchResults([]); return; }
+    try {
+      setSearchLoading(true);
+      const res = await fetch(buildApiUrl(`/api/patient-details?search=${encodeURIComponent(q)}&limit=8`));
+      if (!res.ok) { setSearchResults([]); return; }
+      const json = await res.json();
+      const patients = Array.isArray(json?.data) ? json.data : (Array.isArray(json?.patients) ? json.patients : []);
+      setSearchResults(patients);
+    } catch { setSearchResults([]); }
+    finally { setSearchLoading(false); }
+  };
+
+  const handleSelectSearchResult = (patient) => {
+    const pid = String(patient.patientId || '').trim();
+    setSearchResults([]);
+    setSearchQuery('');
+    setFormData(prev => ({ ...prev, uniqueId: pid }));
+    handleGetDetails(pid);
   };
 
   // Get details for an already-registered patient (must exist in Admin Patient Registration)
@@ -1563,6 +1625,14 @@ const PGDashboard = () => {
           bloodGroup: formData.bloodGroup,
           drugAllergies: formData.drugAllergies.split(',').map(item => item.trim()).filter(item => item),
           dietAllergies: formData.dietAllergies.split(',').map(item => item.trim()).filter(item => item)
+        },
+        clinicalExam: {
+          vitals: formData.vitals || '',
+          constitutionalSigns: formData.constitutionalSigns || '',
+          extraOralExamination: formData.extraOralExamination || '',
+          intraOralFindings: formData.intraOralFindings || '',
+          tmjExamination: formData.tmjExamination || '',
+          lymphNodesExamination: formData.lymphNodesExamination || '',
         }
       };
 
@@ -1686,6 +1756,9 @@ const PGDashboard = () => {
                     <div className="dropdown-name">{pgName || user?.name || 'PG'}</div>
                     {pgId && <div className="dropdown-id">ID: {pgId}</div>}
                     <div className="dropdown-email">{pgEmail || user?.email || ''}</div>
+                    {pgDepartmentLabel && (
+                      <div className="dropdown-dept">{formatDepartmentLabel(pgDepartmentLabel)}</div>
+                    )}
                   </div>
                 </div>
 
@@ -1819,17 +1892,77 @@ const PGDashboard = () => {
               <div className="doctor-dashboard-content">
                 <h2 className="dashboard-title">Patient Details</h2>
 
-                {/* Unique ID input */}
-                <div className="input-group">
-                  <label htmlFor="unique-id">Enter Registered Patient ID</label>
+                {/* Patient Search — ID / Phone / Name */}
+                <div className="input-group" style={{ position: 'relative' }}>
+                  <label>Search Patient</label>
+                  <div style={{ display: 'flex', gap: 8, marginBottom: 8 }}>
+                    {[['id','Patient ID'],['phone','Phone'],['name','Name']].map(([val, lbl]) => (
+                      <button key={val} type="button"
+                        onClick={() => { setSearchType(val); setSearchQuery(''); setSearchResults([]); setFormData(p => ({ ...p, uniqueId: '' })); }}
+                        style={{
+                          padding: '6px 16px', borderRadius: 20, border: 'none', cursor: 'pointer', fontWeight: 600, fontSize: '0.82rem',
+                          background: searchType === val ? '#3C8DFF' : 'rgba(255,255,255,0.12)',
+                          color: searchType === val ? '#fff' : 'rgba(255,255,255,0.75)',
+                          transition: 'background 0.2s',
+                        }}>
+                        {lbl}
+                      </button>
+                    ))}
+                  </div>
                   <input
-                    type="text"
-                    id="unique-id"
-                    name="uniqueId"
-                    value={formData.uniqueId}
-                    onChange={handleInputChange}
-                    placeholder="Enter Patient ID from Admin Patient Registration"
+                    type={searchType === 'phone' ? 'tel' : 'text'}
+                    value={searchType === 'id' ? (searchQuery || formData.uniqueId) : searchQuery}
+                    onChange={e => {
+                      if (searchType === 'id') {
+                        setSearchQuery(e.target.value);
+                        setFormData(p => ({ ...p, uniqueId: e.target.value }));
+                        if (e.target.value.length >= 2) handlePatientSearch(e.target.value);
+                        else setSearchResults([]);
+                      } else {
+                        handlePatientSearch(e.target.value);
+                      }
+                    }}
+                    placeholder={
+                      searchType === 'id' ? 'Enter Patient ID' :
+                      searchType === 'phone' ? 'Enter phone number' :
+                      'Enter patient name'
+                    }
+                    autoComplete="off"
                   />
+                  {/* Search results dropdown */}
+                  {searchResults.length > 0 && (
+                    <div style={{
+                      position: 'absolute', top: '100%', left: 0, right: 0, zIndex: 999,
+                      background: '#1e2a4a', border: '1px solid rgba(255,255,255,0.15)',
+                      borderRadius: 8, boxShadow: '0 8px 24px rgba(0,0,0,0.4)', maxHeight: 260, overflowY: 'auto',
+                    }}>
+                      {searchResults.map((p, i) => {
+                        const fullName = [p.personalInfo?.firstName, p.personalInfo?.lastName].filter(Boolean).join(' ') || p.patientName || '—';
+                        const phone = p.personalInfo?.phone || '—';
+                        return (
+                          <div key={p.patientId || i}
+                            onClick={() => handleSelectSearchResult(p)}
+                            style={{
+                              padding: '10px 14px', cursor: 'pointer', borderBottom: '1px solid rgba(255,255,255,0.07)',
+                              display: 'flex', flexDirection: 'column', gap: 2,
+                            }}
+                            onMouseEnter={e => e.currentTarget.style.background = 'rgba(60,141,255,0.18)'}
+                            onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+                          >
+                            <span style={{ fontWeight: 700, color: '#fff', fontSize: '0.9rem' }}>{fullName}</span>
+                            <span style={{ fontSize: '0.78rem', color: 'rgba(255,255,255,0.6)' }}>
+                              ID: {p.patientId} &nbsp;·&nbsp; 📞 {phone}
+                            </span>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                  {searchLoading && (
+                    <div style={{ position: 'absolute', right: 14, top: '50%', transform: 'translateY(-50%)', color: '#3C8DFF', fontSize: '0.8rem' }}>
+                      Searching…
+                    </div>
+                  )}
                 </div>
 
                 {/* Get Details Button */}

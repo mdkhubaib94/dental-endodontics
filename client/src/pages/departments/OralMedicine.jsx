@@ -25,8 +25,19 @@ const INITIAL_FORM = {
   personalDiet: '', personalSleep: '', oralHygieneHabits: '',
   familyHistory: '', hereditaryDiseases: '', similarComplaintsInFamily: '', systemicIllnesses: '',
   generalExamination: '',
+  // Vitals
+  bloodPressure: '', temperature: '', weight: '', height: '',
+  // Constitutional & other signs
   built: '', nourishment: '', pallor: '', icterus: '', cyanosis: '',
   clubbing: '', edema: '', lymphadenopathy: '', vitalSigns: '',
+  // Clinical Findings — Extra Oral
+  extraOralFacialSymmetry: '', extraOralSkinColor: '', extraOralSwelling: '', extraOralScar: '', extraOralSinus: '',
+  // Clinical Findings — Intra Oral
+  intraOralMucosa: '', intraOralGingiva: '', intraOralTongue: '', intraOralPalate: '', intraOralFloor: '',
+  // Clinical Findings — TMJ
+  tmjTenderness: '', tmjClickingSound: '', tmjMouthOpening: '', tmjDeviation: '',
+  // Clinical Findings — Lymph Nodes
+  lymphNodeSite: '', lymphNodeSize: '', lymphNodeConsistency: '', lymphNodeTenderness: '', lymphNodeMobility: '',
   cns: '', cvs: '', respiratory: '', gastrointestinal: '', genitoUrinary: '', skeletal: '',
   facialSymmetry: '', facialProfile: '',
   earNoseEyes: '',
@@ -360,6 +371,17 @@ const OralMedicine = () => {
       <input type="checkbox" checked={form[field]} onChange={e => set(field, e.target.checked)} />{label}
     </label>
   );
+  // Dropdown helper: sel(field, options, placeholder)
+  const sel = (field, options, placeholder = 'Select...') => (
+    <select className="omr-select" value={form[field]} onChange={e => set(field, e.target.value)}>
+      <option value="">{placeholder}</option>
+      {options.map(opt => (
+        typeof opt === 'string'
+          ? <option key={opt} value={opt}>{opt}</option>
+          : <option key={opt.value} value={opt.value}>{opt.label}</option>
+      ))}
+    </select>
+  );
   const inv = (key, label) => (
     <div className="omr-inv-item" key={key}>
       <label className="omr-inv-chk-label">
@@ -441,6 +463,159 @@ const OralMedicine = () => {
       <p className="omr-section-title">CLINICAL EXAMINATION</p>
       <p className="omr-section-title" style={{ marginTop: 0 }}>GENERAL EXAMINATION:</p>
       {ta('generalExamination', 4)}
+
+      {/* ── VITALS ── */}
+      <p className="omr-subsection-title">VITALS:</p>
+      <div className="omr-vitals-grid">
+        <div className="omr-vital-card">
+          <label className="omr-vital-label">Blood Pressure</label>
+          <div className="omr-vital-input-wrap">
+            <input className="omr-vital-input" type="text" placeholder="e.g. 120/80"
+              value={form.bloodPressure} onChange={e => set('bloodPressure', e.target.value)} />
+            <span className="omr-vital-unit">mmHg</span>
+          </div>
+        </div>
+        <div className="omr-vital-card">
+          <label className="omr-vital-label">Temperature</label>
+          <div className="omr-vital-input-wrap">
+            <input className="omr-vital-input" type="text" placeholder="e.g. 37.0"
+              value={form.temperature} onChange={e => set('temperature', e.target.value)} />
+            <span className="omr-vital-unit">°C</span>
+          </div>
+        </div>
+        <div className="omr-vital-card">
+          <label className="omr-vital-label">Weight</label>
+          <div className="omr-vital-input-wrap">
+            <input className="omr-vital-input" type="text" placeholder="e.g. 65"
+              value={form.weight} onChange={e => set('weight', e.target.value)} />
+            <span className="omr-vital-unit">kg</span>
+          </div>
+        </div>
+        <div className="omr-vital-card">
+          <label className="omr-vital-label">Height</label>
+          <div className="omr-vital-input-wrap">
+            <input className="omr-vital-input" type="text" placeholder="e.g. 165"
+              value={form.height} onChange={e => set('height', e.target.value)} />
+            <span className="omr-vital-unit">cm</span>
+          </div>
+        </div>
+      </div>
+
+      {/* ── CONSTITUTIONAL & OTHER SIGNS ── */}
+      <p className="omr-subsection-title">CONSTITUTIONAL AND OTHER SIGNS:</p>
+      <div className="omr-const-grid">
+        {[
+          { field: 'built',           label: 'Built',           placeholder: 'e.g. Well built' },
+          { field: 'nourishment',     label: 'Nourishment',     placeholder: 'e.g. Well nourished' },
+          { field: 'pallor',          label: 'Pallor',          placeholder: 'e.g. Absent / Mild' },
+          { field: 'icterus',         label: 'Icterus',         placeholder: 'e.g. Absent / Present' },
+          { field: 'cyanosis',        label: 'Cyanosis',        placeholder: 'e.g. Absent / Central' },
+          { field: 'clubbing',        label: 'Clubbing',        placeholder: 'e.g. Absent / Grade I' },
+          { field: 'edema',           label: 'Edema',           placeholder: 'e.g. Absent / Pitting' },
+          { field: 'lymphadenopathy', label: 'Lymphadenopathy', placeholder: 'e.g. Absent / Present' },
+        ].map(({ field, label, placeholder }) => (
+          <div className="omr-const-card" key={field}>
+            <label className="omr-const-label">{label}</label>
+            <input className="omr-const-input" type="text" placeholder={placeholder}
+              value={form[field]} onChange={e => set(field, e.target.value)} />
+          </div>
+        ))}
+      </div>
+
+      {/* ── CLINICAL FINDINGS ── */}
+      <p className="omr-section-title" style={{ marginTop: 16 }}>CLINICAL FINDINGS:</p>
+
+      {/* Extra Oral Examination */}
+      <p className="omr-subsection-title">Extra Oral Examination:</p>
+      <div className="omr-gen-exam-grid">
+        <div className="omr-gen-exam-field">
+          <label className="omr-item-label">Facial Symmetry:</label>
+          {sel('extraOralFacialSymmetry', ['Symmetrical', 'Asymmetrical — Left side', 'Asymmetrical — Right side'])}
+        </div>
+        <div className="omr-gen-exam-field">
+          <label className="omr-item-label">Skin Color / Texture:</label>
+          {sel('extraOralSkinColor', ['Normal', 'Pigmented', 'Pale', 'Jaundiced', 'Cyanotic', 'Erythematous'])}
+        </div>
+        <div className="omr-gen-exam-field">
+          <label className="omr-item-label">Swelling:</label>
+          {sel('extraOralSwelling', ['Absent', 'Present — Diffuse', 'Present — Localized', 'Present — Bilateral', 'Present — Unilateral'])}
+        </div>
+        <div className="omr-gen-exam-field">
+          <label className="omr-item-label">Scar / Sinus:</label>
+          {sel('extraOralScar', ['Absent', 'Scar present', 'Sinus present', 'Both present'])}
+        </div>
+      </div>
+
+      {/* Intra Oral Findings */}
+      <p className="omr-subsection-title">Intra Oral Findings:</p>
+      <div className="omr-gen-exam-grid">
+        <div className="omr-gen-exam-field">
+          <label className="omr-item-label">Oral Mucosa:</label>
+          {sel('intraOralMucosa', ['Normal', 'Pale', 'Erythematous', 'Ulcerated', 'Pigmented', 'Leukoplakic'])}
+        </div>
+        <div className="omr-gen-exam-field">
+          <label className="omr-item-label">Gingiva:</label>
+          {sel('intraOralGingiva', ['Normal', 'Inflamed', 'Bleeding on probing', 'Receded', 'Hyperplastic', 'Pale'])}
+        </div>
+        <div className="omr-gen-exam-field">
+          <label className="omr-item-label">Tongue:</label>
+          {sel('intraOralTongue', ['Normal', 'Coated', 'Fissured', 'Geographic', 'Atrophic', 'Macroglossia', 'Microglossia', 'Ulcerated'])}
+        </div>
+        <div className="omr-gen-exam-field">
+          <label className="omr-item-label">Palate:</label>
+          {sel('intraOralPalate', ['Normal', 'High arched', 'Cleft', 'Torus palatinus', 'Ulcerated', 'Erythematous'])}
+        </div>
+        <div className="omr-gen-exam-field">
+          <label className="omr-item-label">Floor of Mouth:</label>
+          {sel('intraOralFloor', ['Normal', 'Swelling present', 'Ulceration present', 'Ranula present', 'Induration present'])}
+        </div>
+      </div>
+
+      {/* TMJ Examination */}
+      <p className="omr-subsection-title">TMJ Examination:</p>
+      <div className="omr-gen-exam-grid">
+        <div className="omr-gen-exam-field">
+          <label className="omr-item-label">Tenderness:</label>
+          {sel('tmjTenderness', ['Absent', 'Present — Unilateral (Left)', 'Present — Unilateral (Right)', 'Present — Bilateral'])}
+        </div>
+        <div className="omr-gen-exam-field">
+          <label className="omr-item-label">Clicking Sound:</label>
+          {sel('tmjClickingSound', ['Absent', 'Present — Opening click', 'Present — Closing click', 'Present — Reciprocal click', 'Crepitus'])}
+        </div>
+        <div className="omr-gen-exam-field">
+          <label className="omr-item-label">Mouth Opening:</label>
+          {sel('tmjMouthOpening', ['Normal (>35 mm)', 'Restricted (25–35 mm)', 'Severely restricted (<25 mm)', 'Trismus'])}
+        </div>
+        <div className="omr-gen-exam-field">
+          <label className="omr-item-label">Deviation on Opening:</label>
+          {sel('tmjDeviation', ['None', 'Deviation to left', 'Deviation to right', 'Deflection to left', 'Deflection to right'])}
+        </div>
+      </div>
+
+      {/* Lymph Nodes Examination */}
+      <p className="omr-subsection-title">Lymph Nodes Examination:</p>
+      <div className="omr-gen-exam-grid">
+        <div className="omr-gen-exam-field">
+          <label className="omr-item-label">Site:</label>
+          {sel('lymphNodeSite', ['Not palpable', 'Submandibular', 'Submental', 'Cervical — Anterior', 'Cervical — Posterior', 'Preauricular', 'Postauricular', 'Occipital', 'Multiple sites'])}
+        </div>
+        <div className="omr-gen-exam-field">
+          <label className="omr-item-label">Size:</label>
+          {sel('lymphNodeSize', ['Not palpable', '<1 cm', '1–2 cm', '>2 cm'])}
+        </div>
+        <div className="omr-gen-exam-field">
+          <label className="omr-item-label">Consistency:</label>
+          {sel('lymphNodeConsistency', ['Not palpable', 'Soft', 'Firm', 'Hard', 'Rubbery'])}
+        </div>
+        <div className="omr-gen-exam-field">
+          <label className="omr-item-label">Tenderness:</label>
+          {sel('lymphNodeTenderness', ['Not palpable', 'Non-tender', 'Tender'])}
+        </div>
+        <div className="omr-gen-exam-field">
+          <label className="omr-item-label">Mobility:</label>
+          {sel('lymphNodeMobility', ['Not palpable', 'Mobile', 'Fixed', 'Matted'])}
+        </div>
+      </div>
 
       <p className="omr-subsection-title">REVIEW OF SYSTEMS:</p>
       <p className="omr-item-label">1. CENTRAL NERVOUS SYSTEM:</p>{ta('cns', 2)}
@@ -696,25 +871,30 @@ const OralMedicine = () => {
         {pages[currentPage]()}
       </div>
 
-      {/* Navigation buttons (matches Prosthodontics) */}
+      {/* Navigation buttons */}
       <div className="omr-submit-bar">
+        {/* Left side: Back to previous page (always) */}
+        <button type="button" className="omr-btn-back" onClick={() => navigate(-1)}>
+          ← Back
+        </button>
+
+        {/* Center-left: Previous page (only when not on first page) */}
         {currentPage > 0 && (
-          <button type="button" className="omr-btn-back" onClick={handlePrev}>
+          <button type="button" className="omr-btn-prev" onClick={handlePrev}>
             ← Previous
           </button>
         )}
+
+        {/* Right side: Next page or Submit */}
         {currentPage < TOTAL_PAGES - 1 ? (
           <button type="button" className="omr-btn-submit" onClick={handleNext}>
             Next →
           </button>
         ) : (
           <button type="button" className="omr-btn-submit" onClick={handleSubmit} disabled={submitting}>
-            {submitting ? 'Submitting...' : 'Submit Case Sheet'}
+            {submitting ? 'Submitting...' : 'Submit Case Sheet ✓'}
           </button>
         )}
-        <button type="button" className="omr-btn-back" onClick={() => navigate(-1)}>
-          ← Back
-        </button>
       </div>
     </div>
   );

@@ -40,6 +40,38 @@ const DoctorProfile = () => {
     return roleLabelMap[normalizedRole] || "";
   };
 
+  const DEPT_LABEL_MAP = {
+    oral: 'Oral Medicine and Radiology',
+    oralmedicine: 'Oral Medicine and Radiology',
+    oralmedicineandradiology: 'Oral Medicine and Radiology',
+    oralmedicineradiology: 'Oral Medicine and Radiology',
+    oralandmaxillofacial: 'Oral and Maxillofacial Surgery',
+    oralandmaxillofacialsurgery: 'Oral and Maxillofacial Surgery',
+    pedodontics: 'Pedodontics',
+    prosthodontics: 'Prosthodontics',
+    periodontics: 'Periodontics',
+    conservative: 'Conservative Dentistry and Endodontics',
+    conservativedentistry: 'Conservative Dentistry and Endodontics',
+    endodontics: 'Conservative Dentistry and Endodontics',
+    implant: 'Implantology',
+    implantology: 'Implantology',
+    general: 'General Dentistry',
+    generaldentistry: 'General Dentistry',
+  };
+
+  const formatDeptLabel = (value) => {
+    const raw = String(value || '').trim();
+    if (!raw) return '';
+    const key = raw.toLowerCase().replace(/[\s_]+/g, '');
+    if (DEPT_LABEL_MAP[key]) return DEPT_LABEL_MAP[key];
+    const small = new Set(['and', 'of', 'the', 'in', 'for', 'or']);
+    return raw.split(/\s+/).map((word, i) => {
+      if (!word) return word;
+      if (i > 0 && small.has(word.toLowerCase())) return word.toLowerCase();
+      return word.charAt(0).toUpperCase() + word.slice(1);
+    }).join(' ');
+  };
+
   useEffect(() => {
     const token = localStorage.getItem("token");
 
@@ -262,7 +294,7 @@ const DoctorProfile = () => {
               {isEditing ? (
                 <input name="department" value={doctor.department} onChange={handleChange} className="google-input" />
               ) : (
-                <span className="value">{doctor.department || "-"}</span>
+                <span className="value">{formatDeptLabel(doctor.department) || "-"}</span>
               )}
             </div>
 

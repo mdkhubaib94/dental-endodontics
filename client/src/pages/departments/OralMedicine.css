@@ -53,11 +53,7 @@
   to   { opacity: 1; transform: translateY(0); }
 }
 
-/* ── Allergy alert — fixed top banner (matches Pedodontics exactly) ── */
-@keyframes allergyTextFlow {
-  0%   { transform: translateX(-100%); }
-  100% { transform: translateX(100vw); }
-}
+/* ── Allergy alert — fixed top banner ── */
 
 .allergy-alert {
   position: fixed;
@@ -89,8 +85,8 @@
 .allergy-alert .allergy-flow-window {
   flex: 1;
   min-width: 0;
-  overflow: hidden;
-  white-space: nowrap;
+  overflow: visible;
+  white-space: normal;
 }
 
 .allergy-alert #allergyMessage {
@@ -99,7 +95,7 @@
   padding-right: 2rem;
   color: #111827;
   font-weight: 600;
-  animation: allergyTextFlow 10s linear infinite;
+  font-size: 0.9rem;
 }
 
 .allergy-alert .close-btn {
@@ -436,49 +432,75 @@
   width: 90%;
   max-width: 900px;
   display: flex;
-  gap: 14px;
-  justify-content: center;
-  margin-top: 24px;
+  gap: 12px;
+  justify-content: flex-start;
+  align-items: center;
+  margin-top: 28px;
   flex-wrap: wrap;
 }
 
-/* Next / Submit button — white with blue text (matches other depts) */
+/* Push Next/Submit to the far right */
 .omr-btn-submit {
-  padding: 12px 36px;
-  background-color: #ffffff;
-  color: #26286b;
+  margin-left: auto;
+  padding: 13px 40px;
+  background: linear-gradient(135deg, #1d4ed8 0%, #26286b 100%);
+  color: #ffffff;
   font-size: 0.95rem;
   font-weight: 700;
   font-family: 'Inter', Arial, sans-serif;
   border: none;
-  border-radius: 8px;
+  border-radius: 10px;
   cursor: pointer;
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.35);
+  box-shadow: 0 4px 14px rgba(29, 78, 216, 0.45);
   transition: background 0.2s, transform 0.15s, box-shadow 0.2s;
-  letter-spacing: 0.3px;
+  letter-spacing: 0.4px;
 }
 .omr-btn-submit:hover:not(:disabled) {
-  background-color: #e0e0e0;
-  box-shadow: 0 6px 14px rgba(0, 0, 0, 0.45);
-  transform: translateY(-1px);
+  background: linear-gradient(135deg, #1e40af 0%, #1e1f5e 100%);
+  box-shadow: 0 6px 18px rgba(29, 78, 216, 0.55);
+  transform: translateY(-2px);
 }
 .omr-btn-submit:disabled { opacity: 0.55; cursor: not-allowed; }
 
-/* Back / Previous button */
+/* ← Back — ghost style, leftmost */
 .omr-btn-back {
+  padding: 12px 24px;
+  background-color: transparent;
+  color: #ffffff;
+  font-size: 0.9rem;
+  font-weight: 600;
+  font-family: 'Inter', Arial, sans-serif;
+  border: 2px solid rgba(255, 255, 255, 0.45);
+  border-radius: 10px;
+  cursor: pointer;
+  transition: background 0.2s, border-color 0.2s;
+  letter-spacing: 0.3px;
+}
+.omr-btn-back:hover {
+  background-color: rgba(255, 255, 255, 0.12);
+  border-color: rgba(255, 255, 255, 0.75);
+}
+
+/* ← Previous — white filled, sits between Back and Next */
+.omr-btn-prev {
   padding: 12px 28px;
   background-color: #ffffff;
   color: #26286b;
-  font-size: 0.95rem;
-  font-weight: 600;
+  font-size: 0.9rem;
+  font-weight: 700;
   font-family: 'Inter', Arial, sans-serif;
   border: none;
-  border-radius: 8px;
+  border-radius: 10px;
   cursor: pointer;
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
-  transition: background 0.2s;
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.25);
+  transition: background 0.2s, transform 0.15s, box-shadow 0.2s;
+  letter-spacing: 0.3px;
 }
-.omr-btn-back:hover { background-color: #e0e0e0; }
+.omr-btn-prev:hover {
+  background-color: #e8eaf6;
+  box-shadow: 0 5px 14px rgba(0, 0, 0, 0.3);
+  transform: translateY(-1px);
+}
 
 /* ── X-ray preview ── */
 .xray-preview-container {
@@ -567,4 +589,186 @@
   color: #ffffff;
   font-weight: 600;
   font-size: 0.85rem;
+}
+
+/* ── General Examination — dropdown grid ── */
+.omr-gen-exam-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 12px 20px;
+  margin-bottom: 16px;
+}
+
+.omr-gen-exam-field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.omr-gen-exam-field .omr-item-label {
+  margin: 0;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: #c7d2fe;
+}
+
+/* ── Select / Dropdown ── */
+.omr-select {
+  width: 100%;
+  padding: 7px 10px;
+  border-radius: 6px;
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  background: rgba(255, 255, 255, 0.1);
+  color: #ffffff;
+  font-size: 0.85rem;
+  font-family: 'Inter', Arial, sans-serif;
+  cursor: pointer;
+  appearance: auto;
+  transition: border-color 0.2s, background 0.2s;
+}
+
+.omr-select:focus {
+  outline: none;
+  border-color: #818cf8;
+  background: rgba(255, 255, 255, 0.18);
+}
+
+.omr-select option {
+  background: #1e1b4b;
+  color: #ffffff;
+}
+
+/* ══════════════════════════════════════════
+   VITALS — individual cards
+══════════════════════════════════════════ */
+.omr-vitals-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: 14px;
+  margin-bottom: 20px;
+}
+
+.omr-vital-card {
+  background: rgba(255, 255, 255, 0.07);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 10px;
+  padding: 12px 12px 10px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  transition: border-color 0.2s, background 0.2s;
+}
+
+.omr-vital-card:focus-within {
+  border-color: #818cf8;
+  background: rgba(129, 140, 248, 0.12);
+}
+
+.omr-vital-icon {
+  display: none;
+}
+
+.omr-vital-label {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: #c7d2fe;
+  text-align: center;
+  letter-spacing: 0.3px;
+  text-transform: uppercase;
+}
+
+.omr-vital-input-wrap {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  width: 100%;
+}
+
+.omr-vital-input {
+  flex: 1;
+  min-width: 0;
+  padding: 6px 8px;
+  border-radius: 6px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  background: rgba(255, 255, 255, 0.1);
+  color: #ffffff;
+  font-size: 0.9rem;
+  font-family: 'Inter', Arial, sans-serif;
+  text-align: center;
+  transition: border-color 0.2s;
+}
+
+.omr-vital-input::placeholder {
+  color: rgba(255, 255, 255, 0.35);
+  font-size: 0.78rem;
+}
+
+.omr-vital-input:focus {
+  outline: none;
+  border-color: #818cf8;
+}
+
+.omr-vital-unit {
+  font-size: 0.7rem;
+  color: #a5b4fc;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+/* ══════════════════════════════════════════
+   CONSTITUTIONAL & OTHER SIGNS — input cards
+══════════════════════════════════════════ */
+.omr-const-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.omr-const-card {
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 8px;
+  padding: 10px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  transition: border-color 0.2s, background 0.2s;
+}
+
+.omr-const-card:focus-within {
+  border-color: #818cf8;
+  background: rgba(129, 140, 248, 0.1);
+}
+
+.omr-const-label {
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: #c7d2fe;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+}
+
+.omr-const-input {
+  width: 100%;
+  padding: 6px 8px;
+  border-radius: 6px;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  background: rgba(255, 255, 255, 0.09);
+  color: #ffffff;
+  font-size: 0.85rem;
+  font-family: 'Inter', Arial, sans-serif;
+  box-sizing: border-box;
+  transition: border-color 0.2s;
+}
+
+.omr-const-input::placeholder {
+  color: rgba(255, 255, 255, 0.3);
+  font-size: 0.78rem;
+}
+
+.omr-const-input:focus {
+  outline: none;
+  border-color: #818cf8;
 }

@@ -1057,3 +1057,196 @@ select.pg-select-doctor {
   min-width: 180px;
   flex: 0 1 180px;
 }
+
+/* ══════════════════════════════════════════════════════
+   GENERAL EXAMINATION — Vitals & Constitutional Signs
+   (DoctorDashboard patient details form)
+══════════════════════════════════════════════════════ */
+
+.dd-exam-section-label {
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: #c7d2fe;
+  margin: 18px 0 10px;
+  padding-left: 2px;
+  letter-spacing: 0.2px;
+  border-left: 3px solid #818cf8;
+  padding-left: 10px;
+}
+
+/* ── Vitals grid ── */
+.dd-vitals-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+  gap: 12px;
+  margin-bottom: 22px;
+}
+
+.dd-vital-card {
+  background: rgba(255, 255, 255, 0.07);
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 12px;
+  padding: 12px 10px 10px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  transition: border-color 0.2s, background 0.2s, transform 0.15s;
+}
+
+.dd-vital-card:focus-within {
+  border-color: #818cf8;
+  background: rgba(129, 140, 248, 0.12);
+  transform: translateY(-1px);
+}
+
+.dd-vital-icon {
+  display: none;
+}
+
+.dd-vital-label {
+  font-size: 0.68rem;
+  font-weight: 700;
+  color: #c7d2fe;
+  text-align: center;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+}
+
+.dd-vital-input-wrap {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  width: 100%;
+}
+
+.dd-vital-input {
+  flex: 1;
+  min-width: 0;
+  padding: 6px 6px;
+  border-radius: 6px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  background: rgba(255, 255, 255, 0.1);
+  color: #ffffff;
+  font-size: 0.9rem;
+  text-align: center;
+  font-family: inherit;
+  transition: border-color 0.2s;
+}
+
+.dd-vital-input::placeholder {
+  color: rgba(255, 255, 255, 0.3);
+  font-size: 0.75rem;
+}
+
+.dd-vital-input:focus {
+  outline: none;
+  border-color: #818cf8;
+}
+
+.dd-vital-unit {
+  font-size: 0.62rem;
+  color: #a5b4fc;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+/* ── Constitutional & Other Signs grid ── */
+.dd-const-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
+  gap: 10px;
+  margin-bottom: 22px;
+}
+
+.dd-const-card {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.13);
+  border-radius: 8px;
+  padding: 10px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  transition: border-color 0.2s, background 0.2s;
+}
+
+.dd-const-card:focus-within {
+  border-color: #818cf8;
+  background: rgba(129, 140, 248, 0.09);
+}
+
+.dd-const-label {
+  font-size: 0.68rem;
+  font-weight: 700;
+  color: #c7d2fe;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+}
+
+.dd-const-input {
+  width: 100%;
+  padding: 6px 8px;
+  border-radius: 6px;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  background: rgba(255, 255, 255, 0.09);
+  color: #ffffff;
+  font-size: 0.85rem;
+  font-family: inherit;
+  box-sizing: border-box;
+  transition: border-color 0.2s;
+}
+
+.dd-const-input::placeholder {
+  color: rgba(255, 255, 255, 0.28);
+  font-size: 0.76rem;
+}
+
+.dd-const-input:focus {
+  outline: none;
+  border-color: #818cf8;
+}
+
+/* ── Clinical Findings grid ── */
+.dd-clinical-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 14px;
+  margin-bottom: 22px;
+}
+
+.dd-clinical-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.dd-clinical-label {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: #c7d2fe;
+  letter-spacing: 0.2px;
+}
+
+.dd-clinical-ta {
+  width: 100%;
+  padding: 8px 10px;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  background: rgba(255, 255, 255, 0.07);
+  color: #ffffff;
+  font-size: 0.85rem;
+  font-family: inherit;
+  resize: vertical;
+  box-sizing: border-box;
+  transition: border-color 0.2s;
+}
+
+.dd-clinical-ta::placeholder {
+  color: rgba(255, 255, 255, 0.28);
+  font-size: 0.78rem;
+}
+
+.dd-clinical-ta:focus {
+  outline: none;
+  border-color: #818cf8;
+}
