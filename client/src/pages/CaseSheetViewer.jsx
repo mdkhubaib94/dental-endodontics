@@ -30,7 +30,8 @@ const CaseSheetViewer = () => {
         `/api/fpd/${caseId}`,
         `/api/implant/${caseId}`,
         `/api/ImplantPatient/${caseId}`,
-        `/api/partial/${caseId}`
+        `/api/partial/${caseId}`,
+        `/api/oral/${caseId}`
       ];
 
       const mapping = {
@@ -39,7 +40,8 @@ const CaseSheetViewer = () => {
         "/api/fpd/": "fpd",
         "/api/implant/": "implant",
         "/api/ImplantPatient/": "implant_patient",
-        "/api/partial/": "partial_denture"
+        "/api/partial/": "partial_denture",
+        "/api/oral/": "oral"
       };
 
       let data = null;
