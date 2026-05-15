@@ -6,6 +6,7 @@ import { useAuth } from './context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import BillX from './casesheetBilling';
 import { API_BASE_URL } from '../config/api';
+import jsPDF from 'jspdf';
 
 const normalizeListResponse = (payload) => {
   if (Array.isArray(payload)) return payload;
@@ -50,6 +51,7 @@ const CampDashboard = () => {
   const [institutionInfo, setInstitutionInfo] = useState({
     campDate: '', institutionName: '', institutionAddress: ''
   });
+  const [campStudents, setCampStudents] = useState([]); // students added for the current camp session
   const [billingRecords, setBillingRecords] = useState([]);
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [paymentData, setPaymentData] = useState({ amount: '', paymentMethod: 'cash', description: '' });
@@ -178,6 +180,7 @@ const CampDashboard = () => {
   };
 
   const handleClearForm = () => {
+    // Clear both camp info and student fields
     setNewPatient({ 
       patientId: '', firstName: '', lastName: '', email: '', phone: '', 
       dob: '', gender: '', address: '', chiefComplaint: '', maritalStatus: '', 
@@ -188,6 +191,138 @@ const CampDashboard = () => {
     });
     setSearchTerm('');
     setIsWalkInId(false);
+  };
+
+  const clearStudentFields = () => {
+    setNewPatient({ 
+      patientId: '', firstName: '', lastName: '', email: '', phone: '', 
+      dob: '', gender: '', address: '', chiefComplaint: '', maritalStatus: '', 
+      pregnancyStatus: '' 
+    });
+    setSearchTerm('');
+    setIsWalkInId(false);
+  };
+
+  const downloadCampPdf = () => {
+    const doc = new jsPDF('p', 'mm', 'a4');
+    const pageWidth = doc.internal.pageSize.getWidth();
+    const pageHeight = doc.internal.pageSize.getHeight();
+    const margin = 12;
+    const contentWidth = pageWidth - margin * 2;
+
+    const title = 'Department of Public Health Dentistry';
+    const campDateText = institutionInfo.campDate ? new Date(institutionInfo.campDate).toLocaleDateString('en-GB') : '-';
+    const institutionNameText = institutionInfo.institutionName || '-';
+    const institutionAddressText = institutionInfo.institutionAddress || '-';
+
+    let y = 16;
+
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(16);
+    doc.text(title, pageWidth / 2, y, { align: 'center' });
+
+    y += 9;
+    doc.setFontSize(12);
+    doc.text('Camp Report', pageWidth / 2, y, { align: 'center' });
+
+    y += 10;
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(11);
+    doc.text('Date of Camp:', margin, y);
+    doc.setFont('helvetica', 'normal');
+    doc.text(campDateText, margin + 32, y);
+
+    y += 7;
+    doc.setFont('helvetica', 'bold');
+    doc.text('Institution Name:', margin, y);
+    doc.setFont('helvetica', 'normal');
+    doc.text(institutionNameText, margin + 36, y, { maxWidth: contentWidth - 36 });
+
+    y += 7;
+    doc.setFont('helvetica', 'bold');
+    doc.text('Institution Address:', margin, y);
+    doc.setFont('helvetica', 'normal');
+    const addressLines = doc.splitTextToSize(institutionAddressText, contentWidth - 42);
+    doc.text(addressLines, margin + 42, y);
+    y += Math.max(addressLines.length * 6, 7);
+
+    y += 4;
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(12);
+    doc.text('Student Attendance', margin, y);
+    y += 6;
+
+    const columns = [
+      { header: 'Patient ID', width: 28 },
+      { header: 'Student Name', width: 52 },
+      { header: 'Date of Birth', width: 28 },
+      { header: 'Gender', width: 24 },
+      { header: 'Phone', width: 38 },
+    ];
+    const tableWidth = columns.reduce((sum, column) => sum + column.width, 0);
+    const startX = margin;
+    const rowHeight = 8;
+
+    const drawTableHeader = (currentY) => {
+      let x = startX;
+      doc.setDrawColor(120, 120, 120);
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(10);
+      doc.setTextColor(0, 0, 0);
+      columns.forEach((column) => {
+       
+          doc.setFillColor(232, 232, 232);
+          doc.rect(x, currentY, column.width, rowHeight, 'FD');
+        doc.text(column.header, x + 2, currentY + 5.5);
+        x += column.width;
+      });
+      return currentY + rowHeight;
+    };
+
+    const drawRow = (student, currentY) => {
+      const values = [
+        student.patientId || '-',
+        `${student.personalInfo?.firstName || ''}${student.personalInfo?.lastName ? ` ${student.personalInfo.lastName}` : ''}`.trim() || '-',
+        student.personalInfo?.dateOfBirth ? new Date(student.personalInfo.dateOfBirth).toLocaleDateString('en-GB') : '-',
+        student.personalInfo?.gender || '-',
+        student.personalInfo?.phone || '-',
+      ];
+
+      const wrapped = values.map((value, index) => doc.splitTextToSize(String(value), columns[index].width - 4));
+      const cellHeight = Math.max(...wrapped.map((lines) => lines.length)) * 5 + 3;
+
+      if (currentY + cellHeight > pageHeight - 16) {
+        doc.addPage();
+        currentY = 16;
+        currentY = drawTableHeader(currentY);
+      }
+
+      let x = startX;
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(9);
+      columns.forEach((column, index) => {
+        doc.rect(x, currentY, column.width, cellHeight);
+        doc.text(wrapped[index], x + 2, currentY + 5);
+        x += column.width;
+      });
+
+      return currentY + cellHeight;
+    };
+
+    y = drawTableHeader(y);
+
+    if (campStudents.length === 0) {
+      doc.rect(startX, y, tableWidth, rowHeight);
+      doc.text('No students added yet for this camp.', startX + 2, y + 5.5);
+      y += rowHeight;
+    } else {
+      campStudents.forEach((student) => {
+        y = drawRow(student, y);
+      });
+    }
+
+    const safeDate = campDateText === '-' ? 'camp-report' : campDateText.replace(/[\/]/g, '-');
+    doc.save(`${safeDate}-camp-report.pdf`);
   };
 
   const handleSelectPatient = async (patient) => {
@@ -367,9 +502,11 @@ const CampDashboard = () => {
       
       // Add to patients list so it appears in patient management
       setPatients(prev => [...prev, createdPatient]);
-      
-      // Clear the form
-      handleClearForm();
+      // Add to the current camp's student list (keeps camp header fields intact)
+      setCampStudents(prev => [...prev, createdPatient]);
+
+      // Clear only the student input fields so camp info stays
+      clearStudentFields();
       
       // Show success message
       const account = result.account || {};
@@ -420,7 +557,7 @@ const CampDashboard = () => {
           <div className="chief-brand">
             <img className="chief-brand-logo" src="/images/logo.png" alt="Logo"
               onError={(e) => { e.target.onerror = null; e.target.style.display = 'none'; }} />
-            <div className="chief-brand-title">Camp Dashboard</div>
+            <div className="chief-brand-title">Public Health Dentistry</div>
           </div>
         </div>
         <div className="chief-topbar-right">
@@ -843,6 +980,56 @@ const CampDashboard = () => {
                           {loading ? 'Adding...' : 'Add Student to List'}
                         </button>
                       </form>
+                    </div>
+
+                    {/* Current Camp Student List (preview + export) */}
+                    <div style={{ marginTop: '1.5rem', background: 'rgba(255,255,255,0.04)', padding: '1rem', borderRadius: '8px' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
+                        <div>
+                          <div style={{ fontSize: '1.1rem', fontWeight: 700 }}>Public Health Dentistry</div>
+                          <div style={{ fontSize: '0.95rem', opacity: 0.9 }}>{institutionInfo.campDate ? `Date of Camp: ${new Date(institutionInfo.campDate).toLocaleDateString('en-GB')}` : 'Date of Camp: -'}</div>
+                          <div style={{ fontSize: '0.95rem', opacity: 0.9 }}>{institutionInfo.institutionName || 'Institution Name'}</div>
+                          <div style={{ fontSize: '0.85rem', opacity: 0.8 }}>{institutionInfo.institutionAddress || 'Institution Address'}</div>
+                        </div>
+                        <div style={{ display: 'flex', gap: 8 }}>
+                          <button className="btn-secondary" type="button" onClick={() => { setCampStudents([]); }}>Clear List</button>
+                          <button className="btn-primary" type="button" onClick={() => {
+                            try {
+                              downloadCampPdf();
+                            } catch (err) {
+                              alert('Failed to generate PDF: ' + err.message);
+                            }
+                          }}>Download PDF</button>
+                        </div>
+                      </div>
+
+                      <div>
+                        <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                          <thead>
+                            <tr style={{ textAlign: 'left', borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
+                              <th style={{ padding: '8px' }}>Patient ID</th>
+                              <th style={{ padding: '8px' }}>Student Name</th>
+                              <th style={{ padding: '8px' }}>Date of Birth</th>
+                              <th style={{ padding: '8px' }}>Gender</th>
+                              <th style={{ padding: '8px' }}>Phone</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {campStudents.length === 0 && (
+                              <tr><td colSpan={5} style={{ padding: '12px', color: 'rgba(255,255,255,0.6)' }}>No students added yet for this camp.</td></tr>
+                            )}
+                            {campStudents.map((s, idx) => (
+                              <tr key={s.patientId || idx} style={{ borderBottom: '1px solid rgba(255,255,255,0.03)' }}>
+                                <td style={{ padding: '8px' }}>{s.patientId}</td>
+                                <td style={{ padding: '8px' }}>{(s.personalInfo?.firstName || '') + (s.personalInfo?.lastName ? ` ${s.personalInfo.lastName}` : '')}</td>
+                                <td style={{ padding: '8px' }}>{s.personalInfo?.dateOfBirth ? new Date(s.personalInfo.dateOfBirth).toLocaleDateString('en-GB') : '-'}</td>
+                                <td style={{ padding: '8px' }}>{s.personalInfo?.gender || '-'}</td>
+                                <td style={{ padding: '8px' }}>{s.personalInfo?.phone || '-'}</td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
                     </div>
                   </div>
                 </div>
