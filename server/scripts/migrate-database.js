@@ -1,8 +1,16 @@
 // server/scripts/migrate-database.js
 import mongoose from 'mongoose';
 import dotenv from 'dotenv';
+import { fileURLToPath } from 'url';
+import { dirname, resolve } from 'path';
 
-dotenv.config();
+const __filename = fileURLToPath(import.meta.url);
+const __dirname  = dirname(__filename);
+
+// Load root .env (two levels up from server/scripts/)
+dotenv.config({ path: resolve(__dirname, '../../.env') });
+// Also try server/.env as fallback
+dotenv.config({ path: resolve(__dirname, '../.env') });
 
 const PRODUCTION_URI = process.env.MONGO_URI_PRODUCTION;
 const DEVELOPMENT_URI = process.env.MONGO_URI;
