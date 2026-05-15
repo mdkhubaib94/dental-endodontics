@@ -338,7 +338,7 @@ const CampDashboard = () => {
           age: calculatedAge || null,
           gender: newPatient.gender || 'Male',
           maritalStatus: newPatient.maritalStatus || 'Single', 
-          address: newPatient.address?.trim() || ''
+          address: institutionInfo.institutionAddress?.trim() || '' // Use institution address as patient address
         },
         institutionInfo: {
           institutionName: institutionInfo.institutionName?.trim() || '',
@@ -563,16 +563,16 @@ const CampDashboard = () => {
                             <div className="detail-row"><span className="label">Phone:</span><span className="value">{selectedPatient.personalInfo?.phone || 'N/A'}</span></div>
                             <div className="detail-row"><span className="label">Date of Birth:</span><span className="value">{selectedPatient.personalInfo?.dateOfBirth ? new Date(selectedPatient.personalInfo.dateOfBirth).toLocaleDateString() : 'N/A'}</span></div>
                             <div className="detail-row"><span className="label">Gender:</span><span className="value">{selectedPatient.personalInfo?.gender || 'N/A'}</span></div>
-                            <div className="detail-row"><span className="label">Address:</span><span className="value">{selectedPatient.personalInfo?.address || 'N/A'}</span></div>
-                            <div className="detail-row"><span className="label">Institution Name:</span><span className="value">{selectedPatient.institutionInfo?.institutionName || 'N/A'}</span></div>
-                            
-                            {/* Additional Institution Information (only show if any data exists) */}
-                            {selectedPatient.institutionInfo && (selectedPatient.institutionInfo.institutionAddress || selectedPatient.institutionInfo.campDate) && (
-                              <>
-                                <div className="detail-row"><span className="label">Institution Address:</span><span className="value">{selectedPatient.institutionInfo?.institutionAddress || 'N/A'}</span></div>
-                                <div className="detail-row"><span className="label">Camp Date:</span><span className="value">{selectedPatient.institutionInfo?.campDate ? new Date(selectedPatient.institutionInfo.campDate).toLocaleDateString() : 'N/A'}</span></div>
-                              </>
-                            )}
+                            <div className="detail-row"><span className="label">Address:</span><span className="value">{(() => {
+                              console.log('Patient Address Debug:', selectedPatient.personalInfo?.address);
+                              console.log('Full Personal Info:', selectedPatient.personalInfo);
+                              return selectedPatient.personalInfo?.address || 'N/A';
+                            })()}</span></div>
+                            <div className="detail-row"><span className="label">Institution Name:</span><span className="value">{(() => {
+                              console.log('Institution Name Debug:', selectedPatient.institutionInfo?.institutionName);
+                              console.log('Full Institution Info:', selectedPatient.institutionInfo);
+                              return selectedPatient.institutionInfo?.institutionName || 'N/A';
+                            })()}</span></div>
                             
                             {selectedPatientBilling.length > 0 && (
                               <div className="detail-row">

@@ -1,0 +1,15 @@
+{
+  "patientId": "C1026",
+  "personalInfo": {
+    "firstName": "Test Student Final",
+    "phone": "9876543666"
+  },
+  "institutionInfo": {
+    "institutionName": "Final Test School",
+    "institutionAddress": "789 Final Test Street, City",
+    "campDate": "2024-12-17"
+  },
+  "status": "active",
+  "walkIn": true,
+  "createAccount": true
+}

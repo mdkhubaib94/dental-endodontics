@@ -151,6 +151,7 @@ router.post('/', async (req, res) => {
     const {
       patientId,
       personalInfo,
+      institutionInfo,
       status = 'active',
       walkIn,
       createAccount = true,
@@ -327,15 +328,23 @@ router.post('/', async (req, res) => {
         ...personalInfo,
         email: normalizedEmail || '',
         phone: normalizedPhone || '',
+        address: institutionInfo?.institutionAddress || personalInfo?.address || '', // Use institution address as patient address
       },
+      institutionInfo: institutionInfo || {
+        institutionName: '',
+        institutionAddress: '',
+        campDate: null
+      },
+      medicalInfo: {},
+      vitals: {},
       status,
       createdAt: new Date(),
       updatedAt: new Date()
     });
 
+    console.log('Patient object before saving:', JSON.stringify(newPatient, null, 2));
     const savedPatient = await newPatient.save();
-
-    console.log('Patient created successfully:', savedPatient.patientId);
+    console.log('Patient saved successfully:', savedPatient.patientId);
 
     res.status(201).json({
       success: true,
