@@ -15,13 +15,12 @@ const router = Router();
 
 const findUserByIdentifier = async (identifier) => {
   const normalizedIdentifier = String(identifier || '').trim();
-  // Escape regex special chars to prevent injection, then match email case-insensitively.
   const escapedIdentifier = normalizedIdentifier.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
   return User.findOne({
     $or: [
-      { email: { $regex: new RegExp(`^${escapedIdentifier}$`, 'i') } },
-      { Identity: normalizedIdentifier },
+      { email: { $regex: new RegExp("^" + escapedIdentifier + "$", "i") } },
+      { Identity: { $regex: new RegExp(`^${escapedIdentifier}$`, 'i') } },
     ],
   });
 };
@@ -123,7 +122,7 @@ router.post('/login/patientlogin', async (req, res) => {
   try {
     let user = await User.findOne({
       $or: [
-        { Identity: normalizedIdentifier },
+        { Identity: { $regex: new RegExp("^" + escapedIdentifier + "$", "i") } },
         { phone: normalizedIdentifier }
       ]
     });
@@ -1738,3 +1737,5 @@ router.patch('/doctor/assigned-pgs/cases/:caseId/approve', auth, requireRole(['d
 });
 
 export default router;
+
+
