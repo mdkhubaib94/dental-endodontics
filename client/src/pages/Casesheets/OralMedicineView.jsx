@@ -86,18 +86,6 @@ const OralMedicineView = ({ caseData: propCaseData }) => {
               {field('OP.NO:', caseData.opNo)}
             </div>
 
-            <div className="form-row-wide">
-              {field('AGE/SEX:', ageSex)}
-              {field('OCCUPATION:', caseData.occupation)}
-            </div>
-
-            <div className="form-row-wide">
-              {field('INCOME:', caseData.income)}
-              {field('RELIGION:', caseData.religion)}
-            </div>
-
-            {area('ADDRESS:', caseData.address)}
-
             <h3>CHIEF COMPLAINT:</h3>
             {area('', caseData.chiefComplaint)}
 
@@ -181,10 +169,8 @@ const OralMedicineView = ({ caseData: propCaseData }) => {
               {area('', caseData.tmjInspection)}
               <h5>- Palpation:</h5>
               {area('', caseData.tmjPalpation)}
-              <h5>- Percussion:</h5>
-              {area('', caseData.tmjPercussion || caseData.tmjPercussionAuscultation)}
-              <h5>- Auscultation:</h5>
-              {area('', caseData.tmjAuscultation)}
+              <h5>- Percussion and Auscultation:</h5>
+              {area('', caseData.tmjPercussionAuscultation || caseData.tmjPercussion)}
             </div>
 
             <h4>e) Lymph Node Examination:</h4>
@@ -335,15 +321,85 @@ const OralMedicineView = ({ caseData: propCaseData }) => {
             {area('', caseData.treatmentPlan)}
             <h3>Prognosis:</h3>
             {area('', caseData.prognosis)}
+            <h3>Follow-up Date:</h3>
+            {field('', caseData.followUpDate ? new Date(caseData.followUpDate).toLocaleDateString() : '')}
             <h3>Follow-up Notes:</h3>
             {area('', caseData.followUpNotes)}
 
-            {(caseData.doctorSignature || caseData.pgSignature) && (
+            {/* Chargeable Investigations */}
+            <h2 style={{ marginTop: 24 }}>Chargeable Investigations:</h2>
+            <div style={{ marginLeft: 8 }}>
+              {[
+                ['chargeBiopsy',              'Biopsy',               'Rs. 250'],
+                ['chargeExfoliativeCytology', 'Exfoliative Cytology', 'Rs. 50'],
+              ].map(([key, label, rate]) => caseData[key] && (
+                <p key={key} style={{ margin: '4px 0' }}>
+                  ✓ <strong>{label}</strong> — {rate}
+                </p>
+              ))}
+
+              {/* X-rays */}
+              {[
+                ['chargeIOPA',              'IOPA',               'Rs. 30'],
+                ['chargeBitewing',          'Bitewing',           'Rs. 30'],
+                ['chargeOcclusal',          'Occlusal',           'Rs. 150'],
+                ['chargeOPGWithFilm',       'OPG with film',      'Rs. 300'],
+                ['chargeOPGWithoutFilm',    'OPG without film',   'Rs. 200'],
+                ['chargeLateralCephalogram','Lateral Cephalogram','Rs. 300'],
+                ['chargeCBCT',              'CBCT',               'Cost yet to be decided'],
+              ].some(([key]) => caseData[key]) && (
+                <p style={{ margin: '8px 0 4px', fontWeight: 600 }}>X-ray Taken:</p>
+              )}
+              {[
+                ['chargeIOPA',              'IOPA',               'Rs. 30'],
+                ['chargeBitewing',          'Bitewing',           'Rs. 30'],
+                ['chargeOcclusal',          'Occlusal',           'Rs. 150'],
+                ['chargeOPGWithFilm',       'OPG with film',      'Rs. 300'],
+                ['chargeOPGWithoutFilm',    'OPG without film',   'Rs. 200'],
+                ['chargeLateralCephalogram','Lateral Cephalogram','Rs. 300'],
+                ['chargeCBCT',              'CBCT',               'Cost yet to be decided'],
+              ].map(([key, label, rate]) => caseData[key] && (
+                <p key={key} style={{ margin: '4px 0', marginLeft: 16 }}>
+                  ✓ <strong>{label}</strong> — {rate}
+                </p>
+              ))}
+
+              {caseData.chargeDescription && (
+                <>
+                  <h3 style={{ marginTop: 12 }}>Description / Remarks:</h3>
+                  {area('', caseData.chargeDescription)}
+                </>
+              )}
+
+              {/* Show a dash if nothing was selected */}
+              {![
+                'chargeBiopsy','chargeExfoliativeCytology','chargeIOPA','chargeBitewing',
+                'chargeOcclusal','chargeOPGWithFilm','chargeOPGWithoutFilm',
+                'chargeLateralCephalogram','chargeCBCT',
+              ].some(k => caseData[k]) && !caseData.chargeDescription && (
+                <p style={{ color: '#888' }}>—</p>
+              )}
+            </div>
+
+            {(caseData.doctorSignature || caseData.pgSignature || caseData.digitalSignature) && (
               <>
                 <h3>Signatures:</h3>
                 <div className="form-row-wide">
-                  {field('Doctor Signature:', caseData.doctorSignature)}
-                  {field('PG Student Signature:', caseData.pgSignature)}
+                  {(caseData.doctorSignature || caseData.digitalSignature) && (
+                    <div className="form-group-casesheet">
+                      <label>Doctor Signature:</label>
+                      {caseData.digitalSignature ? (
+                        <img
+                          src={caseData.digitalSignature}
+                          alt="Doctor signature"
+                          style={{ maxHeight: 80, border: '1px solid #ccc', borderRadius: 4, marginTop: 4 }}
+                        />
+                      ) : (
+                        <div className="readonly-field">{caseData.doctorSignature}</div>
+                      )}
+                    </div>
+                  )}
+                  {caseData.pgSignature && field('PG Student Signature:', caseData.pgSignature)}
                 </div>
               </>
             )}

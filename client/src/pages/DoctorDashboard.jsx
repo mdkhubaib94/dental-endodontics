@@ -57,6 +57,10 @@ const DoctorDashboard = () => {
     maritalStatus: '',
     preferredLanguage: '',
     otherLanguage: '',
+    occupation: '',
+    income: '',
+    religion: '',
+    address: '',
     chiefComplaint: '',
     currentMedications: 'None',
     knownAllergies: 'None',
@@ -645,6 +649,10 @@ const DoctorDashboard = () => {
       maritalStatus: patientData.personalInfo?.maritalStatus || '',
       preferredLanguage: isOtherLanguage ? 'Other' : preferredLanguage,
       otherLanguage: isOtherLanguage ? preferredLanguage : '',
+      occupation: patientData.personalInfo?.occupation || '',
+      income: patientData.personalInfo?.income || '',
+      religion: patientData.personalInfo?.religion || '',
+      address: patientData.personalInfo?.address || '',
       chiefComplaint: patientData.medicalInfo?.chiefComplaint || '',
       currentMedications: patientData.medicalInfo?.currentMedications?.join(', ') || 'None',
       knownAllergies: patientData.medicalInfo?.knownAllergies?.join(', ') || 'None',
@@ -919,7 +927,11 @@ const DoctorDashboard = () => {
           age: parseInt(formData.age) || 0,
           gender: formData.gender,
           maritalStatus: formData.maritalStatus,
-          preferredLanguage: formData.preferredLanguage === 'Other' ? formData.otherLanguage : formData.preferredLanguage
+          preferredLanguage: formData.preferredLanguage === 'Other' ? formData.otherLanguage : formData.preferredLanguage,
+          occupation: formData.occupation || '',
+          income: formData.income || '',
+          religion: formData.religion || '',
+          address: formData.address || '',
         },
         medicalInfo: {
           chiefComplaint: formData.chiefComplaint,
@@ -3308,6 +3320,59 @@ const DoctorDashboard = () => {
               </div>
             )}
 
+            {/* Occupation, Income, Religion, Address */}
+            <h3>Additional Information</h3>
+
+            <div className="form-row">
+              <div className="input-group">
+                <label htmlFor="occupation">Occupation</label>
+                <input
+                  type="text"
+                  id="occupation"
+                  name="occupation"
+                  value={formData.occupation}
+                  onChange={handleInputChange}
+                  placeholder="e.g. Teacher, Engineer"
+                />
+              </div>
+              <div className="input-group">
+                <label htmlFor="income">Income</label>
+                <input
+                  type="text"
+                  id="income"
+                  name="income"
+                  value={formData.income}
+                  onChange={handleInputChange}
+                  placeholder="e.g. 30,000 / month"
+                />
+              </div>
+            </div>
+
+            <div className="form-row">
+              <div className="input-group">
+                <label htmlFor="religion">Religion</label>
+                <input
+                  type="text"
+                  id="religion"
+                  name="religion"
+                  value={formData.religion}
+                  onChange={handleInputChange}
+                  placeholder="e.g. Hindu, Christian"
+                />
+              </div>
+              <div className="input-group">
+                <label htmlFor="address">Address</label>
+                <input
+                  type="text"
+                  id="address"
+                  name="address"
+                  value={formData.address}
+                  onChange={handleInputChange}
+                  placeholder="Full address"
+                />
+              </div>
+            </div>
+
             {/* Patient Case Entry Section */}
             <h3>Patient Case Entry - Chief Complaint & History</h3>
 
@@ -3329,6 +3394,10 @@ const DoctorDashboard = () => {
               </select>
               {fieldErrors.chiefComplaint && <div className="error-message">{fieldErrors.chiefComplaint}</div>}
             </div>
+
+            {/* HPI, Past Medical History, Personal Habits, Medical History
+                — hidden for Oral Medicine department (captured in the oral case sheet) */}
+            {!String(doctorDepartmentLabel).toLowerCase().replace(/[\s_]+/g, '').includes('oral') && (<>
 
             {/* HPI Checkboxes */}
             <div className="input-group">
@@ -3475,6 +3544,8 @@ const DoctorDashboard = () => {
                 onChange={handleInputChange}
               />
             </div>
+
+            </>)}
 
             {/* Vitals Section */}
             <h3>Other Information</h3>

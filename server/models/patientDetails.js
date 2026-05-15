@@ -71,6 +71,21 @@ const patientDetailsSchema = new Schema({
       trim: true,
       default: ''
     },
+    occupation: {
+      type: String,
+      trim: true,
+      default: ''
+    },
+    income: {
+      type: String,
+      trim: true,
+      default: ''
+    },
+    religion: {
+      type: String,
+      trim: true,
+      default: ''
+    },
     emergencyContact: {
       type: String,
       trim: true,

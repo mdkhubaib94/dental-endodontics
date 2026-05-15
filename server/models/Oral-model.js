@@ -160,6 +160,18 @@ const OralCaseSchema = new mongoose.Schema(
     complications:       { type: String, trim: true },
     postOpInstructions:  { type: String, trim: true },
 
+    // ── Chargeable Investigations ─────────────────────────────────────────
+    chargeBiopsy:              { type: Boolean, default: false },
+    chargeExfoliativeCytology: { type: Boolean, default: false },
+    chargeIOPA:                { type: Boolean, default: false },
+    chargeBitewing:            { type: Boolean, default: false },
+    chargeOcclusal:            { type: Boolean, default: false },
+    chargeOPGWithFilm:         { type: Boolean, default: false },
+    chargeOPGWithoutFilm:      { type: Boolean, default: false },
+    chargeLateralCephalogram:  { type: Boolean, default: false },
+    chargeCBCT:                { type: Boolean, default: false },
+    chargeDescription:         { type: String, trim: true },
+
     // ── Follow-up ─────────────────────────────────────────────────────────
     followUpDate:  { type: Date },
     followUpNotes: { type: String, trim: true },

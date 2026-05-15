@@ -52,6 +52,17 @@ const INITIAL_FORM = {
   invHistopathological: false, invHistopathologicalNotes: '',
   invOthers: false, invOthersNotes: '',
   treatmentPlan: '', prognosis: '',
+  // Chargeable investigations
+  chargeBiopsy: false,
+  chargeExfoliativeCytology: false,
+  chargeIOPA: false,
+  chargeBitewing: false,
+  chargeOcclusal: false,
+  chargeOPGWithFilm: false,
+  chargeOPGWithoutFilm: false,
+  chargeLateralCephalogram: false,
+  chargeCBCT: false,
+  chargeDescription: '',
   digitalSignature: null,
 };
 
@@ -250,8 +261,6 @@ const OralMedicine = () => {
   const validate = () => {
     const e = {};
     if (!form.patientName.trim())    e.patientName    = 'Patient name is required.';
-    if (!form.age)                   e.age            = 'Age is required.';
-    if (!form.sex)                   e.sex            = 'Sex is required.';
     if (!form.chiefComplaint.trim()) e.chiefComplaint = 'Chief complaint is required.';
     setErrors(e);
     return Object.keys(e).length === 0;
@@ -269,6 +278,7 @@ const OralMedicine = () => {
   const handleSubmit = async () => {
     if (!validate()) { showToast('Please fill required fields.', 'error'); return; }
     if (!patientId)  { showToast('No patient loaded. Go back and load a patient first.', 'error'); return; }
+    if (!doctorId)   { showToast('Doctor identity not found. Please log in again.', 'error'); return; }
     if (!form.digitalSignature) {
       showMessageBox('Error', 'Please upload your digital signature before submitting.');
       return;
@@ -391,33 +401,6 @@ const OralMedicine = () => {
           <div className="omr-field-inline"><span className="omr-lbl">OP.NO:</span>{ui('opNo')}</div>
         </div>
         {errors.patientName && <p className="omr-error">{errors.patientName}</p>}
-        <div className="omr-header-row">
-          <div className="omr-field-inline">
-            <span className="omr-lbl">AGE/SEX:</span>
-            <div className="omr-agesex-wrap">
-              <input className="omr-age-inp" type="number" min="0" max="150"
-                value={form.age} onChange={e => set('age', e.target.value)} />
-              <span className="omr-slash">/</span>
-              <select className="omr-sex-sel" value={form.sex} onChange={e => set('sex', e.target.value)}>
-                <option value=""></option>
-                <option value="Male">Male</option>
-                <option value="Female">Female</option>
-                <option value="Other">Other</option>
-              </select>
-            </div>
-          </div>
-          <div className="omr-field-inline"><span className="omr-lbl">OCCUPATION:</span>{ui('occupation')}</div>
-        </div>
-        {(errors.age || errors.sex) && <p className="omr-error">{errors.age || errors.sex}</p>}
-        <div className="omr-header-row">
-          <div className="omr-field-inline"><span className="omr-lbl">INCOME:</span>{ui('income')}</div>
-          <div className="omr-field-inline"><span className="omr-lbl">RELIGION:</span>{ui('religion')}</div>
-        </div>
-        <div className="omr-header-address omr-field-inline" style={{ alignItems: 'flex-start' }}>
-          <span className="omr-lbl">ADDRESS:</span>
-          <textarea className="omr-addr-ta" rows={2} value={form.address}
-            onChange={e => set('address', e.target.value)} />
-        </div>
       </div>
 
       <p className="omr-section-title">CHIEF COMPLAINT:</p>
@@ -559,6 +542,53 @@ const OralMedicine = () => {
       <p className="omr-section-title">Treatment planning:</p>{ta('treatmentPlan', 4)}
 
       <p className="omr-section-title">Prognosis:</p>{ta('prognosis', 3)}
+
+      {/* Chargeable Investigations */}
+      <p className="omr-section-title" style={{ marginTop: 24 }}>Chargeable Investigations:</p>
+      <div className="omr-inv-list">
+        {/* Biopsy */}
+        <div className="omr-inv-item">
+          <label className="omr-inv-chk-label">
+            <input type="checkbox" checked={form.chargeBiopsy}
+              onChange={e => set('chargeBiopsy', e.target.checked)} />
+            Biopsy — <span className="omr-charge-rate">Rs. 250</span>
+          </label>
+        </div>
+        {/* Exfoliative Cytology */}
+        <div className="omr-inv-item">
+          <label className="omr-inv-chk-label">
+            <input type="checkbox" checked={form.chargeExfoliativeCytology}
+              onChange={e => set('chargeExfoliativeCytology', e.target.checked)} />
+            Exfoliative Cytology — <span className="omr-charge-rate">Rs. 50</span>
+          </label>
+        </div>
+
+        {/* X-ray section */}
+        <p className="omr-item-label" style={{ marginTop: 12, marginBottom: 4 }}>X-ray Taken:</p>
+        {[
+          ['chargeIOPA',              'IOPA',                    'Rs. 30'],
+          ['chargeBitewing',          'Bitewing',                'Rs. 30'],
+          ['chargeOcclusal',          'Occlusal',                'Rs. 150'],
+          ['chargeOPGWithFilm',       'OPG with film',           'Rs. 300'],
+          ['chargeOPGWithoutFilm',    'OPG without film',        'Rs. 200'],
+          ['chargeLateralCephalogram','Lateral Cephalogram',     'Rs. 300'],
+          ['chargeCBCT',              'CBCT',                    'Cost yet to be decided'],
+        ].map(([field, label, rate]) => (
+          <div className="omr-inv-item" key={field}>
+            <label className="omr-inv-chk-label">
+              <input type="checkbox" checked={form[field]}
+                onChange={e => set(field, e.target.checked)} />
+              {label} — <span className="omr-charge-rate">{rate}</span>
+            </label>
+          </div>
+        ))}
+
+        {/* Description box */}
+        <div style={{ marginTop: 12 }}>
+          <p className="omr-item-label">Description / Remarks:</p>
+          {ta('chargeDescription', 3)}
+        </div>
+      </div>
 
       {/* Digital Signature */}
       <div className="form-group" style={{ marginTop: 32 }}>

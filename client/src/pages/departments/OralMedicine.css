@@ -561,3 +561,10 @@
   .omr-header-row { grid-template-columns: 1fr; gap: 6px; }
   .omr-inv-chk-label { min-width: 180px; }
 }
+
+/* Chargeable investigations rate label */
+.omr-charge-rate {
+  color: #ffffff;
+  font-weight: 600;
+  font-size: 0.85rem;
+}

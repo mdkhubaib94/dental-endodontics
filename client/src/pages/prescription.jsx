@@ -862,6 +862,42 @@ const Prescription = () => {
   };
 
   const generateTimeSlots = () => {
+    // Detect if the current user belongs to the Oral Medicine department
+    const rawDept = String(
+      localStorage.getItem('doctorDepartment') ||
+      localStorage.getItem('pgDepartment') ||
+      localStorage.getItem('ugDepartment') ||
+      ''
+    ).trim().toLowerCase().replace(/[\s_]+/g, '');
+
+    const isOralDept =
+      rawDept.includes('oral') ||
+      rawDept === 'oralmedicine' ||
+      rawDept === 'oralmedicineandradiology' ||
+      rawDept === 'oralmedicineradiology';
+
+    if (isOralDept) {
+      // Oral Medicine: 15-minute slots from 9:00 AM to 2:00 PM
+      // Skips lunch break (1:00–2:00 PM) and the 11:00 slot (short break)
+      const slotStartsInMinutes = [];
+      const lunchStart = 13 * 60; // 1:00 PM
+      const lunchEnd   = 14 * 60; // 2:00 PM
+      const breakSlot  = 11 * 60; // 11:00 AM (skip this one slot)
+
+      for (let t = 9 * 60; t <= 14 * 60; t += 15) {
+        if (t >= lunchStart && t < lunchEnd) continue; // skip lunch
+        if (t === breakSlot) continue;                  // skip 11:00 break
+        slotStartsInMinutes.push(t);
+      }
+
+      return slotStartsInMinutes.map((start) => ({
+        start,
+        end: start + 15,
+        time: formatMinutesToTime(start),
+      }));
+    }
+
+    // Default: 30-minute slots (all other departments)
     // Strict schedule: 30-minute slots from 9:00 AM to 2:00 PM (last start 2:00 PM, ends 2:30 PM)
     // Lunch break (1:00–2:00) removes 1:00 and 1:30.
     // Break (11:00–11:10) removes the 11:00–11:30 slot; next slot remains 11:30 (no 11:10 slot).
