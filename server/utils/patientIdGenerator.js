@@ -2,19 +2,22 @@
 import { User } from '../models/User.js';
 import { PatientDetails } from '../models/patientDetails.js';
 
-// Generate next patient ID in format YYMMXXX shared by signup and admin registration
+// Generate next patient ID in format C1000, C1001, C1002, etc.
 export const generateNextPatientId = async () => {
-  const now = new Date();
-  const yy = String(now.getFullYear()).slice(2); // e.g., 26
-  const mm = String(now.getMonth() + 1).padStart(2, '0'); // 01–12
-  const prefix = yy + mm; // e.g., "2601"
+  const prefix = 'C';
+  const startingNumber = 1000;
 
   // Find latest IDs from both User (Identity) and PatientDetails (patientId)
   const [lastUser, lastPatient] = await Promise.all([
-    User.findOne({ Identity: { $regex: `^${prefix}` }, role: 'patient' })
+    User.findOne({ 
+      Identity: { $regex: `^${prefix}\\d+$` }, 
+      role: 'patient' 
+    })
       .sort({ Identity: -1 })
       .lean(),
-    PatientDetails.findOne({ patientId: { $regex: `^${prefix}` } })
+    PatientDetails.findOne({ 
+      patientId: { $regex: `^${prefix}\\d+$` } 
+    })
       .sort({ patientId: -1 })
       .lean(),
   ]);
@@ -25,20 +28,19 @@ export const generateNextPatientId = async () => {
     lastId = lastPatient.patientId;
   }
 
-  let nextSeq = 1;
+  let nextNumber = startingNumber;
   if (lastId) {
-    const lastSeq = parseInt(lastId.slice(4), 10);
-    if (!isNaN(lastSeq)) {
-      nextSeq = lastSeq + 1;
+    const lastNumber = parseInt(lastId.slice(1), 10); // Remove 'C' prefix and parse number
+    if (!isNaN(lastNumber) && lastNumber >= startingNumber) {
+      nextNumber = lastNumber + 1;
     }
   }
 
-  if (nextSeq > 999) {
-    throw new Error('Maximum patient IDs for this month reached (999)');
+  if (nextNumber > 99999) {
+    throw new Error('Maximum patient IDs reached (C99999)');
   }
 
-  const seqStr = String(nextSeq).padStart(3, '0');
-  return prefix + seqStr;
+  return prefix + nextNumber;
 };
 
 export default generateNextPatientId;

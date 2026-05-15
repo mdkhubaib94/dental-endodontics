@@ -29,8 +29,9 @@ const patientDetailsSchema = new Schema({
     },
     lastName: {
       type: String,
-      required: true,
-      trim: true
+      required: false, // Made optional for student registration
+      trim: true,
+      default: ''
     },
     dateOfBirth: {
       type: Date
@@ -75,6 +76,23 @@ const patientDetailsSchema = new Schema({
       type: String,
       trim: true,
       default: ''
+    }
+  },
+
+  // Institution Information (for student registration)
+  institutionInfo: {
+    institutionName: {
+      type: String,
+      trim: true,
+      default: ''
+    },
+    institutionAddress: {
+      type: String,
+      trim: true,
+      default: ''
+    },
+    campDate: {
+      type: Date
     }
   },
 

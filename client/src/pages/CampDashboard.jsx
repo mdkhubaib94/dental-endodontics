@@ -47,6 +47,9 @@ const CampDashboard = () => {
     phone: '', dob: '', gender: '', address: '',
     chiefComplaint: '', maritalStatus: '', pregnancyStatus: ''
   });
+  const [institutionInfo, setInstitutionInfo] = useState({
+    campDate: '', institutionName: '', institutionAddress: ''
+  });
   const [billingRecords, setBillingRecords] = useState([]);
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [paymentData, setPaymentData] = useState({ amount: '', paymentMethod: 'cash', description: '' });
@@ -175,7 +178,14 @@ const CampDashboard = () => {
   };
 
   const handleClearForm = () => {
-    setNewPatient({ patientId: '', firstName: '', lastName: '', email: '', phone: '', dob: '', gender: '', address: '', chiefComplaint: '', maritalStatus: '', pregnancyStatus: '' });
+    setNewPatient({ 
+      patientId: '', firstName: '', lastName: '', email: '', phone: '', 
+      dob: '', gender: '', address: '', chiefComplaint: '', maritalStatus: '', 
+      pregnancyStatus: '' 
+    });
+    setInstitutionInfo({
+      campDate: '', institutionName: '', institutionAddress: ''
+    });
     setSearchTerm('');
     setIsWalkInId(false);
   };
@@ -266,6 +276,11 @@ const CampDashboard = () => {
     }
   };
 
+  const handleInstitutionChange = (e) => {
+    const { name, value } = e.target;
+    setInstitutionInfo(prev => ({ ...prev, [name]: value }));
+  };
+
   const fetchSignupDetailsById = async (patientId) => {
     try {
       setFetchingSignupDetails(true);
@@ -291,39 +306,83 @@ const CampDashboard = () => {
     e.preventDefault();
     try {
       setLoading(true);
+      
+      // Validate required fields
+      if (!newPatient.patientId || !newPatient.firstName || !newPatient.phone) {
+        alert('Please fill in all required fields: Patient ID, Student Name, and Phone Number');
+        return;
+      }
+      
       const existingPatient = patients.find(p => p.patientId === newPatient.patientId);
-      if (existingPatient) { alert(`Patient with ID ${newPatient.patientId} already exists.`); return; }
+      if (existingPatient) { 
+        alert(`Patient with ID ${newPatient.patientId} already exists.`); 
+        return; 
+      }
+      
+      // Calculate age from date of birth if provided
+      let calculatedAge = null;
+      if (newPatient.dob) {
+        const birthDate = new Date(newPatient.dob);
+        const today = new Date();
+        calculatedAge = Math.floor((today - birthDate) / (365.25 * 24 * 60 * 60 * 1000));
+      }
+      
       const patientToAdd = {
         patientId: newPatient.patientId,
         personalInfo: {
-          firstName: newPatient.firstName.trim(), lastName: newPatient.lastName.trim(),
-          email: newPatient.email.trim(), phone: newPatient.phone.trim(),
-          dateOfBirth: newPatient.dob || null, gender: newPatient.gender || 'Other',
-          maritalStatus: newPatient.maritalStatus || 'Single', address: newPatient.address.trim()
+          firstName: newPatient.firstName.trim(), 
+          lastName: newPatient.lastName?.trim() || '', // lastName is optional for students
+          email: newPatient.email?.trim() || '', 
+          phone: newPatient.phone.trim(),
+          dateOfBirth: newPatient.dob || null, 
+          age: calculatedAge || null,
+          gender: newPatient.gender || 'Male',
+          maritalStatus: newPatient.maritalStatus || 'Single', 
+          address: newPatient.address?.trim() || ''
         },
-        medicalInfo: { chiefComplaint: newPatient.chiefComplaint?.trim() || '', pregnancyStatus: newPatient.pregnancyStatus || 'N/A' },
-        status: 'active', walkIn: isWalkInId, createAccount: true,
+        institutionInfo: {
+          institutionName: institutionInfo.institutionName?.trim() || '',
+          institutionAddress: institutionInfo.institutionAddress?.trim() || '',
+          campDate: institutionInfo.campDate || null
+        },
+        medicalInfo: { 
+          chiefComplaint: newPatient.chiefComplaint?.trim() || '', 
+          pregnancyStatus: newPatient.pregnancyStatus || 'N/A' 
+        },
+        status: 'active', 
+        walkIn: isWalkInId, 
+        createAccount: true,
       };
+      
       const response = await fetch(buildApiUrl('/api/patient-details'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(patientToAdd),
       });
+      
       if (!response.ok) throw new Error(`Failed to create patient: ${response.status}`);
+      
       const result = await response.json();
       const createdPatient = result.patient || result.data || patientToAdd;
+      
+      // Add to patients list so it appears in patient management
       setPatients(prev => [...prev, createdPatient]);
+      
+      // Clear the form
       handleClearForm();
+      
+      // Show success message
       const account = result.account || {};
-      const summaryLines = [`Patient created successfully with ID: ${createdPatient.patientId}`];
+      const summaryLines = [`Student added successfully with Patient ID: ${createdPatient.patientId}`];
       if (account.created) {
-        summaryLines.push('', 'Patient login account created.', `Email: ${account.email || createdPatient?.personalInfo?.email || 'N/A'}`, `Login ID: ${createdPatient.patientId}`, `Temporary Password: ${account.generatedPassword || '123456'}`, 'Ask the patient to reset password after first login.');
+        summaryLines.push('', 'Patient login account created.', `Login ID: ${createdPatient.patientId}`, `Temporary Password: ${account.generatedPassword || '123456'}`, 'Student can log in with Patient ID and password.');
       } else if (account.linked) {
         summaryLines.push('', 'Existing patient login account linked to this registration.');
       }
       alert(summaryLines.join('\n'));
+      
     } catch (err) {
-      alert(`Failed to create patient: ${err.message}`);
+      alert(`Failed to add student: ${err.message}`);
     } finally {
       setLoading(false);
     }
@@ -466,15 +525,19 @@ const CampDashboard = () => {
                       </thead>
                       <tbody>
                         {filteredPatients.map((patient, index) => {
-                          const lastVisit = new Date(patient.updatedAt || patient.createdAt);
+                          const campDate = patient.institutionInfo?.campDate ? new Date(patient.institutionInfo.campDate) : null;
+                          const displayDate = campDate || new Date(patient.updatedAt || patient.createdAt);
                           return (
                             <tr key={patient._id} className={selectedPatient?._id === patient._id ? 'selected' : ''}>
                               <td>{index + 1}</td>
                               <td>{patient.patientId}</td>
-                              <td>{patient.personalInfo?.firstName || 'N/A'} {patient.personalInfo?.lastName || ''}</td>
+                              <td>
+                                {patient.personalInfo?.firstName || 'N/A'}
+                                {patient.personalInfo?.lastName ? ` ${patient.personalInfo.lastName}` : ''}
+                              </td>
                               <td>{patient.personalInfo?.phone || 'N/A'}</td>
-                              <td>{lastVisit.toLocaleDateString('en-IN')}</td>
-                              <td>{lastVisit.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })}</td>
+                              <td>{displayDate.toLocaleDateString('en-IN')}</td>
+                              <td>{displayDate.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })}</td>
                               <td><button onClick={() => handleSelectPatient(patient)}>View Details</button></td>
                             </tr>
                           );
@@ -489,12 +552,28 @@ const CampDashboard = () => {
                         {!isEditMode ? (
                           <>
                             <div className="detail-row"><span className="label">Patient ID:</span><span className="value">{selectedPatient.patientId}</span></div>
-                            <div className="detail-row"><span className="label">Name:</span><span className="value">{selectedPatient.personalInfo?.firstName} {selectedPatient.personalInfo?.lastName}</span></div>
+                            <div className="detail-row">
+                              <span className="label">Name:</span>
+                              <span className="value">
+                                {selectedPatient.personalInfo?.firstName}
+                                {selectedPatient.personalInfo?.lastName ? ` ${selectedPatient.personalInfo.lastName}` : ''}
+                              </span>
+                            </div>
                             <div className="detail-row"><span className="label">Email:</span><span className="value">{selectedPatient.personalInfo?.email || 'N/A'}</span></div>
                             <div className="detail-row"><span className="label">Phone:</span><span className="value">{selectedPatient.personalInfo?.phone || 'N/A'}</span></div>
                             <div className="detail-row"><span className="label">Date of Birth:</span><span className="value">{selectedPatient.personalInfo?.dateOfBirth ? new Date(selectedPatient.personalInfo.dateOfBirth).toLocaleDateString() : 'N/A'}</span></div>
                             <div className="detail-row"><span className="label">Gender:</span><span className="value">{selectedPatient.personalInfo?.gender || 'N/A'}</span></div>
                             <div className="detail-row"><span className="label">Address:</span><span className="value">{selectedPatient.personalInfo?.address || 'N/A'}</span></div>
+                            <div className="detail-row"><span className="label">Institution Name:</span><span className="value">{selectedPatient.institutionInfo?.institutionName || 'N/A'}</span></div>
+                            
+                            {/* Additional Institution Information (only show if any data exists) */}
+                            {selectedPatient.institutionInfo && (selectedPatient.institutionInfo.institutionAddress || selectedPatient.institutionInfo.campDate) && (
+                              <>
+                                <div className="detail-row"><span className="label">Institution Address:</span><span className="value">{selectedPatient.institutionInfo?.institutionAddress || 'N/A'}</span></div>
+                                <div className="detail-row"><span className="label">Camp Date:</span><span className="value">{selectedPatient.institutionInfo?.campDate ? new Date(selectedPatient.institutionInfo.campDate).toLocaleDateString() : 'N/A'}</span></div>
+                              </>
+                            )}
+                            
                             {selectedPatientBilling.length > 0 && (
                               <div className="detail-row">
                                 <span className="label">Recent Billing:</span>
@@ -540,81 +619,231 @@ const CampDashboard = () => {
               {/* ── PATIENT REGISTRATION TAB ── */}
               {activeTab === 'patientManagement' && showPatientRegistration && (
                 <div className="tab-content">
-                  <h2>Patient Registration</h2>
                   <div className="create-patient">
-                    <h3>Patient Registration</h3>
-                    <div style={{ marginBottom: '15px', display: 'flex', gap: '10px', alignItems: 'center' }}>
-                      <button type="button" onClick={handleGeneratePatientId} disabled={generatingPatientId} className="btn-secondary" style={{ padding: '8px 16px', fontSize: '14px', display: 'flex', alignItems: 'center', gap: '5px' }}>
-                        {generatingPatientId ? '🔄 Generating...' : '🔄 Create New Patient ID'}
-                      </button>
-                      <button type="button" onClick={handleClearForm} className="btn-secondary" style={{ padding: '8px 16px', fontSize: '14px' }}>Clear Form</button>
-                      <small style={{ color: '#e8c2c2ff', fontSize: '16px' }}>Enter the Patient ID given at first appointment, or generate a new one for walk-in patients.</small>
+                    {/* Header with tooth icon */}
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '15px', marginBottom: '30px' }}>
+                      <div style={{ fontSize: '2.5rem' }}>🦷</div>
+                      <h2 style={{ margin: 0, fontSize: '2rem', fontWeight: '600', color: '#ffffff' }}>Dental Camp Records</h2>
                     </div>
-                    <div style={{ background: '#1e3a2f', border: '1px solid #2e6b4f', borderRadius: '8px', padding: '12px 16px', marginBottom: '16px', fontSize: '14px', color: '#a8d5b5' }}>
-                      🔑 <strong>Default Login Password:</strong> <span style={{ fontFamily: 'monospace', fontSize: '16px', color: '#fff' }}>123456</span>
-                      &nbsp;— The patient can log in with their Patient ID and this password after registration.
-                    </div>
-                    <form onSubmit={handleCreatePatient}>
+
+                    {/* Camp Information Section */}
+                    <div style={{ 
+                      background: 'rgba(173, 216, 230, 0.2)', 
+                      borderRadius: '1rem', 
+                      padding: '1.5rem', 
+                      marginBottom: '2rem',
+                      border: '1px solid rgba(173, 216, 230, 0.3)'
+                    }}>
                       <div className="form-row">
                         <div className="form-group">
-                          <label>Patient ID *</label>
-                          <input type="text" name="patientId" value={newPatient.patientId} onChange={handleNewPatientChange} required placeholder="Enter or generate Patient ID" />
-                          <small style={{ color: '#e8c2c2ff', fontSize: '16px' }}>Must match the Patient ID shared with the patient after appointment.</small>
+                          <label>Date of Camp</label>
+                          <input 
+                            type="date" 
+                            name="campDate"
+                            value={institutionInfo.campDate}
+                            onChange={handleInstitutionChange}
+                            placeholder="dd-mm-yyyy"
+                          />
                         </div>
-                      </div>
-                      <div className="form-row">
-                        <div className="form-group"><label>First Name *</label><input type="text" name="firstName" value={newPatient.firstName} onChange={handleNewPatientChange} required /></div>
-                        <div className="form-group"><label>Last Name *</label><input type="text" name="lastName" value={newPatient.lastName} onChange={handleNewPatientChange} required /></div>
-                      </div>
-                      <div className="form-row">
                         <div className="form-group">
-                          <label>Email *</label>
-                          <input type="email" name="email" value={newPatient.email} onChange={handleNewPatientChange} required />
-                          <small style={{ color: '#e8c2c2ff', fontSize: '16px' }}>Account credentials will be created for this email during registration.</small>
-                        </div>
-                        <div className="form-group"><label>Phone *</label><input type="tel" name="phone" value={newPatient.phone} onChange={handleNewPatientChange} required /></div>
-                      </div>
-                      <div className="form-row">
-                        <div className="form-group"><label>Date of Birth</label><input type="date" name="dob" value={newPatient.dob} onChange={handleNewPatientChange} max={new Date().toISOString().split('T')[0]} className="date-input-black-icon" /></div>
-                        <div className="form-group"><label>Gender</label>
-                          <select name="gender" value={newPatient.gender} onChange={handleNewPatientChange}>
-                            <option value="">Select</option><option value="Male">Male</option><option value="Female">Female</option><option value="Other">Other</option>
-                          </select>
+                          <label>Institution Name</label>
+                          <input 
+                            type="text" 
+                            name="institutionName"
+                            value={institutionInfo.institutionName}
+                            onChange={handleInstitutionChange}
+                            placeholder="School/College Name"
+                          />
                         </div>
                       </div>
-                      <div className="form-group"><label>Address</label><textarea name="address" value={newPatient.address} onChange={handleNewPatientChange} rows="3"></textarea></div>
-                      <div className="form-group"><label>Chief Complaint</label>
-                        <select name="chiefComplaint" value={newPatient.chiefComplaint} onChange={handleNewPatientChange}>
-                          <option value="">Select a primary issue</option>
-                          {chiefComplaints.map((c) => (<option key={c} value={c}>{c}</option>))}
-                        </select>
+                      <div className="form-group">
+                        <label>Institution Address</label>
+                        <textarea 
+                          name="institutionAddress"
+                          value={institutionInfo.institutionAddress}
+                          onChange={handleInstitutionChange}
+                          rows="3"
+                          placeholder="Enter complete institution address"
+                        />
                       </div>
-                      <div className="input-group">
-                        <label>Marital Status <span style={{ color: 'red' }}>*</span></label>
-                        <div className="radio-options">
-                          {['Single', 'Married'].map((status) => (
-                            <label key={status} className="radio-option">
-                              <input type="radio" name="maritalStatus" value={status} checked={newPatient.maritalStatus === status} onChange={handleNewPatientChange} />
-                              <span>{status}</span>
-                            </label>
-                          ))}
+                    </div>
+
+                    {/* Patient Registration Section */}
+                    <div style={{ 
+                      background: 'rgba(255, 255, 255, 0.1)', 
+                      borderRadius: '1rem', 
+                      padding: '2rem',
+                      borderTop: '4px solid #ffffff'
+                    }}>
+                      <h3 style={{ 
+                        textAlign: 'center', 
+                        fontSize: '1.5rem', 
+                        fontWeight: '600', 
+                        color: '#ffffff', 
+                        margin: '0 0 30px 0' 
+                      }}>
+                        Patient Registration
+                      </h3>
+                      
+                      <form onSubmit={handleCreatePatient}>
+                        <div className="form-row" style={{ alignItems: 'flex-start', display: 'flex', gap: '1rem' }}>
+                          <div className="form-group" style={{ flex: '1' }}>
+                            <label style={{ marginBottom: '0.5rem', display: 'block' }}>Patient ID</label>
+                            <div style={{ display: 'flex', gap: '10px', alignItems: 'stretch' }}>
+                              <input 
+                                type="text" 
+                                name="patientId" 
+                                value={newPatient.patientId} 
+                                onChange={handleNewPatientChange} 
+                                required 
+                                placeholder="C1000"
+                                style={{ 
+                                  flex: 1,
+                                  padding: '0.8rem 1rem',
+                                  fontSize: '1rem',
+                                  border: 'none',
+                                  borderRadius: '0.5rem',
+                                  outline: 'none',
+                                  backgroundColor: '#f0f0f0',
+                                  color: '#333',
+                                  boxSizing: 'border-box',
+                                  height: '3.2rem'
+                                }}
+                              />
+                              <button 
+                                type="button" 
+                                onClick={handleGeneratePatientId} 
+                                disabled={generatingPatientId}
+                                style={{
+                                  background: '#8e24aa',
+                                  whiteSpace: 'nowrap',
+                                  opacity: generatingPatientId ? 0.6 : 1,
+                                  height: '3.2rem',
+                                  padding: '0.8rem 1.2rem',
+                                  fontSize: '1rem',
+                                  border: 'none',
+                                  borderRadius: '0.5rem',
+                                  color: 'white',
+                                  cursor: generatingPatientId ? 'not-allowed' : 'pointer',
+                                  fontWeight: '600'
+                                }}
+                              >
+                                {generatingPatientId ? 'Generating...' : 'Generate ID'}
+                              </button>
+                            </div>
+                          </div>
+                          <div className="form-group" style={{ flex: '1' }}>
+                            <label style={{ marginBottom: '0.5rem', display: 'block' }}>Student Name</label>
+                            <input 
+                              type="text" 
+                              name="firstName" 
+                              value={newPatient.firstName} 
+                              onChange={handleNewPatientChange} 
+                              required 
+                              placeholder="Enter student name"
+                              style={{ 
+                                width: '100%',
+                                padding: '0.8rem 1rem',
+                                fontSize: '1rem',
+                                border: 'none',
+                                borderRadius: '0.5rem',
+                                outline: 'none',
+                                backgroundColor: '#f0f0f0',
+                                color: '#333',
+                                boxSizing: 'border-box',
+                                height: '3.2rem'
+                              }}
+                            />
+                          </div>
+                          <div className="form-group" style={{ flex: '0 0 200px' }}>
+                            <label style={{ marginBottom: '0.5rem', display: 'block' }}>Date of Birth</label>
+                            <input 
+                              type="date" 
+                              name="dob"
+                              value={newPatient.dob}
+                              onChange={handleNewPatientChange}
+                              max={new Date().toISOString().split('T')[0]}
+                              style={{ 
+                                width: '100%',
+                                padding: '0.8rem 1rem',
+                                fontSize: '1rem',
+                                border: 'none',
+                                borderRadius: '0.5rem',
+                                outline: 'none',
+                                backgroundColor: '#f0f0f0',
+                                color: '#333',
+                                boxSizing: 'border-box',
+                                height: '3.2rem'
+                              }}
+                            />
+                          </div>
                         </div>
-                      </div>
-                      <div className="input-group">
-                        <label>Pregnancy Status (if applicable)</label>
-                        <div className="radio-options">
-                          {['No', 'Yes', 'N/A'].map((status) => (
-                            <label key={status} className="radio-option">
-                              <input type="radio" name="pregnancyStatus" value={status} checked={newPatient.pregnancyStatus === status} onChange={handleNewPatientChange} />
-                              <span>{status}</span>
-                            </label>
-                          ))}
+
+                        <div className="form-row">
+                          <div className="form-group">
+                            <label>Gender</label>
+                            <select 
+                              name="gender" 
+                              value={newPatient.gender || 'Male'} 
+                              onChange={handleNewPatientChange}
+                              style={{ 
+                                width: '100%',
+                                padding: '0.8rem 1rem',
+                                fontSize: '1rem',
+                                border: 'none',
+                                borderRadius: '0.5rem',
+                                outline: 'none',
+                                backgroundColor: '#f0f0f0',
+                                color: '#333',
+                                boxSizing: 'border-box',
+                                height: '3.2rem'
+                              }}
+                            >
+                              <option value="Male">Male</option>
+                              <option value="Female">Female</option>
+                              <option value="Other">Other</option>
+                            </select>
+                          </div>
+                          <div className="form-group">
+                            <label>Phone Number</label>
+                            <input 
+                              type="tel" 
+                              name="phone" 
+                              value={newPatient.phone} 
+                              onChange={handleNewPatientChange} 
+                              required 
+                              placeholder="Enter phone number"
+                              style={{ 
+                                width: '100%',
+                                padding: '0.8rem 1rem',
+                                fontSize: '1rem',
+                                border: 'none',
+                                borderRadius: '0.5rem',
+                                outline: 'none',
+                                backgroundColor: '#f0f0f0',
+                                color: '#333',
+                                boxSizing: 'border-box',
+                                height: '3.2rem'
+                              }}
+                            />
+                          </div>
                         </div>
-                      </div>
-                      <button type="submit" className="btn-primary" disabled={loading || !newPatient.patientId}>
-                        {loading ? 'Creating...' : 'Save'}
-                      </button>
-                    </form>
+
+                        <button 
+                          type="submit" 
+                          disabled={loading || !newPatient.patientId}
+                          className="btn-primary"
+                          style={{
+                            width: '100%',
+                            background: loading || !newPatient.patientId ? '#ccc' : '#4caf50',
+                            borderColor: loading || !newPatient.patientId ? '#ccc' : '#4caf50',
+                            marginTop: '20px'
+                          }}
+                        >
+                          {loading ? 'Adding...' : 'Add Student to List'}
+                        </button>
+                      </form>
+                    </div>
                   </div>
                 </div>
               )}
