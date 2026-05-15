@@ -2256,6 +2256,16 @@ const DoctorDashboard = () => {
                       {assignedAppointments
                         .filter((appt) => !selectedAppointmentPG || appt.pgIdentity === selectedAppointmentPG)
                         .filter((appt) => {
+                          if (!selectedAppointmentPG && pgSearchTerm.trim()) {
+                            const searchLower = pgSearchTerm.toLowerCase();
+                            return (
+                              (appt.pgName || '').toLowerCase().includes(searchLower) ||
+                              (appt.pgIdentity || '').toLowerCase().includes(searchLower)
+                            );
+                          }
+                          return true;
+                        })
+                        .filter((appt) => {
                           const from = parseLocalDateInput(pgFromDate, false);
                           const to = parseLocalDateInput(pgToDate, true);
                           if (!from && !to) return true;
