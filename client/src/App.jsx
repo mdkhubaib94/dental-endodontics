@@ -290,7 +290,12 @@ const AppRoutes = () => {
                 'partialdenture',
                 'partial',
                 'periodontics',
+                'oral',
                 'oralandmaxillofacial',
+                'oralandmaxillofacialsurgery',
+                'oralmedicine',
+                'oralmedicineandradiology',
+                'oralmedicineradiology',
                 'conservativedentistryandendodontics'
               ]}
             >
@@ -314,7 +319,7 @@ const AppRoutes = () => {
           element={
             <ProtectedRoute
               allowedRoles={['doctor', 'chief', 'chief-doctor', 'pg', 'ug']}
-              allowedDepartments={['oral', 'oralandmaxillofacial', 'oralandmaxillofacialsurgery']}
+              allowedDepartments={['oral', 'oralandmaxillofacial', 'oralandmaxillofacialsurgery', 'oralmedicine', 'oralmedicineandradiology', 'oralmedicineradiology']}
             >
               <OralMedicine />
             </ProtectedRoute>

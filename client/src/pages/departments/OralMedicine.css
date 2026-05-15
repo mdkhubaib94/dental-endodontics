@@ -1,20 +1,41 @@
-﻿/* ── OralMedicine.css — Clinical printed case sheet style ─────────────────── */
+﻿/* ── OralMedicine.css — matches Pedodontics / Complete Denture blue theme ── */
 
-/* Page wrapper — white paper on a neutral background */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap');
+
+/* ── Page wrapper — campus background with blue overlay ── */
 .omr-wrapper {
-  font-family: 'Times New Roman', Times, serif;
-  background: #e8e8e8;
+  font-family: 'Inter', Arial, sans-serif;
+  margin: 0;
+  background:
+    linear-gradient(rgba(37, 40, 107, 0.55), rgba(37, 40, 107, 0.55)),
+    url('/images/campus.png') center / cover no-repeat fixed;
   min-height: 100vh;
-  padding: 32px 16px 60px;
   display: flex;
   flex-direction: column;
   align-items: center;
+  padding: 40px 20px 60px;
+  box-sizing: border-box;
+  scrollbar-gutter: stable;
 }
 
-/* Toast notifications */
+/* ── White paper sheet → dark blue card ── */
+.omr-sheet {
+  background-color: rgba(38, 40, 107, 0.92);
+  border-radius: 12px;
+  padding: 36px 40px 40px;
+  width: 90%;
+  max-width: 900px;
+  color: #ffffff;
+  box-shadow: 0 0 30px rgba(0, 0, 0, 0.7);
+  position: relative;
+  overflow: hidden;
+  box-sizing: border-box;
+}
+
+/* ── Toast notifications ── */
 .omr-toast {
   position: fixed;
-  top: 16px;
+  top: 60px;
   right: 16px;
   z-index: 9999;
   padding: 12px 20px;
@@ -22,7 +43,7 @@
   font-weight: 700;
   font-size: 0.95rem;
   font-family: Arial, sans-serif;
-  box-shadow: 0 4px 16px rgba(0,0,0,0.25);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.35);
   animation: omrFadeIn 0.3s ease;
 }
 .omr-toast-success { background: #166534; color: #fff; }
@@ -32,28 +53,91 @@
   to   { opacity: 1; transform: translateY(0); }
 }
 
-/* Status bar above the sheet (patient ID + draft saved) */
-.omr-statusbar {
+/* ── Allergy alert — fixed top banner (matches Pedodontics exactly) ── */
+@keyframes allergyTextFlow {
+  0%   { transform: translateX(-100%); }
+  100% { transform: translateX(100vw); }
+}
+
+.allergy-alert {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  transform: none;
+  background: #ffffff;
+  color: #111827;
+  padding: 10px 14px;
+  border-radius: 0 0 10px 10px;
   width: 100%;
-  max-width: 820px;
+  box-sizing: border-box;
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.25);
+  z-index: 2000;
+  border: 1px solid #d5deeb;
+}
+
+.allergy-alert .alert-icon {
+  font-size: 18px;
+  color: #d97706;
+  flex-shrink: 0;
+}
+
+.allergy-alert .allergy-flow-window {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+}
+
+.allergy-alert #allergyMessage {
+  display: inline-block;
+  white-space: nowrap;
+  padding-right: 2rem;
+  color: #111827;
+  font-weight: 600;
+  animation: allergyTextFlow 10s linear infinite;
+}
+
+.allergy-alert .close-btn {
+  margin-left: 4px;
+  background: #f3f4f6;
+  border: none;
+  font-size: 18px;
+  color: #111827;
+  padding: 2px 8px;
+  border-radius: 50%;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+.allergy-alert .close-btn:hover { background: #e5e7eb; }
+
+/* ── Status bar ── */
+.omr-statusbar {
+  width: 90%;
+  max-width: 900px;
   display: flex;
   justify-content: space-between;
   align-items: center;
   margin-bottom: 10px;
   font-family: Arial, sans-serif;
   font-size: 0.82rem;
-  color: #444;
+  color: rgba(255, 255, 255, 0.85);
   flex-wrap: wrap;
   gap: 6px;
+  margin-top: 44px; /* clear the fixed allergy banner */
 }
-.omr-statusbar-pid   { font-weight: 600; }
-.omr-draft-saved     { color: #166534; font-weight: 700; }
+.omr-statusbar-pid { font-weight: 600; }
+.omr-draft-saved   { color: #86efac; font-weight: 700; }
 
-/* Progress bar */
+/* ── Progress bar ── */
 .omr-progress-wrap {
-  width: 100%;
-  max-width: 820px;
-  background: #d1d5db;
+  width: 90%;
+  max-width: 900px;
+  background: rgba(255, 255, 255, 0.2);
   border-radius: 4px;
   height: 6px;
   margin-bottom: 16px;
@@ -62,7 +146,7 @@
 }
 .omr-progress-bar {
   height: 100%;
-  background: #1d4ed8;
+  background: #60a5fa;
   border-radius: 4px;
   transition: width 0.4s ease;
 }
@@ -72,48 +156,64 @@
   right: 0;
   font-size: 0.75rem;
   font-family: Arial, sans-serif;
-  color: #555;
+  color: rgba(255, 255, 255, 0.75);
   white-space: nowrap;
 }
 
-/* ── The white paper sheet ── */
-.omr-sheet {
-  width: 100%;
-  max-width: 820px;
-  background: #ffffff;
-  border: 1px solid #ccc;
-  box-shadow: 0 2px 12px rgba(0,0,0,0.15);
-  padding: 48px 56px 56px;
-  box-sizing: border-box;
-}
-
-/* Sheet title — centered bold, like the PDF */
+/* ── Sheet title ── */
 .omr-sheet-title {
   text-align: center;
-  font-size: 1.05rem;
+  font-size: 1.15rem;
   font-weight: 700;
   letter-spacing: 0.5px;
-  margin: 0 0 28px 0;
+  margin: 0 0 24px 0;
+  text-transform: uppercase;
+  color: #ffffff;
+  border-bottom: 2px solid rgba(255, 255, 255, 0.4);
+  padding-bottom: 10px;
+}
+
+/* ── Section headings ── */
+.omr-section-title {
+  font-weight: 700;
+  font-size: 0.95rem;
+  color: #ffffff;
+  margin: 24px 0 8px 0;
+  letter-spacing: 0.3px;
   text-transform: uppercase;
 }
 
-/* ── Header grid — DATE / CASE SHEET / NAME / OP.NO etc ── */
+.omr-subsection-title {
+  font-weight: 700;
+  font-size: 0.92rem;
+  color: #ffffff;
+  margin: 18px 0 8px 0;
+}
+
+.omr-item-label {
+  font-weight: 700;
+  font-size: 0.9rem;
+  color: #ffffff;
+  margin: 14px 0 4px 0;
+}
+
+.omr-item-label-indent {
+  font-weight: 700;
+  font-size: 0.9rem;
+  color: #ffffff;
+  margin: 10px 0 4px 28px;
+}
+
+/* ── Header grid ── */
 .omr-header-grid {
   margin-bottom: 20px;
 }
 
-/* DATE row — left aligned, full width */
-.omr-header-date {
-  margin-bottom: 6px;
-}
-
-/* CASE SHEET row — centered */
+.omr-header-date    { margin-bottom: 6px; }
 .omr-header-casesheet {
   text-align: center;
   margin-bottom: 14px;
 }
-
-/* Two-column rows: NAME | OP.NO, AGE/SEX | OCCUPATION, INCOME | RELIGION */
 .omr-header-row {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -121,13 +221,9 @@
   margin-bottom: 8px;
   align-items: end;
 }
+.omr-header-address { margin-bottom: 8px; }
 
-/* ADDRESS — full width */
-.omr-header-address {
-  margin-bottom: 8px;
-}
-
-/* ── Field label + underline input ── */
+/* ── Field inline (label + input on same line) ── */
 .omr-field-inline {
   display: flex;
   align-items: baseline;
@@ -135,40 +231,36 @@
   margin-bottom: 6px;
 }
 
-.omr-field-block {
-  display: flex;
-  flex-direction: column;
-  margin-bottom: 6px;
-}
-
-/* Bold label — matches PDF bold labels */
+/* ── Bold label ── */
 .omr-lbl {
   font-weight: 700;
-  font-size: 0.88rem;
+  font-size: 0.9rem;
   white-space: nowrap;
-  color: #000;
+  color: #ffffff;
   letter-spacing: 0.2px;
 }
 
-/* Underline-style text input — no box, just a bottom border */
+/* ── Underline text input — white bg, blue text ── */
 .omr-uinput {
   flex: 1;
   border: none;
-  border-bottom: 1px solid #333;
+  border-bottom: 2px solid rgba(255, 255, 255, 0.6);
   outline: none;
-  font-family: 'Times New Roman', Times, serif;
+  font-family: 'Inter', Arial, sans-serif;
   font-size: 0.9rem;
-  color: #111;
-  background: transparent;
-  padding: 2px 4px;
+  color: #26286b;
+  background: rgba(255, 255, 255, 0.92);
+  padding: 4px 8px;
+  border-radius: 4px;
   min-width: 60px;
 }
 .omr-uinput:focus {
-  border-bottom-color: #1d4ed8;
-  background: #f0f7ff;
+  border-bottom-color: #60a5fa;
+  background: #ffffff;
+  box-shadow: 0 0 0 2px rgba(96, 165, 250, 0.4);
 }
 
-/* AGE/SEX combined — age number + sex select side by side */
+/* ── AGE/SEX ── */
 .omr-agesex-wrap {
   display: flex;
   align-items: baseline;
@@ -176,102 +268,88 @@
   flex: 1;
 }
 .omr-age-inp {
-  width: 52px;
+  width: 56px;
   border: none;
-  border-bottom: 1px solid #333;
+  border-bottom: 2px solid rgba(255, 255, 255, 0.6);
   outline: none;
-  font-family: 'Times New Roman', Times, serif;
+  font-family: 'Inter', Arial, sans-serif;
   font-size: 0.9rem;
-  color: #111;
-  background: transparent;
-  padding: 2px 4px;
+  color: #26286b;
+  background: rgba(255, 255, 255, 0.92);
+  padding: 4px 6px;
+  border-radius: 4px;
   text-align: center;
 }
-.omr-age-inp:focus { border-bottom-color: #1d4ed8; background: #f0f7ff; }
-.omr-slash { font-weight: 700; color: #333; padding: 0 2px; }
+.omr-age-inp:focus {
+  border-bottom-color: #60a5fa;
+  background: #ffffff;
+  box-shadow: 0 0 0 2px rgba(96, 165, 250, 0.4);
+}
+.omr-slash { font-weight: 700; color: #ffffff; padding: 0 2px; }
 .omr-sex-sel {
   border: none;
-  border-bottom: 1px solid #333;
+  border-bottom: 2px solid rgba(255, 255, 255, 0.6);
   outline: none;
-  font-family: 'Times New Roman', Times, serif;
+  font-family: 'Inter', Arial, sans-serif;
   font-size: 0.9rem;
-  color: #111;
-  background: transparent;
-  padding: 2px 4px;
+  color: #26286b;
+  background: rgba(255, 255, 255, 0.92);
+  padding: 4px 6px;
+  border-radius: 4px;
   cursor: pointer;
   min-width: 80px;
 }
-.omr-sex-sel:focus { border-bottom-color: #1d4ed8; background: #f0f7ff; }
+.omr-sex-sel:focus {
+  border-bottom-color: #60a5fa;
+  background: #ffffff;
+  box-shadow: 0 0 0 2px rgba(96, 165, 250, 0.4);
+}
 
-/* Address textarea — underline style */
+/* ── Address textarea ── */
 .omr-addr-ta {
-  width: 100%;
+  flex: 1;
   border: none;
-  border-bottom: 1px solid #333;
+  border-bottom: 2px solid rgba(255, 255, 255, 0.6);
   outline: none;
-  font-family: 'Times New Roman', Times, serif;
+  font-family: 'Inter', Arial, sans-serif;
   font-size: 0.9rem;
-  color: #111;
-  background: transparent;
+  color: #26286b;
+  background: rgba(255, 255, 255, 0.92);
   resize: none;
-  padding: 2px 4px;
+  padding: 4px 8px;
+  border-radius: 4px;
   line-height: 1.6;
   box-sizing: border-box;
+  width: 100%;
 }
-.omr-addr-ta:focus { border-bottom-color: #1d4ed8; background: #f0f7ff; }
-
-/* ── Section headings — bold, left-aligned, like PDF ── */
-.omr-section-title {
-  font-weight: 700;
-  font-size: 0.9rem;
-  color: #000;
-  margin: 28px 0 10px 0;
-  letter-spacing: 0.2px;
+.omr-addr-ta:focus {
+  border-bottom-color: #60a5fa;
+  background: #ffffff;
+  box-shadow: 0 0 0 2px rgba(96, 165, 250, 0.4);
 }
 
-/* Sub-section heading (e.g. "REVIEW OF SYSTEMS:") */
-.omr-subsection-title {
-  font-weight: 700;
-  font-size: 0.88rem;
-  color: #000;
-  margin: 18px 0 8px 0;
-}
-
-/* Numbered/lettered item label (e.g. "1. CENTRAL NERVOUS SYSTEM:") */
-.omr-item-label {
-  font-weight: 700;
-  font-size: 0.87rem;
-  color: #000;
-  margin: 14px 0 4px 0;
-}
-
-/* Indented item label (e.g. "-Inspection:") */
-.omr-item-label-indent {
-  font-weight: 700;
-  font-size: 0.87rem;
-  color: #000;
-  margin: 10px 0 4px 24px;
-}
-
-/* ── Textarea for clinical notes — underline style ── */
+/* ── Clinical notes textarea ── */
 .omr-ta {
   width: 100%;
   border: none;
-  border-bottom: 1px solid #aaa;
+  border-bottom: 2px solid rgba(255, 255, 255, 0.4);
   outline: none;
-  font-family: 'Times New Roman', Times, serif;
+  font-family: 'Inter', Arial, sans-serif;
   font-size: 0.9rem;
-  color: #111;
-  background: transparent;
-  resize: none;
-  padding: 4px 4px 2px;
+  color: #26286b;
+  background: rgba(255, 255, 255, 0.92);
+  resize: vertical;
+  padding: 8px 10px;
+  border-radius: 6px;
   line-height: 1.7;
   box-sizing: border-box;
-  min-height: 56px;
+  min-height: 60px;
 }
-.omr-ta:focus { border-bottom-color: #1d4ed8; background: #f8faff; }
-
-/* Larger textarea for chief complaint, HPI etc */
+.omr-ta:focus {
+  border-bottom-color: #60a5fa;
+  background: #ffffff;
+  box-shadow: 0 0 0 2px rgba(96, 165, 250, 0.4);
+}
 .omr-ta-lg { min-height: 80px; }
 
 /* ── Personal history habits — inline checkboxes ── */
@@ -284,129 +362,202 @@
 .omr-habit-chk {
   display: flex;
   align-items: center;
-  gap: 6px;
-  font-size: 0.88rem;
-  font-weight: 700;
-  color: #000;
+  gap: 8px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #ffffff;
   cursor: pointer;
 }
 .omr-habit-chk input[type="checkbox"] {
-  width: 14px;
-  height: 14px;
-  accent-color: #1d4ed8;
+  width: 16px;
+  height: 16px;
+  accent-color: #60a5fa;
   cursor: pointer;
 }
 
-/* ── Investigations — checkbox list ── */
+/* ── Investigations ── */
 .omr-inv-list {
-  margin: 8px 0 0 16px;
+  margin: 8px 0 0 20px;
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 10px;
 }
 .omr-inv-item {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 12px;
   flex-wrap: wrap;
 }
 .omr-inv-chk-label {
   display: flex;
   align-items: center;
-  gap: 7px;
-  font-size: 0.88rem;
-  color: #000;
+  gap: 8px;
+  font-size: 0.9rem;
+  color: #ffffff;
   cursor: pointer;
-  min-width: 240px;
+  min-width: 260px;
+  font-weight: 600;
 }
 .omr-inv-chk-label input[type="checkbox"] {
-  width: 14px;
-  height: 14px;
-  accent-color: #1d4ed8;
+  width: 15px;
+  height: 15px;
+  accent-color: #60a5fa;
   cursor: pointer;
 }
 .omr-inv-notes-inp {
   flex: 1;
   min-width: 160px;
   border: none;
-  border-bottom: 1px solid #aaa;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.5);
   outline: none;
-  font-family: 'Times New Roman', Times, serif;
+  font-family: 'Inter', Arial, sans-serif;
   font-size: 0.88rem;
-  color: #111;
-  background: transparent;
-  padding: 2px 4px;
+  color: #26286b;
+  background: rgba(255, 255, 255, 0.9);
+  padding: 4px 8px;
+  border-radius: 4px;
 }
-.omr-inv-notes-inp:focus { border-bottom-color: #1d4ed8; background: #f8faff; }
+.omr-inv-notes-inp:focus {
+  border-bottom-color: #60a5fa;
+  background: #ffffff;
+  box-shadow: 0 0 0 2px rgba(96, 165, 250, 0.3);
+}
 
-/* Validation error */
+/* ── Validation error ── */
 .omr-error {
-  color: #b91c1c;
-  font-size: 0.78rem;
+  color: #fca5a5;
+  font-size: 0.8rem;
   font-family: Arial, sans-serif;
   margin: 2px 0 0 0;
 }
 
-/* ── Submit bar ── */
+/* ── Navigation / submit bar ── */
 .omr-submit-bar {
-  width: 100%;
-  max-width: 820px;
+  width: 90%;
+  max-width: 900px;
   display: flex;
   gap: 14px;
   justify-content: center;
   margin-top: 24px;
   flex-wrap: wrap;
 }
+
+/* Next / Submit button — white with blue text (matches other depts) */
 .omr-btn-submit {
-  padding: 12px 40px;
-  background: #1d4ed8;
-  color: #fff;
+  padding: 12px 36px;
+  background-color: #ffffff;
+  color: #26286b;
   font-size: 0.95rem;
   font-weight: 700;
-  font-family: Arial, sans-serif;
+  font-family: 'Inter', Arial, sans-serif;
   border: none;
-  border-radius: 6px;
+  border-radius: 8px;
   cursor: pointer;
-  box-shadow: 0 3px 10px rgba(29,78,216,0.3);
-  transition: background 0.2s, transform 0.15s;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.35);
+  transition: background 0.2s, transform 0.15s, box-shadow 0.2s;
   letter-spacing: 0.3px;
 }
 .omr-btn-submit:hover:not(:disabled) {
-  background: #1e40af;
+  background-color: #e0e0e0;
+  box-shadow: 0 6px 14px rgba(0, 0, 0, 0.45);
   transform: translateY(-1px);
 }
 .omr-btn-submit:disabled { opacity: 0.55; cursor: not-allowed; }
 
+/* Back / Previous button */
 .omr-btn-back {
   padding: 12px 28px;
-  background: #fff;
-  color: #374151;
+  background-color: #ffffff;
+  color: #26286b;
   font-size: 0.95rem;
   font-weight: 600;
-  font-family: Arial, sans-serif;
-  border: 1.5px solid #9ca3af;
-  border-radius: 6px;
+  font-family: 'Inter', Arial, sans-serif;
+  border: none;
+  border-radius: 8px;
   cursor: pointer;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
   transition: background 0.2s;
 }
-.omr-btn-back:hover { background: #f3f4f6; }
+.omr-btn-back:hover { background-color: #e0e0e0; }
+
+/* ── X-ray preview ── */
+.xray-preview-container {
+  margin: 10px 0 16px;
+  text-align: center;
+}
+.xray-preview {
+  max-width: 100%;
+  max-height: 220px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-radius: 8px;
+  object-fit: contain;
+  background: rgba(255, 255, 255, 0.05);
+}
+
+/* ── Page content wrapper ── */
+.omr-page-content {
+  width: 100%;
+}
+
+/* ── h2/h3 inside sheet ── */
+.omr-sheet h2 {
+  border-bottom: 2px solid rgba(255, 255, 255, 0.4);
+  padding-bottom: 10px;
+  margin-top: 20px;
+  font-size: 1.5rem;
+  font-weight: bold;
+  color: #ffffff;
+}
+.omr-sheet h3 {
+  font-size: 1.1rem;
+  color: #ffffff;
+  margin-top: 16px;
+}
 
 /* ── Print styles ── */
 @media print {
-  .omr-wrapper    { background: #fff; padding: 0; }
+  .omr-wrapper {
+    background: #fff;
+    padding: 0;
+  }
   .omr-statusbar,
   .omr-progress-wrap,
-  .omr-submit-bar { display: none; }
-  .omr-sheet      { box-shadow: none; border: none; padding: 20px; max-width: 100%; }
+  .omr-submit-bar,
+  .allergy-alert {
+    display: none;
+  }
+  .omr-sheet {
+    background: #fff;
+    color: #000;
+    box-shadow: none;
+    border-radius: 0;
+    padding: 20px;
+    max-width: 100%;
+  }
   .omr-uinput,
   .omr-ta,
   .omr-addr-ta,
   .omr-age-inp,
-  .omr-sex-sel    { border-bottom: 1px solid #000; }
+  .omr-sex-sel {
+    background: transparent;
+    color: #000;
+    border-bottom: 1px solid #000;
+  }
+  .omr-lbl,
+  .omr-section-title,
+  .omr-subsection-title,
+  .omr-item-label,
+  .omr-item-label-indent,
+  .omr-sheet-title,
+  .omr-habit-chk,
+  .omr-inv-chk-label {
+    color: #000;
+  }
 }
 
 /* ── Responsive ── */
 @media (max-width: 640px) {
-  .omr-sheet { padding: 28px 20px 36px; }
+  .omr-sheet { padding: 24px 18px 32px; }
   .omr-header-row { grid-template-columns: 1fr; gap: 6px; }
+  .omr-inv-chk-label { min-width: 180px; }
 }

@@ -52,8 +52,16 @@ const CasePortal = () => {
   }, []);
 
   const startCaseFlow = (targetPage) => {
-    // Directly navigate to the selected case sheet, without pre-billing form
-    window.location.href = targetPage;
+    const navState = location.state || {};
+    const consentAlreadyDone = Boolean(navState[CASE_CONSENT_NAV_STATE_KEY]);
+
+    if (consentAlreadyDone) {
+      // Consent was completed before arriving at CasePortal — pass it through
+      navigate(targetPage, { state: { [CASE_CONSENT_NAV_STATE_KEY]: true } });
+    } else {
+      // No consent yet — ask for it on the destination page
+      navigate(targetPage, { state: { requestConsentAfterEntry: true } });
+    }
   };
 
   return (
