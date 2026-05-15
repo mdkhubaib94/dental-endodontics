@@ -1006,7 +1006,7 @@
 
 /* PG Select Doctor Styling */
 .pg-select-doctor {
-  min-width: 240px;
+  min-width: 150px;
   padding: 0 12px;
   border-radius: 8px;
   background-color: rgba(255, 255, 255, 0.95) !important;
@@ -1035,7 +1035,7 @@
   display: flex;
   gap: 10px;
   align-items: center;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
 }
 
 .pg-appointment-selector-label {
@@ -1049,11 +1049,11 @@ input.pg-select-doctor {
 
 select.pg-select-doctor {
   flex: 1;
-  min-width: 320px;
+  min-width: 150px;
   appearance: auto;
 }
 
 .pg-date-input {
-  min-width: 180px;
-  flex: 0 1 180px;
+  min-width: 130px;
+  flex: 0 1 150px;
 }

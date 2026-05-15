@@ -2193,7 +2193,6 @@ const DoctorDashboard = () => {
               ) : (
                 <>
                   <div className="chief-doctor-selector pg-appointment-selector">
-                    <label htmlFor="pg-select" className="pg-appointment-selector-label">Select Doctor:</label>
                       <input
                         type="text"
                         placeholder="Search doctor by name or ID..."
