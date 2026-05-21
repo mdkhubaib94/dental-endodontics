@@ -480,43 +480,6 @@ const OralMedicine = () => {
       <p className="omr-section-title" style={{ marginTop: 0 }}>GENERAL EXAMINATION:</p>
       {ta('generalExamination', 4)}
 
-      {/* ── VITALS ── */}
-      <p className="omr-subsection-title">VITALS:</p>
-      <div className="omr-vitals-grid">
-        <div className="omr-vital-card">
-          <label className="omr-vital-label">Blood Pressure</label>
-          <div className="omr-vital-input-wrap">
-            <input className="omr-vital-input" type="text" placeholder="e.g. 120/80"
-              value={form.bloodPressure} onChange={e => set('bloodPressure', e.target.value)} />
-            <span className="omr-vital-unit">mmHg</span>
-          </div>
-        </div>
-        <div className="omr-vital-card">
-          <label className="omr-vital-label">Temperature</label>
-          <div className="omr-vital-input-wrap">
-            <input className="omr-vital-input" type="text" placeholder="e.g. 37.0"
-              value={form.temperature} onChange={e => set('temperature', e.target.value)} />
-            <span className="omr-vital-unit">°C</span>
-          </div>
-        </div>
-        <div className="omr-vital-card">
-          <label className="omr-vital-label">Weight</label>
-          <div className="omr-vital-input-wrap">
-            <input className="omr-vital-input" type="text" placeholder="e.g. 65"
-              value={form.weight} onChange={e => set('weight', e.target.value)} />
-            <span className="omr-vital-unit">kg</span>
-          </div>
-        </div>
-        <div className="omr-vital-card">
-          <label className="omr-vital-label">Height</label>
-          <div className="omr-vital-input-wrap">
-            <input className="omr-vital-input" type="text" placeholder="e.g. 165"
-              value={form.height} onChange={e => set('height', e.target.value)} />
-            <span className="omr-vital-unit">cm</span>
-          </div>
-        </div>
-      </div>
-
       {/* ── CONSTITUTIONAL & OTHER SIGNS ── */}
       <p className="omr-subsection-title">CONSTITUTIONAL AND OTHER SIGNS:</p>
       <div className="omr-const-grid">
