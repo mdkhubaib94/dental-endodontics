@@ -863,29 +863,18 @@ const OralMedicine = () => {
             <p style={{ margin: '0 0 24px', color: '#374151', fontSize: '0.95rem', lineHeight: 1.5 }}>
               Please complete the patient consent form before proceeding with the Oral Medicine &amp; Radiology case sheet.
             </p>
-            <div style={{ display: 'flex', gap: 12, justifyContent: 'center' }}>
-              <button
-                onClick={() => {
-                  setShowConsentPrompt(false);
-                  navigate(`/consent-form?redirect=${encodeURIComponent(consentRedirectTarget)}`, { replace: true });
-                }}
-                style={{
-                  padding: '10px 28px', background: '#1d4ed8', color: '#fff',
-                  border: 'none', borderRadius: 6, cursor: 'pointer', fontWeight: 700, fontSize: '0.9rem'
-                }}
-              >
-                Go to Consent Form
-              </button>
-              <button
-                onClick={() => setShowConsentPrompt(false)}
-                style={{
-                  padding: '10px 28px', background: '#e5e7eb', color: '#374151',
-                  border: 'none', borderRadius: 6, cursor: 'pointer', fontWeight: 600, fontSize: '0.9rem'
-                }}
-              >
-                Skip
-              </button>
-            </div>
+            <button
+              onClick={() => {
+                setShowConsentPrompt(false);
+                navigate(`/consent-form?redirect=${encodeURIComponent(consentRedirectTarget)}`, { replace: true });
+              }}
+              style={{
+                padding: '10px 28px', background: '#1d4ed8', color: '#fff',
+                border: 'none', borderRadius: 6, cursor: 'pointer', fontWeight: 700, fontSize: '0.9rem'
+              }}
+            >
+              Go to Consent Form
+            </button>
           </div>
         </div>
       )}
