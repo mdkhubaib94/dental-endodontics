@@ -107,15 +107,15 @@ const OralMedicine = () => {
   const [showConsentPrompt, setShowConsentPrompt] = useState(false);
   const [consentRedirectTarget, setConsentRedirectTarget] = useState('');
 
-  /* ── Consent flow ── */
+  /* ── Consent flow — runs once on mount, same pattern as Prosthodontics ── */
   useEffect(() => {
     const navState = location.state || {};
-    if (!navState.requestConsentAfterEntry) return;
-    if (navState[CASE_CONSENT_NAV_STATE_KEY]) return;
-    const redirectTarget = `${location.pathname}${location.search}`;
-    setConsentRedirectTarget(redirectTarget);
-    setShowConsentPrompt(true);
-  }, [location.pathname, location.search, location.state]);
+    if (navState.requestConsentAfterEntry && !navState[CASE_CONSENT_NAV_STATE_KEY]) {
+      const redirectTarget = `${location.pathname}${location.search}`;
+      setConsentRedirectTarget(redirectTarget);
+      setShowConsentPrompt(true);
+    }
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   /* ── Redo-edit prefill (matches Prosthodontics) ── */
   useEffect(() => {

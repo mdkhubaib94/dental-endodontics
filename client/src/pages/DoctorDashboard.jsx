@@ -643,9 +643,9 @@ const DoctorDashboard = () => {
     const patientId = getStoredPatientId();
     const resumeTarget = patientId ? await getPatientResumeTarget(patientId) : null;
 
-    // If there is an unfinished draft for this patient, resume directly without consent prompt.
+    // If there is an unfinished draft for this patient, resume — but still request consent.
     if (resumeTarget?.routeKey) {
-      navigate(resumeTarget.routeKey);
+      navigate(resumeTarget.routeKey, { state: { requestConsentAfterEntry: true } });
       return;
     }
 
