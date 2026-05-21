@@ -3454,17 +3454,65 @@ const DoctorDashboard = () => {
               </div>
             )}
 
+            {/* Additional Information — moved here, right after Marital Status */}
+            <h3>Additional Information</h3>
+            <div className="form-row">
+              <div className="input-group">
+                <label htmlFor="occupation">Occupation</label>
+                <input type="text" id="occupation" name="occupation"
+                  value={formData.occupation} onChange={handleInputChange}
+                  placeholder="e.g. Teacher, Engineer" />
+              </div>
+              <div className="input-group">
+                <label htmlFor="income">Income</label>
+                <input type="text" id="income" name="income"
+                  value={formData.income} onChange={handleInputChange}
+                  placeholder="e.g. 30,000 / month" />
+              </div>
+            </div>
+            <div className="form-row">
+              <div className="input-group">
+                <label htmlFor="religion">Religion</label>
+                <input type="text" id="religion" name="religion"
+                  value={formData.religion} onChange={handleInputChange}
+                  placeholder="e.g. Hindu, Christian" />
+              </div>
+              <div className="input-group">
+                <label htmlFor="address">Address</label>
+                <input type="text" id="address" name="address"
+                  value={formData.address} onChange={handleInputChange}
+                  placeholder="Full address" />
+              </div>
+            </div>
+
+            {/* Vitals — right after Additional Information */}
+            <h3>Vitals</h3>
+            <div className="dd-vitals-grid">
+              {[
+                { name: 'vitalBP',     label: 'Blood Pressure', placeholder: '120/80', unit: 'mmHg' },
+                { name: 'vitalTemp',   label: 'Temperature',    placeholder: '37.0',   unit: '°C'   },
+                { name: 'vitalWeight', label: 'Weight',         placeholder: '65',     unit: 'kg'   },
+                { name: 'vitalHeight', label: 'Height',         placeholder: '165',    unit: 'cm'   },
+              ].map(({ name, label, placeholder, unit }) => (
+                <div className="dd-vital-card" key={name}>
+                  <label className="dd-vital-label">{label}</label>
+                  <div className="dd-vital-input-wrap">
+                    <input className="dd-vital-input" type="text" name={name}
+                      placeholder={placeholder} value={formData[name]}
+                      onChange={handleInputChange} />
+                    <span className="dd-vital-unit">{unit}</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+
             {/* Preferred Language */}
             <div className="input-group">
               <label htmlFor="preferred-language">
                 Preferred Language <span style={{ color: "red" }}>*</span>
               </label>
-              <select
-                id="preferred-language"
-                name="preferredLanguage"
-                value={formData.preferredLanguage}
-                onChange={handleInputChange}
-              >
+              <select id="preferred-language" name="preferredLanguage"
+                value={formData.preferredLanguage} onChange={handleInputChange}>
                 <option value="">Select</option>
                 <option value="English">English</option>
                 <option value="Hindi">Hindi</option>
@@ -3474,76 +3522,15 @@ const DoctorDashboard = () => {
               {fieldErrors.preferredLanguage && <div className="error-message">{fieldErrors.preferredLanguage}</div>}
             </div>
 
-            {/* Other Language Input - Show when Other is selected */}
             {formData.preferredLanguage === 'Other' && (
               <div className="input-group">
-                <label htmlFor="other-language">
-                  Specify Language <span style={{ color: "red" }}>*</span>
-                </label>
-                <input
-                  type="text"
-                  id="other-language"
-                  name="otherLanguage"
-                  value={formData.otherLanguage}
-                  onChange={handleInputChange}
-                  placeholder="Enter preferred language"
-                />
+                <label htmlFor="other-language">Specify Language <span style={{ color: "red" }}>*</span></label>
+                <input type="text" id="other-language" name="otherLanguage"
+                  value={formData.otherLanguage} onChange={handleInputChange}
+                  placeholder="Enter preferred language" />
                 {fieldErrors.otherLanguage && <div className="error-message">{fieldErrors.otherLanguage}</div>}
               </div>
             )}
-
-            {/* Occupation, Income, Religion, Address */}
-            <h3>Additional Information</h3>
-
-            <div className="form-row">
-              <div className="input-group">
-                <label htmlFor="occupation">Occupation</label>
-                <input
-                  type="text"
-                  id="occupation"
-                  name="occupation"
-                  value={formData.occupation}
-                  onChange={handleInputChange}
-                  placeholder="e.g. Teacher, Engineer"
-                />
-              </div>
-              <div className="input-group">
-                <label htmlFor="income">Income</label>
-                <input
-                  type="text"
-                  id="income"
-                  name="income"
-                  value={formData.income}
-                  onChange={handleInputChange}
-                  placeholder="e.g. 30,000 / month"
-                />
-              </div>
-            </div>
-
-            <div className="form-row">
-              <div className="input-group">
-                <label htmlFor="religion">Religion</label>
-                <input
-                  type="text"
-                  id="religion"
-                  name="religion"
-                  value={formData.religion}
-                  onChange={handleInputChange}
-                  placeholder="e.g. Hindu, Christian"
-                />
-              </div>
-              <div className="input-group">
-                <label htmlFor="address">Address</label>
-                <input
-                  type="text"
-                  id="address"
-                  name="address"
-                  value={formData.address}
-                  onChange={handleInputChange}
-                  placeholder="Full address"
-                />
-              </div>
-            </div>
 
             {/* Patient Case Entry Section */}
             <h3>Patient Case Entry - Chief Complaint & History</h3>
@@ -3553,12 +3540,8 @@ const DoctorDashboard = () => {
               <label htmlFor="chief-complaint">
                 Chief Complaint <span style={{ color: "red" }}>*</span>
               </label>
-              <select
-                id="chief-complaint"
-                name="chiefComplaint"
-                value={formData.chiefComplaint}
-                onChange={handleInputChange}
-              >
+              <select id="chief-complaint" name="chiefComplaint"
+                value={formData.chiefComplaint} onChange={handleInputChange}>
                 <option value="">Select a primary issue</option>
                 {chiefComplaints.map((complaint) => (
                   <option key={complaint} value={complaint}>{complaint}</option>
@@ -3769,32 +3752,6 @@ const DoctorDashboard = () => {
 
             {/* General Examination */}
             <h3>General Examination</h3>
-
-            {/* ── VITALS ── */}
-            <p className="dd-exam-section-label">Vitals</p>
-            <div className="dd-vitals-grid">
-              {[
-                { name: 'vitalBP',     label: 'Blood Pressure', placeholder: '120/80', unit: 'mmHg' },
-                { name: 'vitalTemp',   label: 'Temperature',    placeholder: '37.0',   unit: '°C'   },
-                { name: 'vitalWeight', label: 'Weight',         placeholder: '65',     unit: 'kg'   },
-                { name: 'vitalHeight', label: 'Height',         placeholder: '165',    unit: 'cm'   },
-              ].map(({ name, label, placeholder, unit }) => (
-                <div className="dd-vital-card" key={name}>
-                  <label className="dd-vital-label">{label}</label>
-                  <div className="dd-vital-input-wrap">
-                    <input
-                      className="dd-vital-input"
-                      type="text"
-                      name={name}
-                      placeholder={placeholder}
-                      value={formData[name]}
-                      onChange={handleInputChange}
-                    />
-                    <span className="dd-vital-unit">{unit}</span>
-                  </div>
-                </div>
-              ))}
-            </div>
 
             {/* ── CONSTITUTIONAL & OTHER SIGNS ── */}
             <p className="dd-exam-section-label">Constitutional and Other Signs</p>
