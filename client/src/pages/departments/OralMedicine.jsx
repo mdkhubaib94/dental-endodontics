@@ -923,12 +923,7 @@ const OralMedicine = () => {
 
       {/* Navigation buttons */}
       <div className="omr-submit-bar">
-        {/* Left side: Back to previous page (always) */}
-        <button type="button" className="omr-btn-back" onClick={() => navigate(-1)}>
-          ← Back
-        </button>
-
-        {/* Center-left: Previous page (only when not on first page) */}
+        {/* Previous page (only when not on first page) */}
         {currentPage > 0 && (
           <button type="button" className="omr-btn-prev" onClick={handlePrev}>
             ← Previous

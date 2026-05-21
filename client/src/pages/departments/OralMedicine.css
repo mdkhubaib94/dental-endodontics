@@ -63,17 +63,17 @@
   transform: none;
   background: #ffffff;
   color: #111827;
-  padding: 10px 14px;
-  border-radius: 0 0 10px 10px;
+  padding: 10px 20px;
+  border-radius: 0;
   width: 100%;
   box-sizing: border-box;
   margin: 0;
   display: flex;
   align-items: center;
   gap: 8px;
-  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.25);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
   z-index: 2000;
-  border: 1px solid #d5deeb;
+  border-bottom: 2px solid #fbbf24;
 }
 
 .allergy-alert .alert-icon {
