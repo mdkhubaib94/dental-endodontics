@@ -817,6 +817,37 @@ const OralMedicine = () => {
   ];
 
   return (
+    <>
+      {/* Allergy alert — rendered OUTSIDE omr-wrapper so position:fixed works correctly */}
+      {showAllergy && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          width: '100vw',
+          zIndex: 99999,
+          background: '#fff3cd',
+          borderBottom: '2px solid #f59e0b',
+          display: 'flex',
+          alignItems: 'center',
+          gap: 10,
+          padding: '10px 24px',
+          boxSizing: 'border-box',
+          boxShadow: '0 3px 10px rgba(0,0,0,0.18)',
+        }}>
+          <span style={{ fontSize: 18, color: '#d97706', flexShrink: 0 }}>⚠️</span>
+          <span style={{ flex: 1, fontWeight: 700, fontSize: '0.9rem', color: '#92400e', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+            {formatAllergyTicker(allergyMessage)}
+          </span>
+          <button
+            onClick={() => setShowAllergy(false)}
+            aria-label="Dismiss"
+            style={{ marginLeft: 'auto', background: 'transparent', border: 'none', fontSize: 20, color: '#92400e', cursor: 'pointer', flexShrink: 0, lineHeight: 1, padding: '0 4px' }}
+          >×</button>
+        </div>
+      )}
+
     <div className="omr-wrapper">
       {/* Toast */}
       {toast && <div className={`omr-toast omr-toast-${toast.type}`}>{toast.msg}</div>}
@@ -879,16 +910,7 @@ const OralMedicine = () => {
         </div>
       )}
 
-      {/* Allergy ticker — fixed top banner (matches Pedodontics/Complete Denture) */}
-      {showAllergy && (
-        <div className="allergy-alert show" id="patientAllergyAlert">
-          <span className="alert-icon">⚠️</span>
-          <div className="allergy-flow-window">
-            <span id="allergyMessage">{formatAllergyTicker(allergyMessage)}</span>
-          </div>
-          <button className="close-btn" onClick={() => setShowAllergy(false)} aria-label="Dismiss">×</button>
-        </div>
-      )}
+      {/* Allergy ticker moved outside omr-wrapper — see fragment above */}
 
       {/* Status bar */}
       <div className="omr-statusbar">
@@ -942,6 +964,7 @@ const OralMedicine = () => {
         )}
       </div>
     </div>
+    </>
   );
 };
 
