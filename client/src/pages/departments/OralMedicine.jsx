@@ -14,7 +14,7 @@ const TOTAL_PAGES = 5;
 const INITIAL_FORM = {
   caseSheetNumber: '', date: new Date().toISOString().split('T')[0],
   patientName: '', opNo: '',
-  age: '', sex: '',
+  age: '', sex: '', maritalStatus: '',
   occupation: '', income: '', religion: '', address: '',
   chiefComplaint: '',
   historyOfPresentIllness: '',
@@ -137,7 +137,8 @@ const OralMedicine = () => {
       try {
         const draft = await loadCaseDraft({ patientId, routeKey: DRAFT_ROUTE_KEY });
         if (!cancelled && draft?.data?.form) {
-          setForm(prev => ({ ...prev, ...draft.data.form }));
+          const currentName = String(localStorage.getItem('CurrentpatientName') || '').trim();
+          setForm(prev => ({ ...prev, ...draft.data.form, ...(currentName ? { patientName: currentName } : {}) }));
           if (typeof draft.data.signaturePreview === 'string' && draft.data.signaturePreview.trim()) {
             setSignaturePreview(draft.data.signaturePreview);
           }
@@ -176,9 +177,9 @@ const OralMedicine = () => {
     return () => window.removeEventListener('beforeunload', handleBeforeUnload);
   }, [form, currentPage, signaturePreview, isDraftHydrated]);
 
-  /* ── Pre-fill patient name ── */
+  /* ── Pre-fill patient name — always use current patient from localStorage ── */
   useEffect(() => {
-    if (patientName && !form.patientName) setForm(prev => ({ ...prev, patientName }));
+    if (patientName) setForm(prev => ({ ...prev, patientName }));
   }, [patientName]); // eslint-disable-line
 
   /* ── Load allergy info ── */
@@ -205,6 +206,17 @@ const OralMedicine = () => {
         const drug = toListString(p.vitals?.drugAllergies);
         const known = toListString(p.medicalInfo?.knownAllergies);
         const diet = toListString(p.vitals?.dietAllergies);
+        // Auto-fill age and sex from patient record
+        const patientAge = p.personalInfo?.age;
+        const patientGender = p.personalInfo?.gender;
+        if (isMounted) {
+          if (patientAge != null && String(patientAge).trim() !== '') {
+            setForm(prev => ({ ...prev, age: String(patientAge) }));
+          }
+          if (patientGender) {
+            setForm(prev => ({ ...prev, sex: patientGender }));
+          }
+        }
         if (!isMounted) return;
         if (drug) setAllergyMessage(`Drug Allergies: ${drug}`);
         else if (known) setAllergyMessage(`Known Allergies: ${known}`);
@@ -410,38 +422,43 @@ const OralMedicine = () => {
 
       <h2 className="omr-sheet-title" style={{ marginTop: 8 }}>ORAL MEDICINE AND RADIOLOGY</h2>
 
-      {/* Header grid */}
-      <div className="omr-header-grid">
-        <div className="omr-header-date omr-field-inline">
-          <span className="omr-lbl">DATE:</span>{ui('date', 'date')}
+      {/* Header — vertical line-by-line layout */}
+      <div className="omr-header-vertical">
+        <div className="omr-hv-tile-header">PATIENT DETAILS</div>
+
+        <div className="omr-hv-row">
+          <span className="omr-hv-label">DATE:</span>
+          {ui('date', 'date')}
         </div>
-        {/* Single auto-fetched Patient ID — same as OP.NO / Case Sheet No */}
-        <div className="omr-header-casesheet omr-field-inline" style={{ justifyContent: 'center' }}>
-          <span className="omr-lbl">PATIENT ID:</span>
+
+        <div className="omr-hv-row">
+          <span className="omr-hv-label">PATIENT ID:</span>
           <input className="omr-uinput" type="text" value={patientId} readOnly
-            style={{ maxWidth: '200px', background: 'rgba(255,255,255,0.06)', cursor: 'default', opacity: 0.85 }} />
+            style={{ background: 'rgba(255,255,255,0.15)', cursor: 'default', opacity: 1, color: '#fff', fontWeight: 600 }} />
         </div>
-        <div className="omr-header-row">
-          <div className="omr-field-inline"><span className="omr-lbl">NAME:</span>{ui('patientName')}</div>
-        </div>
-        <div className="omr-header-row">
-          <div className="omr-field-inline">
-            <span className="omr-lbl">AGE:</span>
-            {ui('age', 'number', { maxWidth: '80px' })}
-          </div>
-          <div className="omr-field-inline">
-            <span className="omr-lbl">SEX:</span>
-            <select className="omr-uinput" value={form.sex} onChange={e => set('sex', e.target.value)} style={{ maxWidth: '130px' }}>
-              <option value="">Select</option>
-              <option value="Male">Male</option>
-              <option value="Female">Female</option>
-              <option value="Other">Other</option>
-            </select>
-          </div>
+
+        <div className="omr-hv-row">
+          <span className="omr-hv-label">NAME:</span>
+          <input className="omr-uinput" type="text" value={form.patientName} readOnly
+            style={{ background: 'rgba(255,255,255,0.15)', cursor: 'default', opacity: 1, color: '#fff', fontWeight: 600 }} />
         </div>
         {errors.patientName && <p className="omr-error">{errors.patientName}</p>}
+
+        <div className="omr-hv-row">
+          <span className="omr-hv-label">AGE:</span>
+          <input className="omr-uinput" type="text" value={form.age} readOnly
+            style={{ background: 'rgba(255,255,255,0.15)', cursor: 'default', opacity: 1, color: '#fff', fontWeight: 600, maxWidth: '100px' }} />
+        </div>
         {errors.age && <p className="omr-error">{errors.age}</p>}
+
+        <div className="omr-hv-row">
+          <span className="omr-hv-label">SEX:</span>
+          <input className="omr-uinput" type="text" value={form.sex} readOnly
+            style={{ background: 'rgba(255,255,255,0.15)', cursor: 'default', opacity: 1, color: '#fff', fontWeight: 600, maxWidth: '160px' }} />
+        </div>
         {errors.sex && <p className="omr-error">{errors.sex}</p>}
+
+
       </div>
 
       <p className="omr-section-title">CHIEF COMPLAINT:</p>

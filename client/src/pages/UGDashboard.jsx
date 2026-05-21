@@ -2174,6 +2174,36 @@ const UGDashboard = () => {
                       </div>
                     )}
 
+                    {/* ── VITALS ── */}
+                    <h3>Vitals</h3>
+                    <div className="ug-vitals-grid">
+                      {[
+                        { name: 'vitalBP',       icon: '🩺', label: 'Blood Pressure', placeholder: '120/80', unit: 'mmHg' },
+                        { name: 'vitalPulse',     icon: '💓', label: 'Pulse Rate',     placeholder: '72',     unit: 'bpm' },
+                        { name: 'vitalRespRate',  icon: '🫁', label: 'Resp. Rate',     placeholder: '16',     unit: '/min' },
+                        { name: 'vitalTemp',      icon: '🌡️', label: 'Temperature',   placeholder: '37.0',   unit: '°C' },
+                        { name: 'vitalSpO2',      icon: '🩸', label: 'SpO₂',          placeholder: '98',     unit: '%' },
+                        { name: 'vitalWeight',    icon: '⚖️', label: 'Weight',        placeholder: '65',     unit: 'kg' },
+                        { name: 'vitalHeight',    icon: '📏', label: 'Height',        placeholder: '165',    unit: 'cm' },
+                      ].map(({ name, icon, label, placeholder, unit }) => (
+                        <div className="ug-vital-card" key={name}>
+                          <span className="ug-vital-icon">{icon}</span>
+                          <label className="ug-vital-label">{label}</label>
+                          <div className="ug-vital-input-wrap">
+                            <input
+                              className="ug-vital-input"
+                              type="text"
+                              name={name}
+                              placeholder={placeholder}
+                              value={formData[name]}
+                              onChange={handleInputChange}
+                            />
+                            <span className="ug-vital-unit">{unit}</span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+
                     <h3>Additional Information</h3>
 
                     <div className="form-row">
@@ -2312,36 +2342,6 @@ const UGDashboard = () => {
 
                     {/* ── GENERAL EXAMINATION ── */}
                     <h3>General Examination</h3>
-
-                    {/* Vitals */}
-                    <p className="ug-exam-section-label">▼ Vitals</p>
-                    <div className="ug-vitals-grid">
-                      {[
-                        { name: 'vitalBP',       icon: '🩺', label: 'Blood Pressure', placeholder: '120/80', unit: 'mmHg' },
-                        { name: 'vitalPulse',     icon: '💓', label: 'Pulse Rate',     placeholder: '72',     unit: 'bpm' },
-                        { name: 'vitalRespRate',  icon: '🫁', label: 'Resp. Rate',     placeholder: '16',     unit: '/min' },
-                        { name: 'vitalTemp',      icon: '🌡️', label: 'Temperature',   placeholder: '37.0',   unit: '°C' },
-                        { name: 'vitalSpO2',      icon: '🩸', label: 'SpO₂',          placeholder: '98',     unit: '%' },
-                        { name: 'vitalWeight',    icon: '⚖️', label: 'Weight',        placeholder: '65',     unit: 'kg' },
-                        { name: 'vitalHeight',    icon: '📏', label: 'Height',        placeholder: '165',    unit: 'cm' },
-                      ].map(({ name, icon, label, placeholder, unit }) => (
-                        <div className="ug-vital-card" key={name}>
-                          <span className="ug-vital-icon">{icon}</span>
-                          <label className="ug-vital-label">{label}</label>
-                          <div className="ug-vital-input-wrap">
-                            <input
-                              className="ug-vital-input"
-                              type="text"
-                              name={name}
-                              placeholder={placeholder}
-                              value={formData[name]}
-                              onChange={handleInputChange}
-                            />
-                            <span className="ug-vital-unit">{unit}</span>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
 
                     {/* Constitutional & Other Signs */}
                     <p className="ug-exam-section-label">▼ Constitutional and Other Signs</p>

@@ -780,25 +780,27 @@
 .omr-header-vertical {
   display: flex;
   flex-direction: column;
-  gap: 10px;
-  margin-bottom: 20px;
-  border: 1px solid rgba(255,255,255,0.15);
-  border-radius: 8px;
-  padding: 16px 18px;
-  background: rgba(255,255,255,0.04);
+  gap: 0;
+  margin-bottom: 24px;
+  border: 1.5px solid rgba(165,180,252,0.35);
+  border-radius: 12px;
+  padding: 0;
+  background: rgba(255,255,255,0.07);
+  box-shadow: 0 2px 16px rgba(0,0,0,0.18);
+  overflow: hidden;
 }
 
 .omr-hv-row {
   display: flex;
   align-items: center;
   gap: 12px;
-  border-bottom: 1px solid rgba(255,255,255,0.08);
-  padding-bottom: 8px;
+  border-bottom: 1px solid rgba(255,255,255,0.09);
+  padding: 11px 20px;
 }
 
 .omr-hv-row:last-child {
   border-bottom: none;
-  padding-bottom: 0;
+  padding-bottom: 11px;
 }
 
 .omr-hv-row-top {
@@ -814,6 +816,18 @@
   white-space: nowrap;
   min-width: 160px;
   flex-shrink: 0;
+}
+
+/* Tile header strip */
+.omr-hv-tile-header {
+  background: rgba(99,102,241,0.25);
+  border-bottom: 1.5px solid rgba(165,180,252,0.35);
+  padding: 9px 20px;
+  font-size: 0.75rem;
+  font-weight: 800;
+  letter-spacing: 1.2px;
+  text-transform: uppercase;
+  color: #c7d2fe;
 }
 
 /* Vitals inline row */
