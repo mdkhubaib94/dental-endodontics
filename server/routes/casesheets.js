@@ -11,6 +11,7 @@ import Implant from '../models/Implant-model.js';
 import ImplantPatientCase from '../models/ImplantPatient-model.js';
 import PartialDentureCase from '../models/partial-model.js';
 import OralCase from '../models/Oral-model.js';
+import GeneralCase from '../models/GeneralCase.js';
 
 const router = express.Router();
 
@@ -151,6 +152,7 @@ router.get('/pg/history', auth, requireRole(['pg', 'ug']), async (req, res) => {
       { model: ImplantPatientCase, department: 'Implant Patient Surgery', departmentKey: 'implant_patient' },
       { model: PartialDentureCase, department: 'Partial Denture', departmentKey: 'partial_denture' },
       { model: OralCase, department: 'Oral Medicine and Radiology', departmentKey: 'oral' },
+      { model: GeneralCase, department: 'General', departmentKey: 'general' },
     ];
 
     const results = await Promise.all(
@@ -265,6 +267,12 @@ router.get('/:caseId', auth, async (req, res) => {
       return res.json({ success: true, data: doc, department: 'oral' });
     }
 
+    // Try general case sheet
+    doc = await GeneralCase.findById(caseId);
+    if (doc) {
+      return res.json({ success: true, data: doc, department: 'general' });
+    }
+
     return res.status(404).json({ success: false, message: 'Case not found' });
   } catch (error) {
     console.error('Error searching casesheets:', error);
@@ -296,6 +304,7 @@ router.put('/:caseId', auth, requireRole(['pg']), async (req, res) => {
       { model: ImplantPatientCase, departmentKey: 'implant_patient' },
       { model: PartialDentureCase, departmentKey: 'partial_denture' },
       { model: OralCase, departmentKey: 'oral' },
+      { model: GeneralCase, departmentKey: 'general' },
     ];
 
     let found = null;

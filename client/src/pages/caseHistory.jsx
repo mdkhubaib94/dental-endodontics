@@ -39,6 +39,7 @@ const CaseHistory = () => {
         { url: buildApiUrl(`/api/ImplantPatient/patient/${encodeURIComponent(patientId)}`), department: "Implant Patient Surgery" },
         { url: buildApiUrl(`/api/partial/patient/${encodeURIComponent(patientId)}`), department: "Partial Denture" },
         { url: buildApiUrl(`/api/oral/patient/${encodeURIComponent(patientId)}`), department: "Oral Medicine and Radiology" },
+        { url: buildApiUrl(`/api/general/patient/${encodeURIComponent(patientId)}`), department: "General" },
       ];
 
       const results = await Promise.all(
