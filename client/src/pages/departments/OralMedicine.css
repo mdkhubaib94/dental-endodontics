@@ -60,20 +60,20 @@
   top: 0;
   left: 0;
   right: 0;
+  width: 100vw;
   transform: none;
-  background: #ffffff;
+  background: #fff3cd;
   color: #111827;
-  padding: 10px 20px;
+  padding: 10px 24px;
   border-radius: 0;
-  width: 100%;
   box-sizing: border-box;
   margin: 0;
   display: flex;
   align-items: center;
-  gap: 8px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
-  z-index: 2000;
-  border-bottom: 2px solid #fbbf24;
+  gap: 10px;
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.18);
+  z-index: 9999;
+  border-bottom: 2px solid #f59e0b;
 }
 
 .allergy-alert .alert-icon {
@@ -85,31 +85,32 @@
 .allergy-alert .allergy-flow-window {
   flex: 1;
   min-width: 0;
-  overflow: visible;
-  white-space: normal;
+  overflow: hidden;
 }
 
 .allergy-alert #allergyMessage {
-  display: inline-block;
+  display: block;
   white-space: nowrap;
-  padding-right: 2rem;
-  color: #111827;
-  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: #92400e;
+  font-weight: 700;
   font-size: 0.9rem;
 }
 
 .allergy-alert .close-btn {
-  margin-left: 4px;
-  background: #f3f4f6;
+  margin-left: auto;
+  background: transparent;
   border: none;
-  font-size: 18px;
-  color: #111827;
-  padding: 2px 8px;
+  font-size: 20px;
+  color: #92400e;
+  padding: 0 6px;
   border-radius: 50%;
   cursor: pointer;
   flex-shrink: 0;
+  line-height: 1;
 }
-.allergy-alert .close-btn:hover { background: #e5e7eb; }
+.allergy-alert .close-btn:hover { background: rgba(0,0,0,0.08); }
 
 /* ── Status bar ── */
 .omr-statusbar {
