@@ -273,6 +273,8 @@ const OralMedicine = () => {
     const e = {};
     if (!form.patientName.trim())    e.patientName    = 'Patient name is required.';
     if (!form.chiefComplaint.trim()) e.chiefComplaint = 'Chief complaint is required.';
+    if (!form.sex)                   e.sex            = 'Sex is required.';
+    if (!form.age)                   e.age            = 'Age is required.';
     setErrors(e);
     return Object.keys(e).length === 0;
   };
@@ -421,6 +423,21 @@ const OralMedicine = () => {
         <div className="omr-header-row">
           <div className="omr-field-inline"><span className="omr-lbl">NAME:</span>{ui('patientName')}</div>
           <div className="omr-field-inline"><span className="omr-lbl">OP.NO:</span>{ui('opNo')}</div>
+        </div>
+        <div className="omr-header-row">
+          <div className="omr-field-inline">
+            <span className="omr-lbl">AGE:</span>
+            {ui('age', 'number', { maxWidth: '80px' })}
+          </div>
+          <div className="omr-field-inline">
+            <span className="omr-lbl">SEX:</span>
+            <select className="omr-uinput" value={form.sex} onChange={e => set('sex', e.target.value)} style={{ maxWidth: '130px' }}>
+              <option value="">Select</option>
+              <option value="Male">Male</option>
+              <option value="Female">Female</option>
+              <option value="Other">Other</option>
+            </select>
+          </div>
         </div>
         {errors.patientName && <p className="omr-error">{errors.patientName}</p>}
       </div>
