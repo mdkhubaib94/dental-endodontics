@@ -104,19 +104,18 @@ const OralMedicine = () => {
 
   const buildApiUrl = (path) => `${API_BASE_URL}${path.startsWith('/') ? path : `/${path}`}`;
 
-  /* ── Consent flow (matches Prosthodontics) ── */
+  const [showConsentPrompt, setShowConsentPrompt] = useState(false);
+  const [consentRedirectTarget, setConsentRedirectTarget] = useState('');
+
+  /* ── Consent flow ── */
   useEffect(() => {
     const navState = location.state || {};
     if (!navState.requestConsentAfterEntry) return;
     if (navState[CASE_CONSENT_NAV_STATE_KEY]) return;
     const redirectTarget = `${location.pathname}${location.search}`;
-    const shouldOpenConsent = window.confirm(
-      'Please complete the consent form before proceeding with the department case sheet.'
-    );
-    if (shouldOpenConsent) {
-      navigate(`/consent-form?redirect=${encodeURIComponent(redirectTarget)}`, { replace: true });
-    }
-  }, [location.pathname, location.search, location.state, navigate]);
+    setConsentRedirectTarget(redirectTarget);
+    setShowConsentPrompt(true);
+  }, [location.pathname, location.search, location.state]);
 
   /* ── Redo-edit prefill (matches Prosthodontics) ── */
   useEffect(() => {
@@ -842,6 +841,51 @@ const OralMedicine = () => {
               padding: '10px 32px', background: '#1d4ed8', color: '#fff',
               border: 'none', borderRadius: 6, cursor: 'pointer', fontWeight: 700, fontSize: '0.9rem'
             }}>OK</button>
+          </div>
+        </div>
+      )}
+
+      {/* Consent Prompt Modal */}
+      {showConsentPrompt && (
+        <div style={{
+          position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
+          background: 'rgba(0,0,0,0.65)', zIndex: 10001,
+          display: 'flex', alignItems: 'center', justifyContent: 'center'
+        }}>
+          <div style={{
+            background: '#fff', borderRadius: 10, padding: '32px 36px',
+            maxWidth: 440, width: '90%', boxShadow: '0 8px 40px rgba(0,0,0,0.35)',
+            fontFamily: 'Arial, sans-serif', textAlign: 'center'
+          }}>
+            <h3 style={{ margin: '0 0 12px', color: '#1d4ed8', fontSize: '1.1rem' }}>
+              Consent Form Required
+            </h3>
+            <p style={{ margin: '0 0 24px', color: '#374151', fontSize: '0.95rem', lineHeight: 1.5 }}>
+              Please complete the patient consent form before proceeding with the Oral Medicine &amp; Radiology case sheet.
+            </p>
+            <div style={{ display: 'flex', gap: 12, justifyContent: 'center' }}>
+              <button
+                onClick={() => {
+                  setShowConsentPrompt(false);
+                  navigate(`/consent-form?redirect=${encodeURIComponent(consentRedirectTarget)}`, { replace: true });
+                }}
+                style={{
+                  padding: '10px 28px', background: '#1d4ed8', color: '#fff',
+                  border: 'none', borderRadius: 6, cursor: 'pointer', fontWeight: 700, fontSize: '0.9rem'
+                }}
+              >
+                Go to Consent Form
+              </button>
+              <button
+                onClick={() => setShowConsentPrompt(false)}
+                style={{
+                  padding: '10px 28px', background: '#e5e7eb', color: '#374151',
+                  border: 'none', borderRadius: 6, cursor: 'pointer', fontWeight: 600, fontSize: '0.9rem'
+                }}
+              >
+                Skip
+              </button>
+            </div>
           </div>
         </div>
       )}
