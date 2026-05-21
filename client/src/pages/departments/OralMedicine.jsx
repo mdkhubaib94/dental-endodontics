@@ -14,7 +14,7 @@ const TOTAL_PAGES = 5;
 const INITIAL_FORM = {
   caseSheetNumber: '', date: new Date().toISOString().split('T')[0],
   patientName: '', opNo: '',
-  age: '', sex: '',
+  age: '', sex: '', maritalStatus: '',
   occupation: '', income: '', religion: '', address: '',
   chiefComplaint: '',
   historyOfPresentIllness: '',
@@ -410,35 +410,119 @@ const OralMedicine = () => {
 
       <h2 className="omr-sheet-title" style={{ marginTop: 8 }}>ORAL MEDICINE AND RADIOLOGY</h2>
 
-      {/* Header grid — matches PDF exactly */}
-      <div className="omr-header-grid">
-        <div className="omr-header-date omr-field-inline">
-          <span className="omr-lbl">DATE:</span>{ui('date', 'date')}
+      {/* Header — vertical line-by-line layout */}
+      <div className="omr-header-vertical">
+
+        {/* Row 1: Date */}
+        <div className="omr-hv-row">
+          <span className="omr-hv-label">DATE:</span>
+          {ui('date', 'date')}
         </div>
-        <div className="omr-header-casesheet omr-field-inline" style={{ justifyContent: 'center' }}>
-          <span className="omr-lbl">CASE SHEET:…………………….</span>
-          {ui('caseSheetNumber', 'text', { maxWidth: '200px' })}
+
+        {/* Row 2: Patient ID (auto-fetched, read-only — same as OP.NO / Case Sheet) */}
+        <div className="omr-hv-row">
+          <span className="omr-hv-label">PATIENT ID / OP.NO:</span>
+          <input className="omr-uinput" type="text" value={patientId} readOnly
+            style={{ background: 'rgba(255,255,255,0.06)', cursor: 'default', opacity: 0.8 }} />
         </div>
-        <div className="omr-header-row">
-          <div className="omr-field-inline"><span className="omr-lbl">NAME:</span>{ui('patientName')}</div>
-          <div className="omr-field-inline"><span className="omr-lbl">OP.NO:</span>{ui('opNo')}</div>
-        </div>
-        <div className="omr-header-row">
-          <div className="omr-field-inline">
-            <span className="omr-lbl">AGE:</span>
-            {ui('age', 'number', { maxWidth: '80px' })}
-          </div>
-          <div className="omr-field-inline">
-            <span className="omr-lbl">SEX:</span>
-            <select className="omr-uinput" value={form.sex} onChange={e => set('sex', e.target.value)} style={{ maxWidth: '130px' }}>
-              <option value="">Select</option>
-              <option value="Male">Male</option>
-              <option value="Female">Female</option>
-              <option value="Other">Other</option>
-            </select>
-          </div>
+
+        {/* Row 3: Name */}
+        <div className="omr-hv-row">
+          <span className="omr-hv-label">NAME:</span>
+          {ui('patientName')}
         </div>
         {errors.patientName && <p className="omr-error">{errors.patientName}</p>}
+
+        {/* Row 4: Age */}
+        <div className="omr-hv-row">
+          <span className="omr-hv-label">AGE:</span>
+          {ui('age', 'number', { maxWidth: '120px' })}
+        </div>
+        {errors.age && <p className="omr-error">{errors.age}</p>}
+
+        {/* Row 5: Sex */}
+        <div className="omr-hv-row">
+          <span className="omr-hv-label">SEX:</span>
+          <select className="omr-uinput" value={form.sex} onChange={e => set('sex', e.target.value)} style={{ maxWidth: '160px' }}>
+            <option value="">Select</option>
+            <option value="Male">Male</option>
+            <option value="Female">Female</option>
+            <option value="Other">Other</option>
+          </select>
+        </div>
+        {errors.sex && <p className="omr-error">{errors.sex}</p>}
+
+        {/* Row 6: Marital Status */}
+        <div className="omr-hv-row">
+          <span className="omr-hv-label">MARITAL STATUS:</span>
+          <select className="omr-uinput" value={form.maritalStatus} onChange={e => set('maritalStatus', e.target.value)} style={{ maxWidth: '160px' }}>
+            <option value="">Select</option>
+            <option value="Single">Single</option>
+            <option value="Married">Married</option>
+            <option value="Divorced">Divorced</option>
+            <option value="Widowed">Widowed</option>
+          </select>
+        </div>
+
+        {/* Row 7: Vitals inline */}
+        <div className="omr-hv-row omr-hv-vitals-row">
+          <span className="omr-hv-label">VITALS:</span>
+          <div className="omr-hv-vitals">
+            <span className="omr-hv-vital-item">
+              <span className="omr-hv-vital-lbl">BP</span>
+              <input className="omr-uinput" type="text" placeholder="120/80"
+                value={form.bloodPressure} onChange={e => set('bloodPressure', e.target.value)}
+                style={{ maxWidth: '90px' }} />
+              <span className="omr-hv-vital-unit">mmHg</span>
+            </span>
+            <span className="omr-hv-vital-item">
+              <span className="omr-hv-vital-lbl">Temp</span>
+              <input className="omr-uinput" type="text" placeholder="37.0"
+                value={form.temperature} onChange={e => set('temperature', e.target.value)}
+                style={{ maxWidth: '70px' }} />
+              <span className="omr-hv-vital-unit">°C</span>
+            </span>
+            <span className="omr-hv-vital-item">
+              <span className="omr-hv-vital-lbl">Wt</span>
+              <input className="omr-uinput" type="text" placeholder="65"
+                value={form.weight} onChange={e => set('weight', e.target.value)}
+                style={{ maxWidth: '60px' }} />
+              <span className="omr-hv-vital-unit">kg</span>
+            </span>
+            <span className="omr-hv-vital-item">
+              <span className="omr-hv-vital-lbl">Ht</span>
+              <input className="omr-uinput" type="text" placeholder="165"
+                value={form.height} onChange={e => set('height', e.target.value)}
+                style={{ maxWidth: '60px' }} />
+              <span className="omr-hv-vital-unit">cm</span>
+            </span>
+          </div>
+        </div>
+
+        {/* Row 8: Occupation */}
+        <div className="omr-hv-row">
+          <span className="omr-hv-label">OCCUPATION:</span>
+          {ui('occupation')}
+        </div>
+
+        {/* Row 9: Income */}
+        <div className="omr-hv-row">
+          <span className="omr-hv-label">INCOME:</span>
+          {ui('income')}
+        </div>
+
+        {/* Row 10: Religion */}
+        <div className="omr-hv-row">
+          <span className="omr-hv-label">RELIGION:</span>
+          {ui('religion')}
+        </div>
+
+        {/* Row 11: Address */}
+        <div className="omr-hv-row omr-hv-row-top">
+          <span className="omr-hv-label">ADDRESS:</span>
+          <textarea className="omr-ta" rows={2} value={form.address} onChange={e => set('address', e.target.value)} />
+        </div>
+
       </div>
 
       <p className="omr-section-title">CHIEF COMPLAINT:</p>
