@@ -2554,6 +2554,7 @@ const UGDashboard = () => {
                           <th>Patient Name</th>
                           <th>Patient ID</th>
                           <th>Department</th>
+                          <th>Referred To</th>
                           <th>Status</th>
                           <th>Redo Message</th>
                           <th>Action</th>
@@ -2565,6 +2566,7 @@ const UGDashboard = () => {
                           const patientId = String(row?.patientId || '').trim();
                           const department = String(row?.department || '').trim();
                           const departmentKey = String(row?.departmentKey || '').trim();
+                          const referredDepartment = String(row?.referredDepartment || '').trim();
                           const approvalText = String(row?.chiefApproval || '').trim();
                           const status = normalizeChiefApprovalStatus(approvalText);
                           const redoReason = extractRedoReason(approvalText);
@@ -2580,6 +2582,22 @@ const UGDashboard = () => {
                               <td>{patientName || '—'}</td>
                               <td>{patientId || '—'}</td>
                               <td>{department || '—'}</td>
+                              <td>
+                                {referredDepartment ? (
+                                  <span style={{
+                                    background: 'rgba(99,102,241,0.15)',
+                                    border: '1px solid rgba(165,180,252,0.4)',
+                                    borderRadius: 4,
+                                    padding: '2px 8px',
+                                    fontSize: '0.78rem',
+                                    fontWeight: 600,
+                                    color: '#c7d2fe',
+                                    whiteSpace: 'nowrap',
+                                  }}>
+                                    {referredDepartment}
+                                  </span>
+                                ) : '—'}
+                              </td>
                               <td>
                                 <span className={status === 'approved' ? 'status-badge approved' : status === 'redo' ? 'status-badge redo' : 'status-badge pending'}>
                                   {status === 'approved' ? 'Approved' : status === 'redo' ? 'Redo' : 'Pending'}

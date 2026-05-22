@@ -63,6 +63,7 @@ const INITIAL_FORM = {
   invHistopathological: false, invHistopathologicalNotes: '',
   invOthers: false, invOthersNotes: '',
   treatmentPlan: '', prognosis: '',
+  referredDepartment: '',
   // Chargeable investigations
   chargeBiopsy: false,
   chargeExfoliativeCytology: false,
@@ -716,6 +717,27 @@ const OralMedicine = () => {
       <p className="omr-section-title">Treatment planning:</p>{ta('treatmentPlan', 4)}
 
       <p className="omr-section-title">Prognosis:</p>{ta('prognosis', 3)}
+
+      {/* Referred to Department */}
+      <p className="omr-section-title" style={{ marginTop: 24 }}>Referred to Department:</p>
+      <select
+        className="omr-uinput"
+        value={form.referredDepartment}
+        onChange={e => set('referredDepartment', e.target.value)}
+        style={{ maxWidth: 320, marginBottom: 8 }}
+      >
+        <option value="">— None / No Referral —</option>
+        <option value="Pedodontics">Pedodontics</option>
+        <option value="Orthodontics">Orthodontics</option>
+        <option value="Periodontics">Periodontics</option>
+        <option value="Endodontics">Endodontics</option>
+        <option value="Prosthodontics">Prosthodontics</option>
+        <option value="Oral & Maxillofacial Surgery">Oral &amp; Maxillofacial Surgery</option>
+        <option value="Conservative Dentistry">Conservative Dentistry</option>
+        <option value="Oral Medicine & Radiology">Oral Medicine &amp; Radiology</option>
+        <option value="Public Health Dentistry">Public Health Dentistry</option>
+        <option value="Other">Other</option>
+      </select>
 
       {/* Chargeable Investigations */}
       <p className="omr-section-title" style={{ marginTop: 24 }}>Chargeable Investigations:</p>

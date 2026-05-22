@@ -176,6 +176,9 @@ const OralCaseSchema = new mongoose.Schema(
     followUpDate:  { type: Date },
     followUpNotes: { type: String, trim: true },
 
+    // ── Referral ──────────────────────────────────────────────────────────
+    referredDepartment: { type: String, trim: true, default: '' },
+
     // ── Approval ──────────────────────────────────────────────────────────
     chiefApproval: { type: String, default: 'Pending' },
     approvedBy:    { type: String, trim: true },

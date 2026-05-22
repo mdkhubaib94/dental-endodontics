@@ -326,6 +326,24 @@ const OralMedicineView = ({ caseData: propCaseData }) => {
             <h3>Follow-up Notes:</h3>
             {area('', caseData.followUpNotes)}
 
+            {/* Referred to Department */}
+            {caseData.referredDepartment && (
+              <div style={{
+                marginTop: 20,
+                padding: '12px 16px',
+                background: 'rgba(99,102,241,0.12)',
+                border: '1.5px solid rgba(165,180,252,0.4)',
+                borderRadius: 8,
+              }}>
+                <h3 style={{ margin: '0 0 6px', color: '#c7d2fe', fontSize: '0.8rem', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                  Referred to Department
+                </h3>
+                <p style={{ margin: 0, fontWeight: 700, fontSize: '1rem' }}>
+                  {caseData.referredDepartment}
+                </p>
+              </div>
+            )}
+
             {/* Chargeable Investigations */}
             <h2 style={{ marginTop: 24 }}>Chargeable Investigations:</h2>
             <div style={{ marginLeft: 8 }}>
