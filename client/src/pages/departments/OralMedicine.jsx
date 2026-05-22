@@ -386,7 +386,12 @@ const OralMedicine = () => {
       if (res.ok) {
         if (data.data?._id) localStorage.setItem('caseId', data.data._id);
         await clearCaseDraft({ patientId, routeKey: DRAFT_ROUTE_KEY });
-        showMessageBox('Success', 'Case sheet submitted successfully!');
+        const pName = form.patientName || patientName || 'Patient';
+        const referral = form.referredDepartment ? `\n\nReferred to: ${form.referredDepartment}` : '';
+        showMessageBox(
+          '✅ Case Sheet Submitted',
+          `Oral Medicine & Radiology has completed the case sheet for ${pName}.\n\nTreatment plan and diagnosis have been recorded successfully.${referral}`
+        );
         setTimeout(() => navigate('/prescriptions'), 1500);
       } else {
         showMessageBox('Error', data.message || 'Submission failed.');
@@ -890,14 +895,22 @@ const OralMedicine = () => {
           display: 'flex', alignItems: 'center', justifyContent: 'center'
         }}>
           <div style={{
-            background: '#fff', borderRadius: 8, padding: '28px 36px',
-            maxWidth: 420, width: '90%', boxShadow: '0 8px 32px rgba(0,0,0,0.25)',
+            background: '#fff', borderRadius: 12, padding: '32px 36px',
+            maxWidth: 460, width: '90%', boxShadow: '0 8px 40px rgba(0,0,0,0.3)',
             fontFamily: 'Arial, sans-serif', textAlign: 'center'
           }}>
-            <h3 style={{ margin: '0 0 12px', color: messageBox.title === 'Error' ? '#b91c1c' : '#166534' }}>
+            <h3 style={{
+              margin: '0 0 14px',
+              fontSize: '1.15rem',
+              color: messageBox.title.includes('✅') ? '#166534'
+                   : messageBox.title === 'Error'   ? '#b91c1c'
+                   : '#1d4ed8'
+            }}>
               {messageBox.title}
             </h3>
-            <p style={{ margin: '0 0 20px', color: '#333', fontSize: '0.95rem' }}>{messageBox.message}</p>
+            <p style={{ margin: '0 0 22px', color: '#333', fontSize: '0.95rem', whiteSpace: 'pre-line', lineHeight: 1.6 }}>
+              {messageBox.message}
+            </p>
             <button onClick={hideMessageBox} style={{
               padding: '10px 32px', background: '#1d4ed8', color: '#fff',
               border: 'none', borderRadius: 6, cursor: 'pointer', fontWeight: 700, fontSize: '0.9rem'
