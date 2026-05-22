@@ -139,7 +139,9 @@ const OralMedicine = () => {
         const draft = await loadCaseDraft({ patientId, routeKey: DRAFT_ROUTE_KEY });
         if (!cancelled && draft?.data?.form) {
           const currentName = String(localStorage.getItem('CurrentpatientName') || '').trim();
-          setForm(prev => ({ ...prev, ...draft.data.form, ...(currentName ? { patientName: currentName } : {}) }));
+          // Strip age/sex/patientName from draft — these are always fetched live from the API
+          const { age: _a, sex: _s, patientName: _n, ...draftForm } = draft.data.form;
+          setForm(prev => ({ ...prev, ...draftForm, ...(currentName ? { patientName: currentName } : {}) }));
           if (typeof draft.data.signaturePreview === 'string' && draft.data.signaturePreview.trim()) {
             setSignaturePreview(draft.data.signaturePreview);
           }
@@ -183,7 +185,7 @@ const OralMedicine = () => {
     if (patientName) setForm(prev => ({ ...prev, patientName }));
   }, [patientName]); // eslint-disable-line
 
-  /* ── Load allergy info ── */
+  /* ── Load allergy info + auto-fill age & sex ── */
   useEffect(() => {
     let isMounted = true;
     const toListString = (v) => Array.isArray(v) ? v.map(x => String(x).trim()).filter(Boolean).join(', ') : String(v || '').trim();
@@ -200,29 +202,52 @@ const OralMedicine = () => {
         return;
       }
       try {
-        const res = await fetch(`${API_BASE_URL}/api/doctor-patient/${pid}`);
-        const result = res.ok ? await res.json() : null;
-        const p = extractPatient(result);
-        if (!p) { if (isMounted) setAllergyMessage('No known allergies'); return; }
-        const drug = toListString(p.vitals?.drugAllergies);
-        const known = toListString(p.medicalInfo?.knownAllergies);
-        const diet = toListString(p.vitals?.dietAllergies);
-        // Auto-fill age and sex from patient record
-        const patientAge = p.personalInfo?.age;
-        const patientGender = p.personalInfo?.gender;
-        if (isMounted) {
-          if (patientAge != null && String(patientAge).trim() !== '') {
-            setForm(prev => ({ ...prev, age: String(patientAge) }));
-          }
-          if (patientGender) {
-            setForm(prev => ({ ...prev, sex: patientGender }));
-          }
+        // Try primary endpoint first, fall back to patient-details endpoint
+        let p = null;
+        const token = localStorage.getItem('token');
+        const headers = token ? { Authorization: `Bearer ${token}` } : {};
+
+        const res1 = await fetch(`${API_BASE_URL}/api/doctor-patient/${pid}`, { headers });
+        if (res1.ok) {
+          p = extractPatient(await res1.json());
         }
+
+        // Fallback if primary returned nothing
+        if (!p) {
+          const res2 = await fetch(`${API_BASE_URL}/api/patient-details/by-patient-id/${pid}`, { headers });
+          if (res2.ok) p = extractPatient(await res2.json());
+        }
+
         if (!isMounted) return;
-        if (drug) setAllergyMessage(`Drug Allergies: ${drug}`);
-        else if (known) setAllergyMessage(`Known Allergies: ${known}`);
-        else if (diet) setAllergyMessage(`Diet Allergies: ${diet}`);
-        else setAllergyMessage('No known allergies');
+
+        if (!p) {
+          setAllergyMessage('No known allergies');
+          return;
+        }
+
+        // Auto-fill age and sex in a single setForm call to avoid stale closure
+        const patientAge    = p.personalInfo?.age;
+        const patientGender = p.personalInfo?.gender;
+        const hasAge    = patientAge != null && String(patientAge).trim() !== '' && String(patientAge).trim() !== '0';
+        const hasGender = patientGender && ['Male', 'Female', 'Other'].includes(patientGender);
+
+        if (hasAge || hasGender) {
+          setForm(prev => ({
+            ...prev,
+            ...(hasAge    ? { age: String(patientAge) }  : {}),
+            ...(hasGender ? { sex: patientGender }        : {}),
+          }));
+        }
+
+        // Allergy ticker
+        const drug  = toListString(p.vitals?.drugAllergies);
+        const known = toListString(p.medicalInfo?.knownAllergies);
+        const diet  = toListString(p.vitals?.dietAllergies);
+        if (drug)        setAllergyMessage(`Drug Allergies: ${drug}`);
+        else if (known)  setAllergyMessage(`Known Allergies: ${known}`);
+        else if (diet)   setAllergyMessage(`Diet Allergies: ${diet}`);
+        else             setAllergyMessage('No known allergies');
+
       } catch { if (isMounted) setAllergyMessage('No known allergies'); }
     };
     load();
