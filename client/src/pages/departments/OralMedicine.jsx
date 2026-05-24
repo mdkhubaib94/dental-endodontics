@@ -309,14 +309,14 @@ const OralMedicine = () => {
 
   const handleNext = () => {
     if (currentPage < TOTAL_PAGES - 1) setCurrentPage(p => p + 1);
-    else handleSubmit();
+    else handleSubmit('dashboard');
   };
 
   const handlePrev = () => {
     if (currentPage > 0) setCurrentPage(p => p - 1);
   };
 
-  const handleSubmit = async () => {
+  const handleSubmit = async (redirectTo = 'dashboard') => {
     if (!validate()) { showToast('Please fill required fields.', 'error'); return; }
     if (!patientId) { showToast('No patient loaded.', 'error'); return; }
     if (!doctorId) { showToast('Doctor identity not found. Please log in again.', 'error'); return; }
@@ -383,7 +383,7 @@ const OralMedicine = () => {
           : role.includes('pg') ? '/pg-dashboard'
           : role.includes('chief') ? '/chief-doctor-dashboard'
           : '/doctor-dashboard';
-        setTimeout(() => navigate(dashRoute), 1500);
+        setTimeout(() => navigate(redirectTo === 'prescription' ? '/prescriptions' : dashRoute), 1500);
       } else {
         showMessageBox('Error', data.message || 'Submission failed.');
       }
@@ -751,7 +751,8 @@ const OralMedicine = () => {
               <button
                 type="button"
                 className="omr-btn-prev"
-                onClick={() => navigate('/prescriptions')}
+                onClick={() => handleSubmit('prescription')}
+                disabled={submitting}
                 style={{ background: 'rgba(99,102,241,0.25)', border: '1.5px solid rgba(165,180,252,0.5)', color: '#c7d2fe' }}
               >
                 📋 Prescription
