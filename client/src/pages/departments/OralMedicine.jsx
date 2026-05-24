@@ -368,7 +368,12 @@ const OralMedicine = () => {
         const pName = form.patientName || patientName || 'Patient';
         const referral = form.referredDepartment ? `\n\nReferred to: ${form.referredDepartment}` : '';
         showMessageBox('✅ Case Sheet Submitted', `Oral Medicine & Radiology has completed the case sheet for ${pName}.\n\nTreatment plan and diagnosis have been recorded successfully.${referral}`);
-        setTimeout(() => navigate('/prescriptions'), 1500);
+        const role = user?.role || localStorage.getItem('role') || '';
+        const dashRoute = role.includes('ug') ? '/ug-dashboard'
+          : role.includes('pg') ? '/pg-dashboard'
+          : role.includes('chief') ? '/chief-doctor-dashboard'
+          : '/doctor-dashboard';
+        setTimeout(() => navigate(dashRoute), 1500);
       } else {
         showMessageBox('Error', data.message || 'Submission failed.');
       }
@@ -729,9 +734,19 @@ const OralMedicine = () => {
           {currentPage < TOTAL_PAGES - 1 ? (
             <button type="button" className="omr-btn-submit" onClick={handleNext}>Next →</button>
           ) : (
-            <button type="button" className="omr-btn-submit" onClick={handleSubmit} disabled={submitting}>
-              {submitting ? 'Submitting...' : 'Submit Case Sheet ✓'}
-            </button>
+            <>
+              <button type="button" className="omr-btn-submit" onClick={handleSubmit} disabled={submitting}>
+                {submitting ? 'Submitting...' : 'Submit Case Sheet ✓'}
+              </button>
+              <button
+                type="button"
+                className="omr-btn-prev"
+                onClick={() => navigate('/prescriptions')}
+                style={{ background: 'rgba(99,102,241,0.25)', border: '1.5px solid rgba(165,180,252,0.5)', color: '#c7d2fe' }}
+              >
+                📋 Prescription
+              </button>
+            </>
           )}
         </div>
       </div>
