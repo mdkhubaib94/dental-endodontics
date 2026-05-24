@@ -255,6 +255,16 @@ const OralMedicine = () => {
 
   useEffect(() => { window.scrollTo(0, 0); }, [currentPage]);
 
+  // Auto-set referredDepartment to the doctor's own department on first load
+  useEffect(() => {
+    const dept = user?.department
+      || localStorage.getItem('doctorDepartment')
+      || localStorage.getItem('ugDepartment')
+      || localStorage.getItem('pgDepartment')
+      || 'Oral Medicine and Radiology';
+    setForm(prev => prev.referredDepartment ? prev : { ...prev, referredDepartment: dept });
+  }, []); // eslint-disable-line
+
   const formatAllergyTicker = (raw) => {
     const r = (raw || '').trim();
     if (!r) return 'Drug Allergies: None';
@@ -576,6 +586,25 @@ const OralMedicine = () => {
         <option value="Public Health Dentistry">Public Health Dentistry</option>
         <option value="Other">Other</option>
       </select>
+
+      {/* Doctor info below referred department */}
+      <div style={{
+        marginTop: 16, padding: '12px 16px',
+        background: 'rgba(255,255,255,0.07)',
+        border: '1px solid rgba(165,180,252,0.3)',
+        borderRadius: 8, maxWidth: 400,
+      }}>
+        <p style={{ margin: '0 0 4px', fontSize: '0.75rem', color: '#a5b4fc', textTransform: 'uppercase', letterSpacing: '0.5px', fontWeight: 700 }}>
+          Treating Doctor
+        </p>
+        <p style={{ margin: '0 0 2px', fontWeight: 700, fontSize: '1rem', color: '#fff' }}>
+          {doctorName || '—'}
+        </p>
+        <p style={{ margin: 0, fontSize: '0.85rem', color: '#c7d2fe' }}>
+          {user?.department || localStorage.getItem('doctorDepartment') || localStorage.getItem('ugDepartment') || localStorage.getItem('pgDepartment') || 'Oral Medicine and Radiology'}
+          {user?.role ? ` · ${String(user.role).replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase())}` : ''}
+        </p>
+      </div>
       <div className="form-group" style={{ marginTop: 32 }}>
         <label className="omr-lbl">Doctor's Digital Signature: <span style={{ color: '#b91c1c' }}>*</span></label>
         <input type="file" accept="image/*" onChange={e => handleFileChange(e.target.files[0])} style={{ display: 'block', marginTop: 8 }} />
