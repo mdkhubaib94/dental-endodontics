@@ -320,6 +320,11 @@ const OralMedicine = () => {
     if (!validate()) { showToast('Please fill required fields.', 'error'); return; }
     if (!patientId) { showToast('No patient loaded.', 'error'); return; }
     if (!doctorId) { showToast('Doctor identity not found. Please log in again.', 'error'); return; }
+    if (!token) {
+      showMessageBox('Session Expired', 'Your session has expired. Please log in again.');
+      setTimeout(() => navigate('/login'), 1500);
+      return;
+    }
     if (!form.digitalSignature) {
       showMessageBox('Error', 'Please upload your digital signature before submitting.');
       return;
@@ -362,6 +367,11 @@ const OralMedicine = () => {
         body: JSON.stringify(payload),
       });
       const data = await res.json();
+      if (res.status === 401) {
+        showMessageBox('Session Expired', 'Your session has expired. Please log in again.');
+        setTimeout(() => navigate('/login'), 1500);
+        return;
+      }
       if (res.ok) {
         if (data.data?._id) localStorage.setItem('caseId', data.data._id);
         await clearCaseDraft({ patientId, routeKey: DRAFT_ROUTE_KEY });
