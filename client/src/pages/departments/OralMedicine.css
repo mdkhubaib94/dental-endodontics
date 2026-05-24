@@ -385,6 +385,19 @@
   gap: 12px;
   flex-wrap: wrap;
 }
+
+/* Plain investigation list — no checkboxes, matches PDF format */
+.omr-inv-list-plain {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 8px 0 12px 0;
+}
+.omr-inv-plain-item {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
 .omr-inv-chk-label {
   display: flex;
   align-items: center;
