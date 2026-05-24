@@ -398,6 +398,14 @@
   flex-direction: column;
   gap: 2px;
 }
+
+/* Checkbox-only investigation list */
+.omr-inv-chk-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin: 8px 0 16px 8px;
+}
 .omr-inv-chk-label {
   display: flex;
   align-items: center;
@@ -603,6 +611,14 @@
   color: #ffffff;
   font-weight: 600;
   font-size: 0.85rem;
+}
+
+/* Chargeable investigations list */
+.omr-charge-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin: 8px 0 16px 8px;
 }
 
 /* ── General Examination — dropdown grid ── */

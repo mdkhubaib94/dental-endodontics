@@ -7,7 +7,7 @@ import { readStoredGeneralCaseXray } from '../../utils/generalCaseXray';
 import { getCurrentPatientId, getSharedXrayImage } from '../../utils/sharedXray';
 import './OralMedicine.css';
 
-const DRAFT_ROUTE_KEY = '/oral-medicine';
+const DRAFT_ROUTE_KEY = '/oral-medicine'; 
 const CASE_CONSENT_NAV_STATE_KEY = 'caseSheetConsentApproved';
 const TOTAL_PAGES = 8;
 
@@ -40,8 +40,23 @@ const INITIAL_FORM = {
   invSerologicalNotes: '', invCytologicalNotes: '', invMicrobiologicalNotes: '',
   invSpecialNotes: '', invRadiologicalNotes: '', invBiopsyNotes: '',
   invHistopathologicalNotes: '', invOthersNotes: '',
+  invHematological: false, invUrine: false, invBiochemical: false,
+  invSerological: false, invCytological: false, invMicrobiological: false,
+  invSpecial: false, invRadiological: false, invBiopsy: false,
+  invHistopathological: false, invOthers: false,
   treatmentPlan: '', prognosis: '',
   referredDepartment: '',
+  // Chargeable investigations
+  chargeBiopsy: false,
+  chargeExfoliativeCytology: false,
+  chargeIOPA: false,
+  chargeBitewing: false,
+  chargeOcclusal: false,
+  chargeOPGWithFilm: false,
+  chargeOPGWithoutFilm: false,
+  chargeLateralCephalogram: false,
+  chargeCBCT: false,
+  chargeDescription: '',
   digitalSignature: null,
 };
 
@@ -181,6 +196,20 @@ const OralMedicine = () => {
             ...(hasGender ? { sex: patientGender } : {}),
           }));
         }
+
+        // Auto-fetch referredDepartment from the patient's general case sheet
+        try {
+          const gcRes = await fetch(`${API_BASE_URL}/api/general/patient/${pid}`, { headers });
+          if (gcRes.ok) {
+            const gcData = await gcRes.json();
+            const cases = Array.isArray(gcData?.data) ? gcData.data : (gcData?.data ? [gcData.data] : []);
+            // Get the most recent general case that has a referredDepartment
+            const latestWithRef = cases.find(c => c.referredDepartment && c.referredDepartment.trim());
+            if (latestWithRef?.referredDepartment && isMounted) {
+              setForm(prev => ({ ...prev, referredDepartment: latestWithRef.referredDepartment }));
+            }
+          }
+        } catch { /* silently ignore — referredDepartment stays as user-selected */ }
         const drug = toListString(p.vitals?.drugAllergies);
         const known = toListString(p.medicalInfo?.knownAllergies);
         const diet = toListString(p.vitals?.dietAllergies);
@@ -497,29 +526,66 @@ const OralMedicine = () => {
       <p className="omr-section-title">Provisional Diagnosis:</p>{ta('provisionalDiagnosis', 3)}
       <p className="omr-section-title">Differential Diagnosis:</p>{ta('differentialDiagnosis', 3)}
       <p className="omr-section-title">Investigation:</p>
-      <div className="omr-inv-list-plain">
+      <div className="omr-inv-chk-list">
         {[
-          ['invHematologicalNotes',     'a) Hematological'],
-          ['invUrineNotes',             'b) Urine'],
-          ['invBiochemicalNotes',       'c) Bio-Chemical'],
-          ['invSerologicalNotes',       'd) Serological'],
-          ['invCytologicalNotes',       'e) Cytological'],
-          ['invMicrobiologicalNotes',   'f) Microbiological'],
-          ['invSpecialNotes',           'g) Special investigations'],
-          ['invRadiologicalNotes',      'h) Radiological'],
-          ['invBiopsyNotes',            'i) Biopsy'],
-          ['invHistopathologicalNotes', 'j) Histopathological Examination'],
-          ['invOthersNotes',            'k) Any others'],
+          ['invHematological',     'a) Hematological'],
+          ['invUrine',             'b) Urine'],
+          ['invBiochemical',       'c) Bio-Chemical'],
+          ['invSerological',       'd) Serological'],
+          ['invCytological',       'e) Cytological'],
+          ['invMicrobiological',   'f) Microbiological'],
+          ['invSpecial',           'g) Special investigations'],
+          ['invRadiological',      'h) Radiological'],
+          ['invBiopsy',            'i) Biopsy'],
+          ['invHistopathological', 'j) Histopathological Examination'],
+          ['invOthers',            'k) Any others'],
         ].map(([field, label]) => (
-          <div className="omr-inv-plain-item" key={field}>
-            <p className="omr-item-label">{label}</p>
-            {ta(field, 2)}
-          </div>
+          <label className="omr-inv-chk-label" key={field}>
+            <input
+              type="checkbox"
+              checked={!!form[field]}
+              onChange={e => set(field, e.target.checked)}
+            />
+            {label}
+          </label>
         ))}
       </div>
       <p className="omr-section-title">Clinical Diagnosis:</p>{ta('clinicalDiagnosis', 3)}
       <p className="omr-section-title">Treatment planning:</p>{ta('treatmentPlan', 4)}
       <p className="omr-section-title">Prognosis:</p>{ta('prognosis', 3)}
+
+      <p className="omr-section-title" style={{ marginTop: 24 }}>CHARGEABLE INVESTIGATIONS:</p>
+      <div className="omr-charge-list">
+        <label className="omr-inv-chk-label">
+          <input type="checkbox" checked={!!form.chargeBiopsy} onChange={e => set('chargeBiopsy', e.target.checked)} />
+          Biopsy — <span className="omr-charge-rate">Rs. 250</span>
+        </label>
+        <label className="omr-inv-chk-label">
+          <input type="checkbox" checked={!!form.chargeExfoliativeCytology} onChange={e => set('chargeExfoliativeCytology', e.target.checked)} />
+          Exfoliative Cytology — <span className="omr-charge-rate">Rs. 50</span>
+        </label>
+
+        <p className="omr-item-label" style={{ marginTop: 14, marginBottom: 6 }}>X-ray Taken:</p>
+        {[
+          ['chargeIOPA',              'IOPA',               'Rs. 30'],
+          ['chargeBitewing',          'Bitewing',           'Rs. 30'],
+          ['chargeOcclusal',          'Occlusal',           'Rs. 150'],
+          ['chargeOPGWithFilm',       'OPG with film',      'Rs. 300'],
+          ['chargeOPGWithoutFilm',    'OPG without film',   'Rs. 200'],
+          ['chargeLateralCephalogram','Lateral Cephalogram','Rs. 300'],
+          ['chargeCBCT',              'CBCT',               'Cost yet to be decided'],
+        ].map(([field, label, rate]) => (
+          <label className="omr-inv-chk-label" key={field}>
+            <input type="checkbox" checked={!!form[field]} onChange={e => set(field, e.target.checked)} />
+            {label} — <span className="omr-charge-rate">{rate}</span>
+          </label>
+        ))}
+
+        <div style={{ marginTop: 16 }}>
+          <p className="omr-item-label">Description / Remarks:</p>
+          {ta('chargeDescription', 3)}
+        </div>
+      </div>
       <p className="omr-section-title" style={{ marginTop: 24 }}>Referred to Department:</p>
       <select className="omr-uinput" value={form.referredDepartment} onChange={e => set('referredDepartment', e.target.value)} style={{ maxWidth: 320, marginBottom: 8 }}>
         <option value="">— None / No Referral —</option>

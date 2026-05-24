@@ -142,6 +142,7 @@ router.get('/pg/history', auth, requireRole(['pg', 'ug']), async (req, res) => {
       approvedAt: 1,
       createdAt: 1,
       updatedAt: 1,
+      referredDepartment: 1,
     };
 
     const sources = [
@@ -176,6 +177,7 @@ router.get('/pg/history', auth, requireRole(['pg', 'ug']), async (req, res) => {
             approvedAt: row?.approvedAt || null,
             createdAt: row?.createdAt || null,
             updatedAt: row?.updatedAt || null,
+            referredDepartment: String(row?.referredDepartment || ''),
           }));
         } catch (error) {
           console.error(`Error fetching PG history for ${departmentKey}:`, error);
