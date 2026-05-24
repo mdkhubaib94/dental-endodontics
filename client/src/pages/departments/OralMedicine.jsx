@@ -116,7 +116,10 @@ const OralMedicine = () => {
         const draft = await loadCaseDraft({ patientId, routeKey: DRAFT_ROUTE_KEY });
         if (!cancelled && draft?.data?.form) {
           const currentName = String(localStorage.getItem('CurrentpatientName') || '').trim();
-          const { age: _a, sex: _s, patientName: _n, ...draftForm } = draft.data.form;
+          const { age: _a, sex: _s, patientName: _n,
+                  chiefComplaint: _cc, historyOfPresentIllness: _hpi,
+                  pastMedicalHistory: _pmh, pastSurgicalHistory: _psh,
+                  pastDentalHistory: _pdh, ...draftForm } = draft.data.form;
           setForm(prev => ({ ...prev, ...draftForm, ...(currentName ? { patientName: currentName } : {}) }));
           if (typeof draft.data.signaturePreview === 'string' && draft.data.signaturePreview.trim()) {
             setSignaturePreview(draft.data.signaturePreview);
@@ -195,6 +198,18 @@ const OralMedicine = () => {
             ...(hasGender ? { sex: patientGender } : {}),
           }));
         }
+
+        // Auto-fill history fields from patient record
+        const mi = p.medicalInfo || {};
+        setForm(prev => ({
+          ...prev,
+          ...(mi.chiefComplaint               ? { chiefComplaint:          mi.chiefComplaint }               : {}),
+          ...(mi.historyOfPresentIllness       ? { historyOfPresentIllness: mi.historyOfPresentIllness }       : {}),
+          ...(mi.pastSurgicalHistory           ? { pastSurgicalHistory:     mi.pastSurgicalHistory }           : {}),
+          ...(mi.pastDentalHistory             ? { pastDentalHistory:       mi.pastDentalHistory }             : {}),
+          ...(Array.isArray(mi.pastMedicalHistory) && mi.pastMedicalHistory.length
+            ? { pastMedicalHistory: mi.pastMedicalHistory.filter(v => v !== 'None').join(', ') } : {}),
+        }));
 
         // Auto-fetch referredDepartment from the patient's general case sheet
         try {
@@ -367,48 +382,6 @@ const OralMedicine = () => {
         </div>
       )}
       <h2 className="omr-sheet-title" style={{ marginTop: 8 }}>ORAL MEDICINE AND RADIOLOGY</h2>
-      <div className="omr-header-vertical">
-        <div className="omr-hv-tile-header">PATIENT DETAILS</div>
-        <div className="omr-hv-row">
-          <span className="omr-hv-label">DATE:</span>
-          {ui('date', 'date')}
-        </div>
-        <div className="omr-hv-row">
-          <span className="omr-hv-label">CASE SHEET:</span>
-          {ui('caseSheetNumber')}
-        </div>
-        <div className="omr-hv-row">
-          <span className="omr-hv-label">PATIENT ID:</span>
-          <input className="omr-uinput" type="text" value={patientId} readOnly
-            style={{ background: 'rgba(255,255,255,0.15)', cursor: 'default', color: '#fff', fontWeight: 600 }} />
-        </div>
-        <div className="omr-hv-row">
-          <span className="omr-hv-label">NAME:</span>
-          <input className="omr-uinput" type="text" value={form.patientName} readOnly
-            style={{ background: 'rgba(255,255,255,0.15)', cursor: 'default', color: '#fff', fontWeight: 600, flex: 1 }} />
-          <span className="omr-hv-label" style={{ marginLeft: 24, minWidth: 70 }}>OP.NO:</span>
-          {ui('opNo')}
-        </div>
-        {errors.patientName && <p className="omr-error">{errors.patientName}</p>}
-        <div className="omr-hv-row">
-          <span className="omr-hv-label">AGE/SEX:</span>
-          <input className="omr-uinput" type="text" value={form.age ? `${form.age} / ${form.sex}` : ''} readOnly
-            style={{ background: 'rgba(255,255,255,0.15)', cursor: 'default', color: '#fff', fontWeight: 600, maxWidth: 140 }} />
-          <span className="omr-hv-label" style={{ marginLeft: 24, minWidth: 100 }}>OCCUPATION:</span>
-          {ui('occupation')}
-        </div>
-        {(errors.age || errors.sex) && <p className="omr-error">{errors.age || errors.sex}</p>}
-        <div className="omr-hv-row">
-          <span className="omr-hv-label">INCOME:</span>
-          {ui('income')}
-          <span className="omr-hv-label" style={{ marginLeft: 24, minWidth: 80 }}>RELIGION:</span>
-          {ui('religion')}
-        </div>
-        <div className="omr-hv-row omr-hv-row-top">
-          <span className="omr-hv-label">ADDRESS:</span>
-          <textarea className="omr-ta" rows={2} value={form.address || ''} onChange={e => set('address', e.target.value)} />
-        </div>
-      </div>
       <p className="omr-section-title">CHIEF COMPLAINT:</p>
       {ta('chiefComplaint', 4, true)}
       {errors.chiefComplaint && <p className="omr-error">{errors.chiefComplaint}</p>}

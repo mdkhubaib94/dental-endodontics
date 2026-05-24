@@ -100,6 +100,21 @@ const patientDetailsSchema = new Schema({
       trim: true,
       default: ''
     },
+    historyOfPresentIllness: {
+      type: String,
+      trim: true,
+      default: ''
+    },
+    pastSurgicalHistory: {
+      type: String,
+      trim: true,
+      default: ''
+    },
+    pastDentalHistory: {
+      type: String,
+      trim: true,
+      default: ''
+    },
     hpi: [{
       type: String,
       trim: true

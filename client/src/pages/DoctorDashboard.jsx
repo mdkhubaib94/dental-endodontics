@@ -62,6 +62,10 @@ const DoctorDashboard = () => {
     religion: '',
     address: '',
     chiefComplaint: '',
+    historyOfPresentIllness: '',
+    pastMedicalHistory: '',
+    pastSurgicalHistory: '',
+    pastDentalHistory: '',
     currentMedications: 'None',
     knownAllergies: 'None',
     chronicConditions: 'None',
@@ -702,6 +706,10 @@ const DoctorDashboard = () => {
       religion: patientData.personalInfo?.religion || '',
       address: patientData.personalInfo?.address || '',
       chiefComplaint: patientData.medicalInfo?.chiefComplaint || '',
+      historyOfPresentIllness: patientData.medicalInfo?.historyOfPresentIllness || '',
+      pastMedicalHistory: patientData.medicalInfo?.pastMedicalHistory || '',
+      pastSurgicalHistory: patientData.medicalInfo?.pastSurgicalHistory || '',
+      pastDentalHistory: patientData.medicalInfo?.pastDentalHistory || '',
       currentMedications: patientData.medicalInfo?.currentMedications?.join(', ') || 'None',
       knownAllergies: patientData.medicalInfo?.knownAllergies?.join(', ') || 'None',
       chronicConditions: patientData.medicalInfo?.chronicConditions?.join(', ') || 'None',
@@ -1025,6 +1033,10 @@ const DoctorDashboard = () => {
         },
         medicalInfo: {
           chiefComplaint: formData.chiefComplaint,
+          historyOfPresentIllness: formData.historyOfPresentIllness || '',
+          pastMedicalHistory: formData.pastMedicalHistory || '',
+          pastSurgicalHistory: formData.pastSurgicalHistory || '',
+          pastDentalHistory: formData.pastDentalHistory || '',
           hpi: hpiSelections,
           pastMedicalHistory: pastMedicalHistory,
           personalHabits: personalHabits,
@@ -3456,23 +3468,41 @@ const DoctorDashboard = () => {
 
             {/* Vitals — right after Marital Status */}
             <h3>Vitals</h3>
-            <div className="dd-vitals-grid">
-              {[
-                { name: 'vitalBP',     label: 'Blood Pressure', placeholder: '120/80', unit: 'mmHg' },
-                { name: 'vitalTemp',   label: 'Temperature',    placeholder: '37.0',   unit: '°C'   },
-                { name: 'vitalWeight', label: 'Weight',         placeholder: '65',     unit: 'kg'   },
-                { name: 'vitalHeight', label: 'Height',         placeholder: '165',    unit: 'cm'   },
-              ].map(({ name, label, placeholder, unit }) => (
-                <div className="dd-vital-card" key={name}>
-                  <label className="dd-vital-label">{label}</label>
-                  <div className="dd-vital-input-wrap">
-                    <input className="dd-vital-input" type="text" name={name}
-                      placeholder={placeholder} value={formData[name]}
-                      onChange={handleInputChange} />
-                    <span className="dd-vital-unit">{unit}</span>
-                  </div>
+            <div className="form-row">
+              <div className="input-group">
+                <label>Blood Pressure</label>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                  <input type="text" name="vitalBP" placeholder="120/80"
+                    value={formData.vitalBP} onChange={handleInputChange} />
+                  <span style={{ color: '#6b7280', fontSize: '0.85rem', whiteSpace: 'nowrap' }}>mmHg</span>
                 </div>
-              ))}
+              </div>
+              <div className="input-group">
+                <label>Temperature</label>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                  <input type="text" name="vitalTemp" placeholder="37.0"
+                    value={formData.vitalTemp} onChange={handleInputChange} />
+                  <span style={{ color: '#6b7280', fontSize: '0.85rem', whiteSpace: 'nowrap' }}>°C</span>
+                </div>
+              </div>
+            </div>
+            <div className="form-row">
+              <div className="input-group">
+                <label>Weight</label>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                  <input type="text" name="vitalWeight" placeholder="65"
+                    value={formData.vitalWeight} onChange={handleInputChange} />
+                  <span style={{ color: '#6b7280', fontSize: '0.85rem', whiteSpace: 'nowrap' }}>kg</span>
+                </div>
+              </div>
+              <div className="input-group">
+                <label>Height</label>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                  <input type="text" name="vitalHeight" placeholder="165"
+                    value={formData.vitalHeight} onChange={handleInputChange} />
+                  <span style={{ color: '#6b7280', fontSize: '0.85rem', whiteSpace: 'nowrap' }}>cm</span>
+                </div>
+              </div>
             </div>
 
             {/* Additional Information */}
@@ -3540,14 +3570,38 @@ const DoctorDashboard = () => {
               <label htmlFor="chief-complaint">
                 Chief Complaint <span style={{ color: "red" }}>*</span>
               </label>
-              <select id="chief-complaint" name="chiefComplaint"
-                value={formData.chiefComplaint} onChange={handleInputChange}>
-                <option value="">Select a primary issue</option>
-                {chiefComplaints.map((complaint) => (
-                  <option key={complaint} value={complaint}>{complaint}</option>
-                ))}
-              </select>
+              <textarea id="chief-complaint" name="chiefComplaint" rows={2}
+                value={formData.chiefComplaint} onChange={handleInputChange}
+                placeholder="Describe the chief complaint..." />
               {fieldErrors.chiefComplaint && <div className="error-message">{fieldErrors.chiefComplaint}</div>}
+            </div>
+
+            <div className="input-group">
+              <label htmlFor="history-of-present-illness">History of Presenting Illness</label>
+              <textarea id="history-of-present-illness" name="historyOfPresentIllness" rows={3}
+                value={formData.historyOfPresentIllness} onChange={handleInputChange}
+                placeholder="Describe the history of the presenting illness..." />
+            </div>
+
+            <div className="input-group">
+              <label htmlFor="past-medical-history">Past Medical History</label>
+              <textarea id="past-medical-history" name="pastMedicalHistory" rows={3}
+                value={formData.pastMedicalHistory} onChange={handleInputChange}
+                placeholder="e.g. Diabetes, Hypertension, previous illnesses..." />
+            </div>
+
+            <div className="input-group">
+              <label htmlFor="past-surgical-history">Past Surgical History</label>
+              <textarea id="past-surgical-history" name="pastSurgicalHistory" rows={2}
+                value={formData.pastSurgicalHistory} onChange={handleInputChange}
+                placeholder="e.g. Previous surgeries, procedures..." />
+            </div>
+
+            <div className="input-group">
+              <label htmlFor="past-dental-history">Past Dental History</label>
+              <textarea id="past-dental-history" name="pastDentalHistory" rows={2}
+                value={formData.pastDentalHistory} onChange={handleInputChange}
+                placeholder="e.g. Previous dental treatments, extractions..." />
             </div>
 
             {/* HPI, Past Medical History, Personal Habits, Medical History
