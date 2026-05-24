@@ -171,7 +171,12 @@ const patientDetailsSchema = new Schema({
     dietAllergies: [{
       type: String,
       trim: true
-    }]
+    }],
+    criticalCondition: {
+      type: String,
+      trim: true,
+      default: ''
+    }
   },
 
   // Clinical Examination

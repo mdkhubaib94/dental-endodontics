@@ -76,6 +76,7 @@ const DoctorDashboard = () => {
     bloodGroup: '',
     drugAllergies: '',
     dietAllergies: '',
+    criticalCondition: '',
     // General Examination — Vitals (individual fields)
     vitalBP: '',
     vitalTemp: '',
@@ -720,6 +721,7 @@ const DoctorDashboard = () => {
       bloodGroup: patientData.vitals?.bloodGroup || '',
       drugAllergies: patientData.vitals?.drugAllergies?.join(', ') || '',
       dietAllergies: patientData.vitals?.dietAllergies?.join(', ') || '',
+      criticalCondition: patientData.vitals?.criticalCondition || '',
       // Vitals — individual
       vitalBP:       patientData.clinicalExam?.vitalBP       || '',
       vitalTemp:     patientData.clinicalExam?.vitalTemp     || '',
@@ -1051,7 +1053,8 @@ const DoctorDashboard = () => {
         vitals: {
           bloodGroup: formData.bloodGroup,
           drugAllergies: formData.drugAllergies.split(',').map(item => item.trim()).filter(item => item),
-          dietAllergies: formData.dietAllergies.split(',').map(item => item.trim()).filter(item => item)
+          dietAllergies: formData.dietAllergies.split(',').map(item => item.trim()).filter(item => item),
+          criticalCondition: formData.criticalCondition || '',
         },
         clinicalExam: {
           vitalBP:       formData.vitalBP       || '',
@@ -3800,6 +3803,17 @@ const DoctorDashboard = () => {
                   value={formData.dietAllergies}
                   onChange={handleInputChange}
                   placeholder="Specify diet allergies"
+                />
+              </div>
+              <div className="input-group">
+                <label htmlFor="critical-condition">Critical Condition</label>
+                <input
+                  type="text"
+                  id="critical-condition"
+                  name="criticalCondition"
+                  value={formData.criticalCondition}
+                  onChange={handleInputChange}
+                  placeholder="e.g. Cardiac arrest risk, Severe allergy, Haemophilia..."
                 />
               </div>
             </div>
