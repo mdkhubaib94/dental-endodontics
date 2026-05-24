@@ -121,9 +121,8 @@ const OralMedicine = () => {
           if (typeof draft.data.signaturePreview === 'string' && draft.data.signaturePreview.trim()) {
             setSignaturePreview(draft.data.signaturePreview);
           }
-          if (Number.isFinite(draft.step)) {
-            setCurrentPage(Math.max(0, Math.min(Number(draft.step), TOTAL_PAGES - 1)));
-          }
+          // Always start from page 0 — never restore the last page from draft
+          setCurrentPage(0);
         }
       } finally {
         if (!cancelled) setIsDraftHydrated(true);

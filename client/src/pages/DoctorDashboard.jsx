@@ -3454,7 +3454,28 @@ const DoctorDashboard = () => {
               </div>
             )}
 
-            {/* Additional Information — moved here, right after Marital Status */}
+            {/* Vitals — right after Marital Status */}
+            <h3>Vitals</h3>
+            <div className="dd-vitals-grid">
+              {[
+                { name: 'vitalBP',     label: 'Blood Pressure', placeholder: '120/80', unit: 'mmHg' },
+                { name: 'vitalTemp',   label: 'Temperature',    placeholder: '37.0',   unit: '°C'   },
+                { name: 'vitalWeight', label: 'Weight',         placeholder: '65',     unit: 'kg'   },
+                { name: 'vitalHeight', label: 'Height',         placeholder: '165',    unit: 'cm'   },
+              ].map(({ name, label, placeholder, unit }) => (
+                <div className="dd-vital-card" key={name}>
+                  <label className="dd-vital-label">{label}</label>
+                  <div className="dd-vital-input-wrap">
+                    <input className="dd-vital-input" type="text" name={name}
+                      placeholder={placeholder} value={formData[name]}
+                      onChange={handleInputChange} />
+                    <span className="dd-vital-unit">{unit}</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* Additional Information */}
             <h3>Additional Information</h3>
             <div className="form-row">
               <div className="input-group">
@@ -3483,27 +3504,6 @@ const DoctorDashboard = () => {
                   value={formData.address} onChange={handleInputChange}
                   placeholder="Full address" />
               </div>
-            </div>
-
-            {/* Vitals — right after Additional Information */}
-            <h3>Vitals</h3>
-            <div className="dd-vitals-grid">
-              {[
-                { name: 'vitalBP',     label: 'Blood Pressure', placeholder: '120/80', unit: 'mmHg' },
-                { name: 'vitalTemp',   label: 'Temperature',    placeholder: '37.0',   unit: '°C'   },
-                { name: 'vitalWeight', label: 'Weight',         placeholder: '65',     unit: 'kg'   },
-                { name: 'vitalHeight', label: 'Height',         placeholder: '165',    unit: 'cm'   },
-              ].map(({ name, label, placeholder, unit }) => (
-                <div className="dd-vital-card" key={name}>
-                  <label className="dd-vital-label">{label}</label>
-                  <div className="dd-vital-input-wrap">
-                    <input className="dd-vital-input" type="text" name={name}
-                      placeholder={placeholder} value={formData[name]}
-                      onChange={handleInputChange} />
-                    <span className="dd-vital-unit">{unit}</span>
-                  </div>
-                </div>
-              ))}
             </div>
 
             {/* Preferred Language */}
@@ -3748,59 +3748,6 @@ const DoctorDashboard = () => {
                   placeholder="Specify diet allergies"
                 />
               </div>
-            </div>
-
-            {/* General Examination */}
-            <h3>General Examination</h3>
-
-            {/* ── CONSTITUTIONAL & OTHER SIGNS ── */}
-            <p className="dd-exam-section-label">Constitutional and Other Signs</p>
-            <div className="dd-const-grid">
-              {[
-                { name: 'constBuilt',           label: 'Built',           placeholder: 'e.g. Well built'       },
-                { name: 'constNourishment',     label: 'Nourishment',     placeholder: 'e.g. Well nourished'   },
-                { name: 'constPallor',          label: 'Pallor',          placeholder: 'e.g. Absent / Mild'    },
-                { name: 'constIcterus',         label: 'Icterus',         placeholder: 'e.g. Absent / Present' },
-                { name: 'constCyanosis',        label: 'Cyanosis',        placeholder: 'e.g. Absent / Central' },
-                { name: 'constClubbing',        label: 'Clubbing',        placeholder: 'e.g. Absent / Grade I' },
-                { name: 'constEdema',           label: 'Edema',           placeholder: 'e.g. Absent / Pitting' },
-                { name: 'constLymphadenopathy', label: 'Lymphadenopathy', placeholder: 'e.g. Absent / Present' },
-              ].map(({ name, label, placeholder }) => (
-                <div className="dd-const-card" key={name}>
-                  <label className="dd-const-label">{label}</label>
-                  <input
-                    className="dd-const-input"
-                    type="text"
-                    name={name}
-                    placeholder={placeholder}
-                    value={formData[name]}
-                    onChange={handleInputChange}
-                  />
-                </div>
-              ))}
-            </div>
-
-            {/* Clinical Findings */}
-            <h3>Clinical Findings</h3>
-            <div className="dd-clinical-grid">
-              {[
-                { name: 'extraOralExamination',  label: 'Extra Oral Examination',  placeholder: 'Facial symmetry, skin, swelling, scar/sinus...' },
-                { name: 'intraOralFindings',     label: 'Intra Oral Findings',     placeholder: 'Mucosa, gingiva, tongue, palate, floor of mouth...' },
-                { name: 'tmjExamination',        label: 'TMJ Examination',         placeholder: 'Tenderness, clicking, mouth opening, deviation...' },
-                { name: 'lymphNodesExamination', label: 'Lymph Nodes Examination', placeholder: 'Site, size, consistency, tenderness, mobility...' },
-              ].map(({ name, label, placeholder }) => (
-                <div className="dd-clinical-field" key={name}>
-                  <label className="dd-clinical-label">{label}</label>
-                  <textarea
-                    className="dd-clinical-ta"
-                    name={name}
-                    rows={3}
-                    placeholder={placeholder}
-                    value={formData[name]}
-                    onChange={handleInputChange}
-                  />
-                </div>
-              ))}
             </div>
 
             {/* Navigation buttons */}
