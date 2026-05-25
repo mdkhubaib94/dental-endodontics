@@ -785,7 +785,6 @@ const DoctorDashboard = () => {
   // Multi-criteria patient search (ID / phone / name)
   const handlePatientSearch = async (query) => {
     const q = String(query || '').trim();
-    setSearchQuery(q);
     if (!q) { setSearchResults([]); return; }
     try {
       setSearchLoading(true);
@@ -3242,9 +3241,7 @@ const DoctorDashboard = () => {
                   const val = e.target.value;
                   setSearchQuery(val);
                   setFormData(p => ({ ...p, uniqueId: val }));
-                  if (/^\d+$/.test(val.trim())) setSearchType('id');
-                  else if (/^[\+\d][\d\s\-\(\)]{4,}$/.test(val.trim())) setSearchType('phone');
-                  else setSearchType('name');
+                  setSearchType(/^\d+$/.test(val.trim()) ? 'id' : 'name');
                   if (val.length >= 2) handlePatientSearch(val);
                   else setSearchResults([]);
                 }}
