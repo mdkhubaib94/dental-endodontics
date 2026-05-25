@@ -1947,38 +1947,21 @@ const UGDashboard = () => {
                 {/* Patient Search — ID / Phone / Name */}
                 <div className="input-group" style={{ position: 'relative' }}>
                   <label>Search Patient</label>
-                  <div style={{ display: 'flex', gap: 8, marginBottom: 8 }}>
-                    {[['id','Patient ID'],['phone','Phone'],['name','Name']].map(([val, lbl]) => (
-                      <button key={val} type="button"
-                        onClick={() => { setSearchType(val); setSearchQuery(''); setSearchResults([]); setFormData(p => ({ ...p, uniqueId: '' })); }}
-                        style={{
-                          padding: '6px 16px', borderRadius: 20, border: 'none', cursor: 'pointer', fontWeight: 600, fontSize: '0.82rem',
-                          background: searchType === val ? '#3C8DFF' : 'rgba(255,255,255,0.12)',
-                          color: searchType === val ? '#fff' : 'rgba(255,255,255,0.75)',
-                          transition: 'background 0.2s',
-                        }}>
-                        {lbl}
-                      </button>
-                    ))}
-                  </div>
                   <input
-                    type={searchType === 'phone' ? 'tel' : 'text'}
-                    value={searchType === 'id' ? (searchQuery || formData.uniqueId) : searchQuery}
+                    type="text"
+                    value={searchQuery || formData.uniqueId || ''}
                     onChange={e => {
-                      if (searchType === 'id') {
-                        setSearchQuery(e.target.value);
-                        setFormData(p => ({ ...p, uniqueId: e.target.value }));
-                        if (e.target.value.length >= 2) handlePatientSearch(e.target.value);
-                        else setSearchResults([]);
-                      } else {
-                        handlePatientSearch(e.target.value);
-                      }
+                      const val = e.target.value;
+                      setSearchQuery(val);
+                      setFormData(p => ({ ...p, uniqueId: val }));
+                      // Auto-detect type: pure digits = ID, contains @ or + = phone, else name
+                      if (/^\d+$/.test(val.trim())) setSearchType('id');
+                      else if (/^[\+\d][\d\s\-\(\)]{4,}$/.test(val.trim())) setSearchType('phone');
+                      else setSearchType('name');
+                      if (val.length >= 2) handlePatientSearch(val);
+                      else setSearchResults([]);
                     }}
-                    placeholder={
-                      searchType === 'id' ? 'Enter Patient ID' :
-                      searchType === 'phone' ? 'Enter phone number' :
-                      'Enter patient name'
-                    }
+                    placeholder="Enter name, patient ID or phone number"
                     autoComplete="off"
                   />
                   {/* Search results dropdown */}
