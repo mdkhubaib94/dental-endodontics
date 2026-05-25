@@ -168,7 +168,7 @@ router.post('/login/patientlogin', async (req, res) => {
     const token = sign(
       { userId: user._id, role: user.role },
       process.env.JWT_SECRET || 'defaultsecret',
-      { expiresIn: '2h' }
+      { expiresIn: '8h' }
     );
 
     res.json({
@@ -296,7 +296,7 @@ router.post('/login/doctorlogin', async (req, res) => {
     const token = sign(
       { userId: user._id, role: normalizedRole },
       process.env.JWT_SECRET || 'defaultsecret',
-      { expiresIn: '2h' }
+      { expiresIn: '8h' }
     );
 
     res.json({
@@ -464,7 +464,7 @@ router.post('/login/adminlogin', async (req, res) => {
     const token = sign(
       { userId: user._id, role: normalizedRole },
       process.env.JWT_SECRET || 'defaultsecret',
-      { expiresIn: '2h' }
+      { expiresIn: '8h' }
     );
 
     res.json({

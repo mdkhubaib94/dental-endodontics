@@ -165,11 +165,11 @@ const generateBookingId = () => {
   return "SRMDNT" + Math.floor(100000 + Math.random() * 900000).toString();
 };
 
-// Appointment slot rules: 8 slots per day
-// 30-minute slots from 9:00 AM to 2:00 PM (last start 2:00 PM, ends 2:30 PM)
-// Lunch break (1:00–2:00) removes 1:00 and 1:30.
-// Break (11:00–11:10) removes the 11:00–11:30 slot; next slot remains 11:30 (no 11:10 slot).
+// Appointment slot rules
+// Default departments: 30-minute slots from 9:00 AM to 2:00 PM
+// Oral Medicine: 15-minute slots from 9:00 AM to 2:00 PM (skips lunch 1:00–2:00 and 11:00 break)
 const ALLOWED_APPOINTMENT_TIMES = new Set([
+  // 30-minute slots (all departments)
   "9:00 AM",
   "9:30 AM",
   "10:00 AM",
@@ -178,6 +178,19 @@ const ALLOWED_APPOINTMENT_TIMES = new Set([
   "12:00 PM",
   "12:30 PM",
   "2:00 PM",
+  // 15-minute slots (Oral Medicine)
+  "9:15 AM",
+  "9:45 AM",
+  "10:15 AM",
+  "10:45 AM",
+  "11:15 AM",
+  "11:45 AM",
+  "12:15 PM",
+  "12:45 PM",
+  "2:15 PM",
+  "2:30 PM",
+  "2:45 PM",
+  "3:00 PM",
 ]);
 
 const normalizeAppointmentTime = (value) => {
@@ -191,10 +204,6 @@ const normalizeAppointmentTime = (value) => {
   const period = match[3].toUpperCase();
 
   if (hour < 1 || hour > 12) return trimmed;
-  if (minute !== "00" && minute !== "30") {
-    // Keep as-is; will be rejected by the allowed slots check
-    return `${hour}:${minute} ${period}`;
-  }
 
   // Remove leading zero if provided (e.g., 09:00 AM -> 9:00 AM)
   hour = Number(hour);

@@ -21,6 +21,20 @@ const App = () => {
   const location = useLocation();
   const redirectTarget = getSafeRedirectTarget(location.search);
 
+  // Detect department from the redirect URL
+  const getDepartmentLabel = () => {
+    const target = redirectTarget.toLowerCase();
+    if (target.includes('oral')) return 'Oral Medicine and Radiology';
+    if (target.includes('pedodontic')) return 'Pedodontics';
+    if (target.includes('implant')) return 'Implantology';
+    if (target.includes('fpd') || target.includes('fixed-partial')) return 'Fixed Partial Denture';
+    if (target.includes('partial')) return 'Partial Denture';
+    if (target.includes('complete-denture') || target.includes('complete_denture')) return 'Complete Denture';
+    return 'Prosthodontics';
+  };
+
+  const departmentLabel = getDepartmentLabel();
+
   const [formData, setFormData] = useState({
     patientName: '',
     date: new Date().toISOString().split('T')[0],
@@ -428,7 +442,7 @@ const App = () => {
       <img src="${printLogoSrc}" alt="SRM Dental College Logo" />
       <div class="header-text">
         <h1>SRM Dental College</h1>
-        <p class="dept">Department of Prosthodontics</p>
+        <p class="dept">Department of ${departmentLabel}</p>
         <p class="subtitle">சம்மதப் படிவம் (Consent Form)</p>
       </div>
     </div>
@@ -523,7 +537,7 @@ const App = () => {
         <div style={styles.header}>
           <img src={logo} alt="SRM Dental College Logo" style={styles.logo} />
           <h1 style={styles.title}>SRM Dental College</h1>
-          <p style={styles.dept}>Department of Prosthodontics</p>
+          <p style={styles.dept}>Department of {departmentLabel}</p>
           <div style={styles.divider}></div>
           <h2 style={styles.subtitle}>சம்மதப் படிவம் (Consent Form)</h2>
         </div>

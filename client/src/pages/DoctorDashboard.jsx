@@ -62,7 +62,15 @@ const DoctorDashboard = () => {
     maritalStatus: '',
     preferredLanguage: '',
     otherLanguage: '',
+    occupation: '',
+    income: '',
+    religion: '',
+    address: '',
     chiefComplaint: '',
+    historyOfPresentIllness: '',
+    pastMedicalHistory: '',
+    pastSurgicalHistory: '',
+    pastDentalHistory: '',
     currentMedications: 'None',
     knownAllergies: 'None',
     chronicConditions: 'None',
@@ -72,7 +80,27 @@ const DoctorDashboard = () => {
     lastDentalVisit: '',
     bloodGroup: '',
     drugAllergies: '',
-    dietAllergies: ''
+    dietAllergies: '',
+    criticalCondition: '',
+    // General Examination — Vitals (individual fields)
+    vitalBP: '',
+    vitalTemp: '',
+    vitalWeight: '',
+    vitalHeight: '',
+    // General Examination — Constitutional & Other Signs
+    constBuilt: '',
+    constNourishment: '',
+    constPallor: '',
+    constIcterus: '',
+    constCyanosis: '',
+    constClubbing: '',
+    constEdema: '',
+    constLymphadenopathy: '',
+    // Clinical Findings
+    extraOralExamination: '',
+    intraOralFindings: '',
+    tmjExamination: '',
+    lymphNodesExamination: '',
   });
 
   const [showForm, setShowForm] = useState(false);
@@ -95,6 +123,11 @@ const DoctorDashboard = () => {
   const [showAssignPGModal, setShowAssignPGModal] = useState(false);
   const [assignPGMode, setAssignPGMode] = useState('create');
   const [selectedPGForEdit, setSelectedPGForEdit] = useState(null);
+  // Patient search
+  const [searchType, setSearchType] = useState('id');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [searchResults, setSearchResults] = useState([]);
+  const [searchLoading, setSearchLoading] = useState(false);
 
   // PG Management State
   const [assignedPGs, setAssignedPGs] = useState([]);
@@ -461,15 +494,39 @@ const DoctorDashboard = () => {
 
   const normalizeDepartment = (value) => String(value || '').trim().toLowerCase().replace(/[\s_]+/g, '');
 
+  // Maps any stored department value (short key or full name) to the proper display label
+  const DEPT_LABEL_MAP = {
+    oral: 'Oral Medicine and Radiology',
+    oralmedicine: 'Oral Medicine and Radiology',
+    oralmedicineandradiology: 'Oral Medicine and Radiology',
+    oralmedicineradiology: 'Oral Medicine and Radiology',
+    oralandmaxillofacial: 'Oral and Maxillofacial Surgery',
+    oralandmaxillofacialsurgery: 'Oral and Maxillofacial Surgery',
+    pedodontics: 'Pedodontics',
+    prosthodontics: 'Prosthodontics',
+    periodontics: 'Periodontics',
+    conservative: 'Conservative Dentistry and Endodontics',
+    conservativedentistry: 'Conservative Dentistry and Endodontics',
+    endodontics: 'Conservative Dentistry and Endodontics',
+    implant: 'Implantology',
+    implantology: 'Implantology',
+    general: 'General Dentistry',
+    generaldentistry: 'General Dentistry',
+  };
+
   const formatDepartmentLabel = (value) => {
     const raw = String(value || '').trim();
     if (!raw) return '';
+    const key = raw.toLowerCase().replace(/[\s_]+/g, '');
+    if (DEPT_LABEL_MAP[key]) return DEPT_LABEL_MAP[key];
+    // Fallback: title-case but keep small connector words lowercase
+    const small = new Set(['and', 'of', 'the', 'in', 'for', 'or']);
     return raw
       .split(/\s+/)
-      .map((word) => {
+      .map((word, i) => {
         if (!word) return word;
-        if (word.toUpperCase() === word) return word;
-        return word.charAt(0).toUpperCase() + word.slice(1).toLowerCase();
+        if (i > 0 && small.has(word.toLowerCase())) return word.toLowerCase();
+        return word.charAt(0).toUpperCase() + word.slice(1);
       })
       .join(' ');
   };
@@ -502,7 +559,7 @@ const DoctorDashboard = () => {
 
     if (departmentKey === 'pedodontics') return '/pedodontics';
     if (departmentKey === 'periodontics') return '/casePortal?dept=periodontics';
-    if (departmentKey.includes('oral') || departmentKey.includes('maxillofacial')) return '/casePortal?dept=oral';
+    if (departmentKey.includes('oral') || departmentKey.includes('maxillofacial')) return '/oral-medicine';
     if (departmentKey.includes('conservative') || departmentKey.includes('endodontic')) return '/casePortal';
     if (departmentKey === 'general' || departmentKey === 'generaldentistry') return '/general-case-sheet';
     return '/casePortal?dept=prosthodontics';
@@ -648,9 +705,9 @@ const DoctorDashboard = () => {
     const patientId = getStoredPatientId();
     const resumeTarget = patientId ? await getPatientResumeTarget(patientId) : null;
 
-    // If there is an unfinished draft for this patient, resume directly without consent prompt.
+    // If there is an unfinished draft for this patient, resume — but still request consent.
     if (resumeTarget?.routeKey) {
-      navigate(resumeTarget.routeKey);
+      navigate(resumeTarget.routeKey, { state: { requestConsentAfterEntry: true } });
       return;
     }
 
@@ -703,7 +760,15 @@ const DoctorDashboard = () => {
       maritalStatus: patientData.personalInfo?.maritalStatus || '',
       preferredLanguage: isOtherLanguage ? 'Other' : preferredLanguage,
       otherLanguage: isOtherLanguage ? preferredLanguage : '',
+      occupation: patientData.personalInfo?.occupation || '',
+      income: patientData.personalInfo?.income || '',
+      religion: patientData.personalInfo?.religion || '',
+      address: patientData.personalInfo?.address || '',
       chiefComplaint: patientData.medicalInfo?.chiefComplaint || '',
+      historyOfPresentIllness: patientData.medicalInfo?.historyOfPresentIllness || '',
+      pastMedicalHistory: patientData.medicalInfo?.pastMedicalHistory || '',
+      pastSurgicalHistory: patientData.medicalInfo?.pastSurgicalHistory || '',
+      pastDentalHistory: patientData.medicalInfo?.pastDentalHistory || '',
       currentMedications: patientData.medicalInfo?.currentMedications?.join(', ') || 'None',
       knownAllergies: patientData.medicalInfo?.knownAllergies?.join(', ') || 'None',
       chronicConditions: patientData.medicalInfo?.chronicConditions?.join(', ') || 'None',
@@ -713,7 +778,26 @@ const DoctorDashboard = () => {
       lastDentalVisit: patientData.medicalInfo?.lastDentalVisit ? new Date(patientData.medicalInfo?.lastDentalVisit).toISOString().split('T')[0] : '',
       bloodGroup: patientData.vitals?.bloodGroup || '',
       drugAllergies: patientData.vitals?.drugAllergies?.join(', ') || '',
-      dietAllergies: patientData.vitals?.dietAllergies?.join(', ') || ''
+      dietAllergies: patientData.vitals?.dietAllergies?.join(', ') || '',
+      criticalCondition: patientData.vitals?.criticalCondition || '',
+      // Vitals — individual
+      vitalBP:       patientData.clinicalExam?.vitalBP       || '',
+      vitalTemp:     patientData.clinicalExam?.vitalTemp     || '',
+      vitalWeight:   patientData.clinicalExam?.vitalWeight   || '',
+      vitalHeight:   patientData.clinicalExam?.vitalHeight   || '',
+      // Constitutional signs — individual
+      constBuilt:           patientData.clinicalExam?.constBuilt           || '',
+      constNourishment:     patientData.clinicalExam?.constNourishment     || '',
+      constPallor:          patientData.clinicalExam?.constPallor          || '',
+      constIcterus:         patientData.clinicalExam?.constIcterus         || '',
+      constCyanosis:        patientData.clinicalExam?.constCyanosis        || '',
+      constClubbing:        patientData.clinicalExam?.constClubbing        || '',
+      constEdema:           patientData.clinicalExam?.constEdema           || '',
+      constLymphadenopathy: patientData.clinicalExam?.constLymphadenopathy || '',
+      extraOralExamination:  patientData.clinicalExam?.extraOralExamination  || '',
+      intraOralFindings:     patientData.clinicalExam?.intraOralFindings     || '',
+      tmjExamination:        patientData.clinicalExam?.tmjExamination        || '',
+      lymphNodesExamination: patientData.clinicalExam?.lymphNodesExamination || '',
     });
 
     setHpiSelections(patientData.medicalInfo?.hpi || []);
@@ -754,6 +838,29 @@ const DoctorDashboard = () => {
 
     setFieldErrors(errors);
     return Object.keys(errors).length === 0;
+  };
+
+  // Multi-criteria patient search (ID / phone / name)
+  const handlePatientSearch = async (query) => {
+    const q = String(query || '').trim();
+    if (!q) { setSearchResults([]); return; }
+    try {
+      setSearchLoading(true);
+      const res = await fetch(buildApiUrl(`/api/patient-details?search=${encodeURIComponent(q)}&limit=8`));
+      if (!res.ok) { setSearchResults([]); return; }
+      const json = await res.json();
+      const patients = Array.isArray(json?.data) ? json.data : (Array.isArray(json?.patients) ? json.patients : []);
+      setSearchResults(patients);
+    } catch { setSearchResults([]); }
+    finally { setSearchLoading(false); }
+  };
+
+  const handleSelectSearchResult = (patient) => {
+    const pid = String(patient.patientId || '').trim();
+    setSearchResults([]);
+    setSearchQuery('');
+    setFormData(prev => ({ ...prev, uniqueId: pid }));
+    handleGetDetails(pid);
   };
 
   // Get details for an already-registered patient (must exist in Admin Patient Registration)
@@ -1006,10 +1113,18 @@ const DoctorDashboard = () => {
           age: parseInt(formData.age) || 0,
           gender: formData.gender,
           maritalStatus: formData.maritalStatus,
-          preferredLanguage: formData.preferredLanguage === 'Other' ? formData.otherLanguage : formData.preferredLanguage
+          preferredLanguage: formData.preferredLanguage === 'Other' ? formData.otherLanguage : formData.preferredLanguage,
+          occupation: formData.occupation || '',
+          income: formData.income || '',
+          religion: formData.religion || '',
+          address: formData.address || '',
         },
         medicalInfo: {
           chiefComplaint: formData.chiefComplaint,
+          historyOfPresentIllness: formData.historyOfPresentIllness || '',
+          pastMedicalHistory: formData.pastMedicalHistory || '',
+          pastSurgicalHistory: formData.pastSurgicalHistory || '',
+          pastDentalHistory: formData.pastDentalHistory || '',
           hpi: hpiSelections,
           pastMedicalHistory: pastMedicalHistory,
           personalHabits: personalHabits,
@@ -1024,7 +1139,26 @@ const DoctorDashboard = () => {
         vitals: {
           bloodGroup: formData.bloodGroup,
           drugAllergies: formData.drugAllergies.split(',').map(item => item.trim()).filter(item => item),
-          dietAllergies: formData.dietAllergies.split(',').map(item => item.trim()).filter(item => item)
+          dietAllergies: formData.dietAllergies.split(',').map(item => item.trim()).filter(item => item),
+          criticalCondition: formData.criticalCondition || '',
+        },
+        clinicalExam: {
+          vitalBP:       formData.vitalBP       || '',
+          vitalTemp:     formData.vitalTemp     || '',
+          vitalWeight:   formData.vitalWeight   || '',
+          vitalHeight:   formData.vitalHeight   || '',
+          constBuilt:           formData.constBuilt           || '',
+          constNourishment:     formData.constNourishment     || '',
+          constPallor:          formData.constPallor          || '',
+          constIcterus:         formData.constIcterus         || '',
+          constCyanosis:        formData.constCyanosis        || '',
+          constClubbing:        formData.constClubbing        || '',
+          constEdema:           formData.constEdema           || '',
+          constLymphadenopathy: formData.constLymphadenopathy || '',
+          extraOralExamination:  formData.extraOralExamination  || '',
+          intraOralFindings:     formData.intraOralFindings     || '',
+          tmjExamination:        formData.tmjExamination        || '',
+          lymphNodesExamination: formData.lymphNodesExamination || '',
         }
       };
 
@@ -1921,6 +2055,9 @@ const DoctorDashboard = () => {
                     <div className="dropdown-name">{doctorName || user?.name || 'Doctor'}</div>
                     {doctorId && <div className="dropdown-id">ID: {doctorId}</div>}
                     <div className="dropdown-email">{doctorEmail || user?.email || ''}</div>
+                    {doctorDepartmentLabel && (
+                      <div className="dropdown-dept">{formatDepartmentLabel(doctorDepartmentLabel)}</div>
+                    )}
                   </div>
                 </div>
 
@@ -2361,7 +2498,6 @@ const DoctorDashboard = () => {
               ) : (
                 <>
                   <div className="chief-doctor-selector pg-appointment-selector">
-                    <label htmlFor="pg-select" className="pg-appointment-selector-label">Select Doctor:</label>
                       <input
                         type="text"
                         placeholder="Search doctor by name or ID..."
@@ -2427,6 +2563,16 @@ const DoctorDashboard = () => {
                     <tbody>
                       {assignedAppointments
                         .filter((appt) => !selectedAppointmentPG || appt.pgIdentity === selectedAppointmentPG)
+                        .filter((appt) => {
+                          if (!selectedAppointmentPG && pgSearchTerm.trim()) {
+                            const searchLower = pgSearchTerm.toLowerCase();
+                            return (
+                              (appt.pgName || '').toLowerCase().includes(searchLower) ||
+                              (appt.pgIdentity || '').toLowerCase().includes(searchLower)
+                            );
+                          }
+                          return true;
+                        })
                         .filter((appt) => {
                           const from = parseLocalDateInput(pgFromDate, false);
                           const to = parseLocalDateInput(pgToDate, true);
@@ -3259,17 +3405,58 @@ const DoctorDashboard = () => {
               {message && <div className="error-message">{message}</div>}
               {successMessage && <div className="success-message">{successMessage}</div>}
 
-            {/* Unique ID input */}
-            <div className="input-group">
-              <label htmlFor="unique-id">Enter Registered Patient ID</label>
+            {/* Patient Search */}
+            <div className="input-group" style={{ position: 'relative' }}>
+              <label>Search Patient</label>
               <input
                 type="text"
-                id="unique-id"
-                name="uniqueId"
-                value={formData.uniqueId}
-                onChange={handleInputChange}
-                placeholder="Enter Patient ID from Admin Patient Registration"
+                value={searchQuery || formData.uniqueId || ''}
+                onChange={e => {
+                  const val = e.target.value;
+                  setSearchQuery(val);
+                  setFormData(p => ({ ...p, uniqueId: val }));
+                  setSearchType(/^\d+$/.test(val.trim()) ? 'id' : 'name');
+                  if (val.length >= 2) handlePatientSearch(val);
+                  else setSearchResults([]);
+                }}
+                placeholder="Enter name, patient ID or phone number"
+                autoComplete="off"
               />
+              {/* Search results dropdown */}
+              {searchResults.length > 0 && (
+                <div style={{
+                  position: 'absolute', top: '100%', left: 0, right: 0, zIndex: 999,
+                  background: '#1e2a4a', border: '1px solid rgba(255,255,255,0.15)',
+                  borderRadius: 8, boxShadow: '0 8px 24px rgba(0,0,0,0.4)', maxHeight: 260, overflowY: 'auto',
+                }}>
+                  {searchResults.map((p, i) => {
+                    const fullName = [p.personalInfo?.firstName, p.personalInfo?.lastName].filter(Boolean).join(' ') || p.patientName || '—';
+                    const phone = p.personalInfo?.phone || '—';
+                    return (
+                      <div key={p.patientId || i}
+                        onClick={() => handleSelectSearchResult(p)}
+                        style={{
+                          padding: '10px 14px', cursor: 'pointer', borderBottom: '1px solid rgba(255,255,255,0.07)',
+                          display: 'flex', flexDirection: 'column', gap: 2,
+                          transition: 'background 0.15s',
+                        }}
+                        onMouseEnter={e => e.currentTarget.style.background = 'rgba(60,141,255,0.18)'}
+                        onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+                      >
+                        <span style={{ fontWeight: 700, color: '#fff', fontSize: '0.9rem' }}>{fullName}</span>
+                        <span style={{ fontSize: '0.78rem', color: 'rgba(255,255,255,0.6)' }}>
+                          ID: {p.patientId} &nbsp;·&nbsp; 📞 {phone}
+                        </span>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+              {searchLoading && (
+                <div style={{ position: 'absolute', right: 14, top: '50%', transform: 'translateY(-50%)', color: '#3C8DFF', fontSize: '0.8rem' }}>
+                  Searching…
+                </div>
+              )}
             </div>
 
 
@@ -3435,17 +3622,83 @@ const DoctorDashboard = () => {
               </div>
             )}
 
+            {/* Vitals — right after Marital Status */}
+            <h3>Vitals</h3>
+            <div className="form-row">
+              <div className="input-group">
+                <label>Blood Pressure</label>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                  <input type="text" name="vitalBP" placeholder="120/80"
+                    value={formData.vitalBP} onChange={handleInputChange} />
+                  <span style={{ color: '#6b7280', fontSize: '0.85rem', whiteSpace: 'nowrap' }}>mmHg</span>
+                </div>
+              </div>
+              <div className="input-group">
+                <label>Temperature</label>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                  <input type="text" name="vitalTemp" placeholder="37.0"
+                    value={formData.vitalTemp} onChange={handleInputChange} />
+                  <span style={{ color: '#6b7280', fontSize: '0.85rem', whiteSpace: 'nowrap' }}>°C</span>
+                </div>
+              </div>
+            </div>
+            <div className="form-row">
+              <div className="input-group">
+                <label>Weight</label>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                  <input type="text" name="vitalWeight" placeholder="65"
+                    value={formData.vitalWeight} onChange={handleInputChange} />
+                  <span style={{ color: '#6b7280', fontSize: '0.85rem', whiteSpace: 'nowrap' }}>kg</span>
+                </div>
+              </div>
+              <div className="input-group">
+                <label>Height</label>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                  <input type="text" name="vitalHeight" placeholder="165"
+                    value={formData.vitalHeight} onChange={handleInputChange} />
+                  <span style={{ color: '#6b7280', fontSize: '0.85rem', whiteSpace: 'nowrap' }}>cm</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Additional Information */}
+            <h3>Additional Information</h3>
+            <div className="form-row">
+              <div className="input-group">
+                <label htmlFor="occupation">Occupation</label>
+                <input type="text" id="occupation" name="occupation"
+                  value={formData.occupation} onChange={handleInputChange}
+                  placeholder="e.g. Teacher, Engineer" />
+              </div>
+              <div className="input-group">
+                <label htmlFor="income">Income</label>
+                <input type="text" id="income" name="income"
+                  value={formData.income} onChange={handleInputChange}
+                  placeholder="e.g. 30,000 / month" />
+              </div>
+            </div>
+            <div className="form-row">
+              <div className="input-group">
+                <label htmlFor="religion">Religion</label>
+                <input type="text" id="religion" name="religion"
+                  value={formData.religion} onChange={handleInputChange}
+                  placeholder="e.g. Hindu, Christian" />
+              </div>
+              <div className="input-group">
+                <label htmlFor="address">Address</label>
+                <input type="text" id="address" name="address"
+                  value={formData.address} onChange={handleInputChange}
+                  placeholder="Full address" />
+              </div>
+            </div>
+
             {/* Preferred Language */}
             <div className="input-group">
               <label htmlFor="preferred-language">
                 Preferred Language <span style={{ color: "red" }}>*</span>
               </label>
-              <select
-                id="preferred-language"
-                name="preferredLanguage"
-                value={formData.preferredLanguage}
-                onChange={handleInputChange}
-              >
+              <select id="preferred-language" name="preferredLanguage"
+                value={formData.preferredLanguage} onChange={handleInputChange}>
                 <option value="">Select</option>
                 <option value="English">English</option>
                 <option value="Hindi">Hindi</option>
@@ -3455,20 +3708,12 @@ const DoctorDashboard = () => {
               {fieldErrors.preferredLanguage && <div className="error-message">{fieldErrors.preferredLanguage}</div>}
             </div>
 
-            {/* Other Language Input - Show when Other is selected */}
             {formData.preferredLanguage === 'Other' && (
               <div className="input-group">
-                <label htmlFor="other-language">
-                  Specify Language <span style={{ color: "red" }}>*</span>
-                </label>
-                <input
-                  type="text"
-                  id="other-language"
-                  name="otherLanguage"
-                  value={formData.otherLanguage}
-                  onChange={handleInputChange}
-                  placeholder="Enter preferred language"
-                />
+                <label htmlFor="other-language">Specify Language <span style={{ color: "red" }}>*</span></label>
+                <input type="text" id="other-language" name="otherLanguage"
+                  value={formData.otherLanguage} onChange={handleInputChange}
+                  placeholder="Enter preferred language" />
                 {fieldErrors.otherLanguage && <div className="error-message">{fieldErrors.otherLanguage}</div>}
               </div>
             )}
@@ -3481,19 +3726,43 @@ const DoctorDashboard = () => {
               <label htmlFor="chief-complaint">
                 Chief Complaint <span style={{ color: "red" }}>*</span>
               </label>
-              <select
-                id="chief-complaint"
-                name="chiefComplaint"
-                value={formData.chiefComplaint}
-                onChange={handleInputChange}
-              >
-                <option value="">Select a primary issue</option>
-                {chiefComplaints.map((complaint) => (
-                  <option key={complaint} value={complaint}>{complaint}</option>
-                ))}
-              </select>
+              <textarea id="chief-complaint" name="chiefComplaint" rows={2}
+                value={formData.chiefComplaint} onChange={handleInputChange}
+                placeholder="Describe the chief complaint..." />
               {fieldErrors.chiefComplaint && <div className="error-message">{fieldErrors.chiefComplaint}</div>}
             </div>
+
+            <div className="input-group">
+              <label htmlFor="history-of-present-illness">History of Presenting Illness</label>
+              <textarea id="history-of-present-illness" name="historyOfPresentIllness" rows={3}
+                value={formData.historyOfPresentIllness} onChange={handleInputChange}
+                placeholder="Describe the history of the presenting illness..." />
+            </div>
+
+            <div className="input-group">
+              <label htmlFor="past-medical-history">Past Medical History</label>
+              <textarea id="past-medical-history" name="pastMedicalHistory" rows={3}
+                value={formData.pastMedicalHistory} onChange={handleInputChange}
+                placeholder="e.g. Diabetes, Hypertension, previous illnesses..." />
+            </div>
+
+            <div className="input-group">
+              <label htmlFor="past-surgical-history">Past Surgical History</label>
+              <textarea id="past-surgical-history" name="pastSurgicalHistory" rows={2}
+                value={formData.pastSurgicalHistory} onChange={handleInputChange}
+                placeholder="e.g. Previous surgeries, procedures..." />
+            </div>
+
+            <div className="input-group">
+              <label htmlFor="past-dental-history">Past Dental History</label>
+              <textarea id="past-dental-history" name="pastDentalHistory" rows={2}
+                value={formData.pastDentalHistory} onChange={handleInputChange}
+                placeholder="e.g. Previous dental treatments, extractions..." />
+            </div>
+
+            {/* HPI, Past Medical History, Personal Habits, Medical History
+                — hidden for Oral Medicine department (captured in the oral case sheet) */}
+            {!String(doctorDepartmentLabel).toLowerCase().replace(/[\s_]+/g, '').includes('oral') && (<>
 
             {/* HPI Checkboxes */}
             <div className="input-group">
@@ -3641,6 +3910,8 @@ const DoctorDashboard = () => {
               />
             </div>
 
+            </>)}
+
             {/* Vitals Section */}
             <h3>Other Information</h3>
             
@@ -3685,6 +3956,17 @@ const DoctorDashboard = () => {
                   value={formData.dietAllergies}
                   onChange={handleInputChange}
                   placeholder="Specify diet allergies"
+                />
+              </div>
+              <div className="input-group">
+                <label htmlFor="critical-condition">Critical Condition</label>
+                <input
+                  type="text"
+                  id="critical-condition"
+                  name="criticalCondition"
+                  value={formData.criticalCondition}
+                  onChange={handleInputChange}
+                  placeholder="e.g. Cardiac arrest risk, Severe allergy, Haemophilia..."
                 />
               </div>
             </div>

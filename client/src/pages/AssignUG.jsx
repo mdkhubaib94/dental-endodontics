@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import axios from 'axios';
 import './AssignDoctor.css'; // Reuse same styles
 
@@ -20,6 +20,7 @@ const AssignUG = ({
   const [message, setMessage] = useState('');
   const [messageType, setMessageType] = useState(''); // 'success' | 'error'
   const [isLoading, setIsLoading] = useState(false);
+  const contentRef = useRef(null);
 
   const departments = allowedDepartment
     ? [allowedDepartment]
@@ -61,6 +62,9 @@ const AssignUG = ({
   const showMessage = (msg, type = 'error') => {
     setMessage(msg);
     setMessageType(type);
+    if (contentRef.current) {
+      contentRef.current.scrollTo({ top: 0, behavior: 'smooth' });
+    }
   };
 
   const clearMessage = () => {
@@ -172,7 +176,7 @@ const AssignUG = ({
 
   return (
     <div className="assign-doctor-overlay">
-      <div className="assign-doctor-modal">
+      <div className="assign-doctor-modal" ref={contentRef}>
         <div className="assign-doctor-header">
           <h2>{isEditMode ? 'Edit UG Student' : 'Assign a UG Student'}</h2>
           <button className="close-btn" onClick={onClose} title="Close">

@@ -23,6 +23,7 @@ const UGDashboard = () => {
     implant: '/Implant',
     implant_patient: '/ImplantPatient',
     partial_denture: '/partial_denture',
+    oral: '/oral-medicine',
   };
 
   const formatDateInput = (date) => {
@@ -34,17 +35,36 @@ const UGDashboard = () => {
     return `${y}-${m}-${day}`;
   };
 
+  const DEPT_LABEL_MAP = {
+    oral: 'Oral Medicine and Radiology',
+    oralmedicine: 'Oral Medicine and Radiology',
+    oralmedicineandradiology: 'Oral Medicine and Radiology',
+    oralmedicineradiology: 'Oral Medicine and Radiology',
+    oralandmaxillofacial: 'Oral and Maxillofacial Surgery',
+    oralandmaxillofacialsurgery: 'Oral and Maxillofacial Surgery',
+    pedodontics: 'Pedodontics',
+    prosthodontics: 'Prosthodontics',
+    periodontics: 'Periodontics',
+    conservative: 'Conservative Dentistry and Endodontics',
+    conservativedentistry: 'Conservative Dentistry and Endodontics',
+    endodontics: 'Conservative Dentistry and Endodontics',
+    implant: 'Implantology',
+    implantology: 'Implantology',
+    general: 'General Dentistry',
+    generaldentistry: 'General Dentistry',
+  };
+
   const formatDepartmentLabel = (value) => {
     const raw = String(value || '').trim();
     if (!raw) return '';
-    return raw
-      .split(/\s+/)
-      .map((word) => {
-        if (!word) return word;
-        if (word.toUpperCase() === word) return word;
-        return word.charAt(0).toUpperCase() + word.slice(1).toLowerCase();
-      })
-      .join(' ');
+    const key = raw.toLowerCase().replace(/[\s_]+/g, '');
+    if (DEPT_LABEL_MAP[key]) return DEPT_LABEL_MAP[key];
+    const small = new Set(['and', 'of', 'the', 'in', 'for', 'or']);
+    return raw.split(/\s+/).map((word, i) => {
+      if (!word) return word;
+      if (i > 0 && small.has(word.toLowerCase())) return word.toLowerCase();
+      return word.charAt(0).toUpperCase() + word.slice(1);
+    }).join(' ');
   };
 
   const ugDepartmentLabel = String(user?.department || localStorage.getItem('ugDepartment') || '').trim();
@@ -71,7 +91,15 @@ const UGDashboard = () => {
     maritalStatus: '',
     preferredLanguage: '',
     otherLanguage: '',
+    occupation: '',
+    income: '',
+    religion: '',
+    address: '',
     chiefComplaint: '',
+    historyOfPresentIllness: '',
+    pastMedicalHistoryText: '',
+    pastSurgicalHistory: '',
+    pastDentalHistory: '',
     currentMedications: 'None',
     knownAllergies: 'None',
     chronicConditions: 'None',
@@ -81,7 +109,30 @@ const UGDashboard = () => {
     lastDentalVisit: '',
     bloodGroup: '',
     drugAllergies: '',
-    dietAllergies: ''
+    dietAllergies: '',
+    criticalCondition: '',
+    // General Examination — Vitals (individual fields)
+    vitalBP: '',
+    vitalPulse: '',
+    vitalRespRate: '',
+    vitalTemp: '',
+    vitalSpO2: '',
+    vitalWeight: '',
+    vitalHeight: '',
+    // General Examination — Constitutional & Other Signs
+    constBuilt: '',
+    constNourishment: '',
+    constPallor: '',
+    constIcterus: '',
+    constCyanosis: '',
+    constClubbing: '',
+    constEdema: '',
+    constLymphadenopathy: '',
+    // Clinical Findings
+    extraOralExamination: '',
+    intraOralFindings: '',
+    tmjExamination: '',
+    lymphNodesExamination: '',
   });
 
   const [showForm, setShowForm] = useState(false);
@@ -108,6 +159,11 @@ const UGDashboard = () => {
   const [pgAppointmentsLoading, setPgAppointmentsLoading] = useState(false);
   const [pgAppointmentsError, setPgAppointmentsError] = useState('');
   const [rescheduleDrafts, setRescheduleDrafts] = useState({});
+  // Patient search
+  const [searchType, setSearchType] = useState('id');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [searchResults, setSearchResults] = useState([]);
+  const [searchLoading, setSearchLoading] = useState(false);
   const [activeRescheduleBookingId, setActiveRescheduleBookingId] = useState('');
   const [rescheduleSubmittingBookingId, setRescheduleSubmittingBookingId] = useState('');
   const [bookedSlotsByDate, setBookedSlotsByDate] = useState({});
@@ -910,6 +966,7 @@ const UGDashboard = () => {
         { url: buildApiUrl(`/api/implant/patient/${encodeURIComponent(patientId)}`), department: 'Implant' },
         { url: buildApiUrl(`/api/ImplantPatient/patient/${encodeURIComponent(patientId)}`), department: 'Implant Patient Surgery' },
         { url: buildApiUrl(`/api/partial/patient/${encodeURIComponent(patientId)}`), department: 'Partial Denture' },
+        { url: buildApiUrl(`/api/oral/patient/${encodeURIComponent(patientId)}`), department: 'Oral Medicine and Radiology' },
       ];
 
       const results = await Promise.all(
@@ -1271,6 +1328,10 @@ const UGDashboard = () => {
       maritalStatus: patientData.personalInfo?.maritalStatus || '',
       preferredLanguage: isOtherLanguage ? 'Other' : preferredLanguage,
       otherLanguage: isOtherLanguage ? preferredLanguage : '',
+      occupation: patientData.personalInfo?.occupation || '',
+      income: patientData.personalInfo?.income || '',
+      religion: patientData.personalInfo?.religion || '',
+      address: patientData.personalInfo?.address || '',
       chiefComplaint: patientData.medicalInfo?.chiefComplaint || '',
       currentMedications: patientData.medicalInfo?.currentMedications?.join(', ') || 'None',
       knownAllergies: patientData.medicalInfo?.knownAllergies?.join(', ') || 'None',
@@ -1281,7 +1342,29 @@ const UGDashboard = () => {
       lastDentalVisit: patientData.medicalInfo?.lastDentalVisit ? new Date(patientData.medicalInfo.lastDentalVisit).toISOString().split('T')[0] : '',
       bloodGroup: patientData.vitals?.bloodGroup || '',
       drugAllergies: patientData.vitals?.drugAllergies?.join(', ') || '',
-      dietAllergies: patientData.vitals?.dietAllergies?.join(', ') || ''
+      dietAllergies: patientData.vitals?.dietAllergies?.join(', ') || '',
+      criticalCondition: patientData.vitals?.criticalCondition || '',
+      // Vitals — individual
+      vitalBP: patientData.clinicalExam?.vitalBP || '',
+      vitalPulse: patientData.clinicalExam?.vitalPulse || '',
+      vitalRespRate: patientData.clinicalExam?.vitalRespRate || '',
+      vitalTemp: patientData.clinicalExam?.vitalTemp || '',
+      vitalSpO2: patientData.clinicalExam?.vitalSpO2 || '',
+      vitalWeight: patientData.clinicalExam?.vitalWeight || '',
+      vitalHeight: patientData.clinicalExam?.vitalHeight || '',
+      // Constitutional signs — individual
+      constBuilt: patientData.clinicalExam?.constBuilt || '',
+      constNourishment: patientData.clinicalExam?.constNourishment || '',
+      constPallor: patientData.clinicalExam?.constPallor || '',
+      constIcterus: patientData.clinicalExam?.constIcterus || '',
+      constCyanosis: patientData.clinicalExam?.constCyanosis || '',
+      constClubbing: patientData.clinicalExam?.constClubbing || '',
+      constEdema: patientData.clinicalExam?.constEdema || '',
+      constLymphadenopathy: patientData.clinicalExam?.constLymphadenopathy || '',
+      extraOralExamination: patientData.clinicalExam?.extraOralExamination || '',
+      intraOralFindings: patientData.clinicalExam?.intraOralFindings || '',
+      tmjExamination: patientData.clinicalExam?.tmjExamination || '',
+      lymphNodesExamination: patientData.clinicalExam?.lymphNodesExamination || '',
     });
 
     setHpiSelections(patientData.medicalInfo?.hpi || []);
@@ -1322,6 +1405,29 @@ const UGDashboard = () => {
 
     setFieldErrors(errors);
     return Object.keys(errors).length === 0;
+  };
+
+  // Multi-criteria patient search (ID / phone / name)
+  const handlePatientSearch = async (query) => {
+    const q = String(query || '').trim();
+    if (!q) { setSearchResults([]); return; }
+    try {
+      setSearchLoading(true);
+      const res = await fetch(buildApiUrl(`/api/patient-details?search=${encodeURIComponent(q)}&limit=8`));
+      if (!res.ok) { setSearchResults([]); return; }
+      const json = await res.json();
+      const patients = Array.isArray(json?.data) ? json.data : (Array.isArray(json?.patients) ? json.patients : []);
+      setSearchResults(patients);
+    } catch { setSearchResults([]); }
+    finally { setSearchLoading(false); }
+  };
+
+  const handleSelectSearchResult = (patient) => {
+    const pid = String(patient.patientId || '').trim();
+    setSearchResults([]);
+    setSearchQuery('');
+    setFormData(prev => ({ ...prev, uniqueId: pid }));
+    handleGetDetails(pid);
   };
 
   // Get details for an already-registered patient (must exist in Admin Patient Registration)
@@ -1530,10 +1636,17 @@ const UGDashboard = () => {
           age: parseInt(formData.age) || 0,
           gender: formData.gender,
           maritalStatus: formData.maritalStatus,
-          preferredLanguage: formData.preferredLanguage === 'Other' ? formData.otherLanguage : formData.preferredLanguage
+          preferredLanguage: formData.preferredLanguage === 'Other' ? formData.otherLanguage : formData.preferredLanguage,
+          occupation: formData.occupation || '',
+          income: formData.income || '',
+          religion: formData.religion || '',
+          address: formData.address || '',
         },
         medicalInfo: {
           chiefComplaint: formData.chiefComplaint,
+          historyOfPresentIllness: formData.historyOfPresentIllness || '',
+          pastSurgicalHistory: formData.pastSurgicalHistory || '',
+          pastDentalHistory: formData.pastDentalHistory || '',
           hpi: hpiSelections,
           pastMedicalHistory: pastMedicalHistory,
           personalHabits: personalHabits,
@@ -1548,7 +1661,29 @@ const UGDashboard = () => {
         vitals: {
           bloodGroup: formData.bloodGroup,
           drugAllergies: formData.drugAllergies.split(',').map(item => item.trim()).filter(item => item),
-          dietAllergies: formData.dietAllergies.split(',').map(item => item.trim()).filter(item => item)
+          dietAllergies: formData.dietAllergies.split(',').map(item => item.trim()).filter(item => item),
+          criticalCondition: formData.criticalCondition || '',
+        },
+        clinicalExam: {
+          vitalBP: formData.vitalBP || '',
+          vitalPulse: formData.vitalPulse || '',
+          vitalRespRate: formData.vitalRespRate || '',
+          vitalTemp: formData.vitalTemp || '',
+          vitalSpO2: formData.vitalSpO2 || '',
+          vitalWeight: formData.vitalWeight || '',
+          vitalHeight: formData.vitalHeight || '',
+          constBuilt: formData.constBuilt || '',
+          constNourishment: formData.constNourishment || '',
+          constPallor: formData.constPallor || '',
+          constIcterus: formData.constIcterus || '',
+          constCyanosis: formData.constCyanosis || '',
+          constClubbing: formData.constClubbing || '',
+          constEdema: formData.constEdema || '',
+          constLymphadenopathy: formData.constLymphadenopathy || '',
+          extraOralExamination: formData.extraOralExamination || '',
+          intraOralFindings: formData.intraOralFindings || '',
+          tmjExamination: formData.tmjExamination || '',
+          lymphNodesExamination: formData.lymphNodesExamination || '',
         }
       };
 
@@ -1672,6 +1807,9 @@ const UGDashboard = () => {
                     <div className="dropdown-name">{ugName || user?.name || 'UG'}</div>
                     {ugId && <div className="dropdown-id">ID: {ugId}</div>}
                     <div className="dropdown-email">{ugEmail || user?.email || ''}</div>
+                    {ugDepartmentLabel && (
+                      <div className="dropdown-dept">{formatDepartmentLabel(ugDepartmentLabel)}</div>
+                    )}
                   </div>
                 </div>
 
@@ -1805,17 +1943,58 @@ const UGDashboard = () => {
               <div className="doctor-dashboard-content">
                 <h2 className="dashboard-title">Patient Details</h2>
 
-                {/* Unique ID input */}
-                <div className="input-group">
-                  <label htmlFor="unique-id">Enter Registered Patient ID</label>
+                {/* Patient Search — ID / Phone / Name */}
+                <div className="input-group" style={{ position: 'relative' }}>
+                  <label>Search Patient</label>
                   <input
                     type="text"
-                    id="unique-id"
-                    name="uniqueId"
-                    value={formData.uniqueId}
-                    onChange={handleInputChange}
-                    placeholder="Enter Patient ID from Admin Patient Registration"
+                    value={searchQuery || formData.uniqueId || ''}
+                    onChange={e => {
+                      const val = e.target.value;
+                      setSearchQuery(val);
+                      setFormData(p => ({ ...p, uniqueId: val }));
+                      // Simple detection: pure digits = ID, else search by name/phone as text
+                      setSearchType(/^\d+$/.test(val.trim()) ? 'id' : 'name');
+                      if (val.length >= 2) handlePatientSearch(val);
+                      else setSearchResults([]);
+                    }}
+                    placeholder="Enter name, patient ID or phone number"
+                    autoComplete="off"
                   />
+                  {/* Search results dropdown */}
+                  {searchResults.length > 0 && (
+                    <div style={{
+                      position: 'absolute', top: '100%', left: 0, right: 0, zIndex: 999,
+                      background: '#1e2a4a', border: '1px solid rgba(255,255,255,0.15)',
+                      borderRadius: 8, boxShadow: '0 8px 24px rgba(0,0,0,0.4)', maxHeight: 260, overflowY: 'auto',
+                    }}>
+                      {searchResults.map((p, i) => {
+                        const fullName = [p.personalInfo?.firstName, p.personalInfo?.lastName].filter(Boolean).join(' ') || p.patientName || '—';
+                        const phone = p.personalInfo?.phone || '—';
+                        return (
+                          <div key={p.patientId || i}
+                            onClick={() => handleSelectSearchResult(p)}
+                            style={{
+                              padding: '10px 14px', cursor: 'pointer', borderBottom: '1px solid rgba(255,255,255,0.07)',
+                              display: 'flex', flexDirection: 'column', gap: 2,
+                            }}
+                            onMouseEnter={e => e.currentTarget.style.background = 'rgba(60,141,255,0.18)'}
+                            onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+                          >
+                            <span style={{ fontWeight: 700, color: '#fff', fontSize: '0.9rem' }}>{fullName}</span>
+                            <span style={{ fontSize: '0.78rem', color: 'rgba(255,255,255,0.6)' }}>
+                              ID: {p.patientId} &nbsp;·&nbsp; 📞 {phone}
+                            </span>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                  {searchLoading && (
+                    <div style={{ position: 'absolute', right: 14, top: '50%', transform: 'translateY(-50%)', color: '#3C8DFF', fontSize: '0.8rem' }}>
+                      Searching…
+                    </div>
+                  )}
                 </div>
 
                 {/* Get Details Button */}
@@ -1985,19 +2164,102 @@ const UGDashboard = () => {
                       </div>
                     )}
 
+                    {/* ── VITALS ── */}
+                    <h3>Vitals</h3>
+                    <div className="ug-vitals-grid">
+                      {[
+                        { name: 'vitalBP',       icon: '🩺', label: 'Blood Pressure', placeholder: '120/80', unit: 'mmHg' },
+                        { name: 'vitalPulse',     icon: '💓', label: 'Pulse Rate',     placeholder: '72',     unit: 'bpm' },
+                        { name: 'vitalRespRate',  icon: '🫁', label: 'Resp. Rate',     placeholder: '16',     unit: '/min' },
+                        { name: 'vitalTemp',      icon: '🌡️', label: 'Temperature',   placeholder: '37.0',   unit: '°C' },
+                        { name: 'vitalSpO2',      icon: '🩸', label: 'SpO₂',          placeholder: '98',     unit: '%' },
+                        { name: 'vitalWeight',    icon: '⚖️', label: 'Weight',        placeholder: '65',     unit: 'kg' },
+                        { name: 'vitalHeight',    icon: '📏', label: 'Height',        placeholder: '165',    unit: 'cm' },
+                      ].map(({ name, icon, label, placeholder, unit }) => (
+                        <div className="ug-vital-card" key={name}>
+                          <span className="ug-vital-icon">{icon}</span>
+                          <label className="ug-vital-label">{label}</label>
+                          <div className="ug-vital-input-wrap">
+                            <input
+                              className="ug-vital-input"
+                              type="text"
+                              name={name}
+                              placeholder={placeholder}
+                              value={formData[name]}
+                              onChange={handleInputChange}
+                            />
+                            <span className="ug-vital-unit">{unit}</span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+
+                    <h3>Additional Information</h3>
+
+                    <div className="form-row">
+                      <div className="input-group">
+                        <label htmlFor="occupation">Occupation</label>
+                        <input type="text" id="occupation" name="occupation" value={formData.occupation} onChange={handleInputChange} placeholder="e.g. Teacher, Engineer" />
+                      </div>
+                      <div className="input-group">
+                        <label htmlFor="income">Income</label>
+                        <input type="text" id="income" name="income" value={formData.income} onChange={handleInputChange} placeholder="e.g. 30,000 / month" />
+                      </div>
+                    </div>
+
+                    <div className="form-row">
+                      <div className="input-group">
+                        <label htmlFor="religion">Religion</label>
+                        <input type="text" id="religion" name="religion" value={formData.religion} onChange={handleInputChange} placeholder="e.g. Hindu, Christian" />
+                      </div>
+                      <div className="input-group">
+                        <label htmlFor="address">Address</label>
+                        <input type="text" id="address" name="address" value={formData.address} onChange={handleInputChange} placeholder="Full address" />
+                      </div>
+                    </div>
+
                     <h3>Patient Case Entry - Chief Complaint &amp; History</h3>
 
                     {/* Chief Complaint */}
                     <div className="input-group">
                       <label htmlFor="chief-complaint">Chief Complaint <span style={{ color: 'red' }}>*</span></label>
-                      <select id="chief-complaint" name="chiefComplaint" value={formData.chiefComplaint} onChange={handleInputChange}>
-                        <option value="">Select a primary issue</option>
-                        {chiefComplaints.map((complaint) => (
-                          <option key={complaint} value={complaint}>{complaint}</option>
-                        ))}
-                      </select>
+                      <textarea id="chief-complaint" name="chiefComplaint" rows={2}
+                        value={formData.chiefComplaint} onChange={handleInputChange}
+                        placeholder="Describe the chief complaint..." />
                       {fieldErrors.chiefComplaint && <div className="error-message">{fieldErrors.chiefComplaint}</div>}
                     </div>
+
+                    <div className="input-group">
+                      <label htmlFor="history-of-present-illness">History of Presenting Illness</label>
+                      <textarea id="history-of-present-illness" name="historyOfPresentIllness" rows={3}
+                        value={formData.historyOfPresentIllness} onChange={handleInputChange}
+                        placeholder="Describe the history of the presenting illness..." />
+                    </div>
+
+                    <div className="input-group">
+                      <label htmlFor="past-medical-history-text">Past Medical History</label>
+                      <textarea id="past-medical-history-text" name="pastMedicalHistoryText" rows={3}
+                        value={formData.pastMedicalHistoryText} onChange={handleInputChange}
+                        placeholder="e.g. Diabetes, Hypertension, previous illnesses..." />
+                    </div>
+
+                    <div className="input-group">
+                      <label htmlFor="past-surgical-history">Past Surgical History</label>
+                      <textarea id="past-surgical-history" name="pastSurgicalHistory" rows={2}
+                        value={formData.pastSurgicalHistory} onChange={handleInputChange}
+                        placeholder="e.g. Previous surgeries, procedures..." />
+                    </div>
+
+                    <div className="input-group">
+                      <label htmlFor="past-dental-history">Past Dental History</label>
+                      <textarea id="past-dental-history" name="pastDentalHistory" rows={2}
+                        value={formData.pastDentalHistory} onChange={handleInputChange}
+                        placeholder="e.g. Previous dental treatments, extractions..." />
+                    </div>
+
+                    {/* HPI, Past Medical History, Personal Habits, Medical History
+                        — hidden for Oral Medicine department (captured in the oral case sheet) */}
+                    {!String(ugDepartmentLabel).toLowerCase().replace(/[\s_]+/g, '').includes('oral') && (<>
 
                     {/* HPI */}
                     <div className="input-group">
@@ -2069,6 +2331,8 @@ const UGDashboard = () => {
                       <input type="date" id="last-dental-visit" name="lastDentalVisit" value={formData.lastDentalVisit} onChange={handleInputChange} />
                     </div>
 
+                    </>)}
+
                     <h3>Other Information</h3>
                     <div className="form-grid">
                       <div className="input-group">
@@ -2088,6 +2352,10 @@ const UGDashboard = () => {
                       <div className="input-group">
                         <label htmlFor="diet-allergies">Diet Allergies</label>
                         <input type="text" id="diet-allergies" name="dietAllergies" value={formData.dietAllergies} onChange={handleInputChange} placeholder="Specify diet allergies" />
+                      </div>
+                      <div className="input-group">
+                        <label htmlFor="critical-condition">Critical Condition</label>
+                        <input type="text" id="critical-condition" name="criticalCondition" value={formData.criticalCondition} onChange={handleInputChange} placeholder="e.g. Cardiac arrest risk, Severe allergy, Haemophilia..." />
                       </div>
                     </div>
 
@@ -2226,6 +2494,7 @@ const UGDashboard = () => {
                           <th>Patient Name</th>
                           <th>Patient ID</th>
                           <th>Department</th>
+                          <th>Referred To</th>
                           <th>Status</th>
                           <th>Redo Message</th>
                           <th>Action</th>
@@ -2237,6 +2506,7 @@ const UGDashboard = () => {
                           const patientId = String(row?.patientId || '').trim();
                           const department = String(row?.department || '').trim();
                           const departmentKey = String(row?.departmentKey || '').trim();
+                          const referredDepartment = String(row?.referredDepartment || '').trim();
                           const approvalText = String(row?.chiefApproval || '').trim();
                           const status = normalizeChiefApprovalStatus(approvalText);
                           const redoReason = extractRedoReason(approvalText);
@@ -2252,6 +2522,22 @@ const UGDashboard = () => {
                               <td>{patientName || '—'}</td>
                               <td>{patientId || '—'}</td>
                               <td>{department || '—'}</td>
+                              <td>
+                                {referredDepartment ? (
+                                  <span style={{
+                                    background: 'rgba(99,102,241,0.15)',
+                                    border: '1px solid rgba(165,180,252,0.4)',
+                                    borderRadius: 4,
+                                    padding: '2px 8px',
+                                    fontSize: '0.78rem',
+                                    fontWeight: 600,
+                                    color: '#c7d2fe',
+                                    whiteSpace: 'nowrap',
+                                  }}>
+                                    {referredDepartment}
+                                  </span>
+                                ) : '—'}
+                              </td>
                               <td>
                                 <span className={status === 'approved' ? 'status-badge approved' : status === 'redo' ? 'status-badge redo' : 'status-badge pending'}>
                                   {status === 'approved' ? 'Approved' : status === 'redo' ? 'Redo' : 'Pending'}
