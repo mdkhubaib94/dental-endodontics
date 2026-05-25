@@ -2333,6 +2333,7 @@ const UGDashboard = () => {
                           <th style={{ padding: '6px 6px', textAlign: 'center' }}>Patient ID</th>
                           <th style={{ padding: '6px 6px', textAlign: 'center' }}>Date & Time</th>
                           <th style={{ padding: '6px 6px', textAlign: 'center' }}>Complaint</th>
+                          <th style={{ padding: '6px 6px', textAlign: 'center' }}>Status</th>
                           <th style={{ padding: '6px 6px', textAlign: 'center' }}>Action</th>
                         </tr>
                       </thead>
@@ -2344,8 +2345,12 @@ const UGDashboard = () => {
                           const rescheduleReqStatus = String(appointment?.rescheduleRequest?.requestStatus || 'none').trim().toLowerCase();
                           const hasPendingReschedule = rescheduleReqStatus === 'pending';
                           const hasApprovedReschedule = rescheduleReqStatus === 'approved';
-                          const canApproveAppointment = appointmentStatus === 'pending';
-                          const canRescheduleAppointment = appointmentStatus === 'pending' && !hasPendingReschedule;
+                          const isAssignedAppointment = appointmentStatus === 'assigned' || appointmentStatus === 'in_progress';
+                          
+                          // 🔥 FIX: Appointments are auto-confirmed, so they should show as confirmed
+                          const isConfirmed = appointmentStatus === 'confirmed' || appointmentStatus === 'rescheduled';
+                          const canConfirmAppointment = appointmentStatus === 'assigned';
+                          const canRescheduleAppointment = isAssignedAppointment && !hasPendingReschedule;
 
                           return (
                             <tr key={bookingId || `${appointment?.patientId}-${appointment?.appointmentDate}`} className="pg-assigned-row">
@@ -2378,11 +2383,35 @@ const UGDashboard = () => {
                                 {formatAppointmentComplaintDisplay(appointment?.chiefComplaint) || '—'}
                               </td>
                               <td style={{ padding: '6px 6px', textAlign: 'center', whiteSpace: 'nowrap' }}>
-                                {appointmentStatus === 'rescheduled' && hasApprovedReschedule ? (
-                                  <span style={{ background: '#38a169', color: '#fff', borderRadius: '12px', padding: '3px 10px', fontSize: '12px', fontWeight: 600 }}>
-                                    ✓ Approved
+                                {/* 🔥 FIX: Show confirmation status */}
+                                {isConfirmed ? (
+                                  <span style={{ 
+                                    background: '#48bb78', 
+                                    color: '#fff', 
+                                    borderRadius: '12px', 
+                                    padding: '3px 10px', 
+                                    fontSize: '12px', 
+                                    fontWeight: 600,
+                                    display: 'inline-block'
+                                  }}>
+                                    ✓ Confirmed
                                   </span>
-                                ) : hasPendingReschedule ? (
+                                ) : (
+                                  <span style={{ 
+                                    background: '#ed8936', 
+                                    color: '#fff', 
+                                    borderRadius: '12px', 
+                                    padding: '3px 10px', 
+                                    fontSize: '12px', 
+                                    fontWeight: 600,
+                                    display: 'inline-block'
+                                  }}>
+                                    ⏳ Pending
+                                  </span>
+                                )}
+                              </td>
+                              <td style={{ padding: '6px 6px', textAlign: 'center', whiteSpace: 'nowrap' }}>
+                                {hasPendingReschedule ? (
                                   <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px' }}>
                                     <span style={{ background: '#ed8936', color: '#fff', borderRadius: '12px', padding: '3px 10px', fontSize: '12px', fontWeight: 600 }}>
                                       ⏳ Pending Approval
@@ -2391,31 +2420,21 @@ const UGDashboard = () => {
                                       {appointment?.rescheduleRequest?.requestedDate} {appointment?.rescheduleRequest?.requestedTime}
                                     </span>
                                   </div>
-                                ) : appointmentStatus === 'rescheduled' ? (
-                                  <span style={{ background: '#3182ce', color: '#fff', borderRadius: '12px', padding: '3px 10px', fontSize: '12px', fontWeight: 600 }}>
-                                    Rescheduled
-                                  </span>
-                                ) : appointmentStatus === 'confirmed' ? (
-                                  <span style={{ background: '#38a169', color: '#fff', borderRadius: '12px', padding: '3px 10px', fontSize: '12px', fontWeight: 600 }}>
-                                    ✓ Approved
-                                  </span>
                                 ) : (
                                   <div style={{ display: 'inline-flex', gap: '6px', flexWrap: 'nowrap', justifyContent: 'center', alignItems: 'center' }}>
                                     <button
                                       type="button"
                                       className="view-button"
                                       onClick={() => approveAppointment(appointment)}
-                                      disabled={isSubmitting || !canApproveAppointment}
+                                      disabled={!canConfirmAppointment || isSubmitting}
                                       style={{
-                                        backgroundColor: '#4CAF50',
-                                        cursor: isSubmitting || !canApproveAppointment ? 'not-allowed' : 'pointer',
                                         padding: '4px 6px',
                                         fontSize: '0.75em',
-                                        minWidth: '70px',
-                                        whiteSpace: 'nowrap'
+                                        minWidth: '78px',
+                                        whiteSpace: 'nowrap',
                                       }}
                                     >
-                                      Approve
+                                      {isSubmitting ? 'Saving...' : 'Confirm appointment'}
                                     </button>
                                     <button
                                       type="button"
@@ -2431,7 +2450,7 @@ const UGDashboard = () => {
                                         opacity: hasPendingReschedule ? 0.5 : 1,
                                       }}
                                     >
-                                      {isSubmitting ? 'Saving...' : 'Reschedule'}
+                                        {isSubmitting ? 'Saving...' : 'Request reschedule'}
                                     </button>
                                   </div>
                                 )}

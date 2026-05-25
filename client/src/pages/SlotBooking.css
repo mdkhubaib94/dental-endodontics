@@ -4,12 +4,12 @@
 .slot-body {
   display: flex;
   justify-content: center;
-  align-items: center;
+  align-items: flex-start;
   min-height: 100vh;
   background: url('/images/campus.png') no-repeat center center fixed;
   background-size: cover;
   position: relative;
-  padding: 20px;
+  padding: 40px 20px;
 }
 
 .slot-body::before {

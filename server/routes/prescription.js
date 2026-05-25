@@ -1,8 +1,51 @@
 // server/routes/prescription.js - Enhanced with debugging
 import express from 'express';
 import Prescription from '../models/Prescription.js';
+import { User } from '../models/User.js';
+import Appointment from '../models/AppoitmentBooked.js';
+import { PatientDetails } from '../models/patientDetails.js';
+import auth from '../middleware/auth.js';
+import requireRole from '../middleware/role.js';
 
 const router = express.Router();
+
+const normalizeRole = (value) => String(value || '').trim().toLowerCase().replace(/[_\s]+/g, '-');
+
+const isGeneralDoctorUser = (user) => {
+  if (!user) return false;
+  if (user.isGeneralDoctor === true) return true;
+  if (user.isDeptDoctor === true) return false;
+  return normalizeRole(user.role) === 'doctor' && String(user.department || '').trim().toLowerCase() === 'general';
+};
+
+const buildPatientData = async (appointment, overrides = {}) => {
+  const patientId = String(overrides.patientId || appointment.patientId || '').trim();
+  const patientDetails = patientId ? await PatientDetails.findOne({ patientId }).lean() : null;
+  const patientUser = patientId ? await User.findOne({ Identity: patientId }, { name: 1, email: 1 }).lean() : null;
+
+  const derivedName =
+    String(overrides.patientData?.name || '').trim() ||
+    String(patientDetails?.personalInfo?.fullName || '').trim() ||
+    [patientDetails?.personalInfo?.firstName, patientDetails?.personalInfo?.middleName, patientDetails?.personalInfo?.lastName].filter(Boolean).join(' ').trim() ||
+    String(patientUser?.name || '').trim() ||
+    patientId;
+
+  const derivedAge = Number.isFinite(Number(overrides.patientData?.age))
+    ? Number(overrides.patientData.age)
+    : Number.isFinite(Number(patientDetails?.personalInfo?.age))
+      ? Number(patientDetails.personalInfo.age)
+      : 0;
+
+  const rawGender = String(overrides.patientData?.gender || patientDetails?.personalInfo?.gender || 'other').trim().toLowerCase();
+  const derivedGender = ['male', 'female', 'other'].includes(rawGender) ? rawGender : 'other';
+
+  return {
+    name: derivedName,
+    age: derivedAge,
+    gender: derivedGender,
+    date: overrides.patientData?.date ? new Date(overrides.patientData.date) : new Date(),
+  };
+};
 
 // Test endpoint - MUST come before parameterized routes
 router.get('/test', (req, res) => {
@@ -42,11 +85,46 @@ router.post('/test-syrup', async (req, res) => {
 });
 
 // Create new prescription - Enhanced with detailed logging and validation
-router.post('/', async (req, res) => {
+router.post('/', auth, requireRole(['doctor', 'chief-doctor', 'pg', 'ug']), async (req, res) => {
   console.log('\n=== PRESCRIPTION CREATION START ===');
   console.log('Raw request body:', JSON.stringify(req.body, null, 2));
 
   try {
+    const bookingId = String(req.body?.bookingId || '').trim();
+    let appointment = null;
+    if (bookingId) {
+      appointment = await Appointment.findOne({ bookingId }).lean();
+      if (!appointment) {
+        return res.status(404).json({ success: false, message: 'Appointment not found for bookingId' });
+      }
+    }
+
+    const requesterRole = normalizeRole(req.user?.role);
+    const requesterIdentity = String(req.user?.Identity || '').trim();
+    const isGeneralDoctor = isGeneralDoctorUser(req.user);
+    const isPgRequester = requesterRole === 'pg' || requesterRole === 'ug';
+
+    if (appointment) {
+      if (isPgRequester) {
+        const { default: GeneralCase } = await import('../models/GeneralCase.js');
+        const assignment = await GeneralCase.findOne({
+          patientId: appointment.patientId,
+          assignedPgId: requesterIdentity,
+          specialistStatus: 'approved',
+        }).lean();
+
+        const fallbackPgIds = [appointment.assignedPgUgId, appointment.assigned_pg_ug_id, appointment.pgDoctorId]
+          .map((value) => String(value || '').trim())
+          .filter(Boolean);
+
+        if (!assignment && !fallbackPgIds.includes(requesterIdentity)) {
+          return res.status(403).json({ success: false, message: 'You are not assigned to this appointment' });
+        }
+      } else if (!isGeneralDoctor) {
+        return res.status(403).json({ success: false, message: 'Only assigned doctors can create prescriptions for this appointment' });
+      }
+    }
+
     const {
       caseId,
       patientId,
@@ -70,14 +148,26 @@ router.post('/', async (req, res) => {
     console.log('- doctorId:', doctorId);
     console.log('- doctorName:', doctorName);
 
+    const effectivePatientId = String(patientId || appointment?.patientId || '').trim();
+    const effectivePatientData = patientData && typeof patientData === 'object'
+      ? patientData
+      : appointment
+        ? await buildPatientData(appointment, { patientId: effectivePatientId, patientData: null })
+        : null;
+
+    const effectiveDoctorId = String(doctorId || req.user?._id || req.user?.Identity || appointment?.doctorId || '').trim();
+    const effectiveDoctorName = String(doctorName || req.user?.name || req.user?.Identity || appointment?.doctorName || 'Doctor').trim();
+    const effectiveSymptoms = String(symptoms || appointment?.chiefComplaint || diagnosis || '').trim();
+    const fallbackMedicineType = appointment ? 'syrup' : '';
+
     // Detailed validation with specific error messages
     const errors = [];
 
-    if (!patientId || typeof patientId !== 'string' || !patientId.trim()) {
+    if (!effectivePatientId) {
       errors.push('Patient ID is required and must be a non-empty string');
     }
 
-    if (!symptoms || typeof symptoms !== 'string' || !symptoms.trim()) {
+    if (!effectiveSymptoms) {
       errors.push('Symptoms are required and must be a non-empty string');
     }
 
@@ -85,24 +175,24 @@ router.post('/', async (req, res) => {
       errors.push('Diagnosis is required and must be a non-empty string');
     }
 
-    if (!doctorId || typeof doctorId !== 'string' || !doctorId.trim()) {
+    if (!effectiveDoctorId) {
       errors.push('Doctor ID is required and must be a non-empty string');
     }
 
-    if (!doctorName || typeof doctorName !== 'string' || !doctorName.trim()) {
+    if (!effectiveDoctorName) {
       errors.push('Doctor name is required and must be a non-empty string');
     }
 
-    if (!patientData || typeof patientData !== 'object') {
+    if (!effectivePatientData || typeof effectivePatientData !== 'object') {
       errors.push('Patient data is required and must be an object');
     } else {
-      if (!patientData.name || typeof patientData.name !== 'string' || !patientData.name.trim()) {
+      if (!effectivePatientData.name || typeof effectivePatientData.name !== 'string' || !effectivePatientData.name.trim()) {
         errors.push('Patient name is required in patientData');
       }
-      if (!patientData.age || isNaN(parseInt(patientData.age))) {
+      if (effectivePatientData.age === undefined || effectivePatientData.age === null || Number.isNaN(Number(effectivePatientData.age))) {
         errors.push('Patient age is required and must be a number');
       }
-      if (!patientData.gender || !['male', 'female', 'other'].includes(patientData.gender.toLowerCase())) {
+      if (!effectivePatientData.gender || !['male', 'female', 'other'].includes(String(effectivePatientData.gender).toLowerCase())) {
         errors.push('Patient gender must be male, female, or other');
       }
     }
@@ -123,7 +213,7 @@ router.post('/', async (req, res) => {
       };
 
       medicines.forEach((med, index) => {
-        const rawType = med && med.type ? String(med.type).toLowerCase() : '';
+        const rawType = med && med.type ? String(med.type).toLowerCase() : fallbackMedicineType;
         const normalized = TYPE_MAP[rawType] || null;
 
         if (!normalized) {
@@ -153,17 +243,17 @@ router.post('/', async (req, res) => {
     // Create prescription with validated and processed data
     const prescriptionData = {
       caseId: caseId && String(caseId).trim() ? String(caseId).trim() : null,
-      patientId: patientId.trim(),
+      patientId: effectivePatientId,
       patientData: {
-        name: patientData.name.trim(),
-        age: parseInt(patientData.age),
-        gender: patientData.gender.toLowerCase(),
-        date: patientData.date ? new Date(patientData.date) : new Date()
+        name: String(effectivePatientData.name).trim(),
+        age: parseInt(effectivePatientData.age),
+        gender: String(effectivePatientData.gender).toLowerCase(),
+        date: effectivePatientData.date ? new Date(effectivePatientData.date) : new Date()
       },
-      symptoms: symptoms.trim(),
+      symptoms: effectiveSymptoms,
       diagnosis: diagnosis.trim(),
       medicines: (medicines || [])
-        .filter(med => med && med.type && med.name) // Filter out invalid medicines
+        .filter(med => med && med.name) // Keep medicines that have at least a name
         .map(med => {
           // Normalize type mapping (same map as validation)
           const TYPE_MAP = {
@@ -177,7 +267,7 @@ router.post('/', async (req, res) => {
             ointment: 'ointment'
           };
 
-          const rawType = med && med.type ? String(med.type).toLowerCase() : '';
+          const rawType = med && med.type ? String(med.type).toLowerCase() : fallbackMedicineType;
           const normalizedType = TYPE_MAP[rawType] || rawType;
 
           const processedMedicine = {
@@ -208,8 +298,8 @@ router.post('/', async (req, res) => {
         }),
       advice: advice ? advice.trim() : '',
       nextVisitDate: nextVisitDate ? new Date(nextVisitDate) : null,
-      doctorId: doctorId.trim(),
-      doctorName: doctorName.trim(),
+        doctorId: effectiveDoctorId,
+        doctorName: effectiveDoctorName,
       status: 'active'
     };
 
@@ -223,6 +313,39 @@ router.post('/', async (req, res) => {
     console.log('Calling save()...');
     const savedPrescription = await prescription.save();
 
+    if (appointment) {
+      await Appointment.findOneAndUpdate(
+        { bookingId: appointment.bookingId },
+        { $set: { status: 'completed', needsGeneralApproval: false, needsPgApproval: false } },
+        { new: true }
+      );
+    }
+
+    // 📅 Auto-schedule Revisit Appointment
+    if (nextVisitDate) {
+      try {
+        const visitDateStr = new Date(nextVisitDate).toISOString().split('T')[0];
+        const patientUser = await User.findOne({ Identity: effectivePatientId }, { email: 1 });
+        
+        const revisitAppt = new Appointment({
+          bookingId: "SRMDNT" + Math.floor(100000 + Math.random() * 900000).toString(),
+          patientId: effectivePatientId,
+          patientEmail: patientUser?.email || "patient@example.com",
+          chiefComplaint: `Revisit: ${diagnosis || symptoms}`,
+          appointmentDate: visitDateStr,
+          appointmentTime: "9:00 AM", // Default slot
+          doctorId: effectiveDoctorId,
+          status: "pending",
+          needsGeneralApproval: true
+        });
+        
+        await revisitAppt.save();
+        console.log(`📅 Revisit appointment scheduled for ${visitDateStr}`);
+      } catch (apptErr) {
+        console.error("❌ Failed to auto-schedule revisit appointment:", apptErr);
+      }
+    }
+
     console.log('Prescription saved successfully!');
     console.log('Saved prescription ID:', savedPrescription._id);
     console.log('=== PRESCRIPTION CREATION END ===\n');
@@ -230,7 +353,8 @@ router.post('/', async (req, res) => {
     res.status(201).json({
       success: true,
       message: 'Prescription saved successfully',
-      data: savedPrescription
+      data: savedPrescription,
+      appointmentStatus: appointment ? 'completed' : null
     });
 
   } catch (error) {

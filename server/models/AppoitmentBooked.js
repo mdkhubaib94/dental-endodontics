@@ -21,6 +21,14 @@ const appointmentSchema = new mongoose.Schema(
       required: true,
     },
 
+    // Reference to the general doctor responsible for this appointment
+    generalDoctorId: {
+      type: String,
+      default: null,
+      index: true,
+    },
+
+    // Backwards-compatible legacy field
     doctorId: {
       type: String,
       default: null,
@@ -48,8 +56,26 @@ const appointmentSchema = new mongoose.Schema(
 
     status: {
       type: String,
-      enum: ["pending", "confirmed", "rescheduled", "cancelled"],
+      enum: [
+        "pending",
+        "confirmed",
+        "assigned",
+        "in_progress",
+        "cancelled",
+        "reschedule_requested",
+        "rescheduled",
+        "completed",
+        "revisit_scheduled",
+        "revisit_pending_approval",
+        "revisit_approved",
+        "closed",
+      ],
       default: "pending",
+    },
+
+    isProcessed: {
+      type: Boolean,
+      default: false,
     },
 
     originalBookingId: {
@@ -57,7 +83,63 @@ const appointmentSchema = new mongoose.Schema(
       default: null,
     },
 
-    // Reschedule request fields (for PG-initiated reschedules)
+    // PG/UG assignment fields (camelCase required by audit)
+    assignedPgUgId: {
+      type: String,
+      default: null,
+      index: true,
+    },
+
+    // Backwards-compatible legacy field
+    assigned_pg_ug_id: {
+      type: String,
+      default: null,
+      index: true,
+    },
+
+    pgDoctorId: {
+      type: String,
+      default: null,
+    },
+
+    // Department doctor oversight
+    supervisingDeptDoctorId: {
+      type: String,
+      default: null,
+      index: true,
+    },
+
+    // Backwards-compatible legacy field
+    supervising_dept_doctor_id: {
+      type: String,
+      default: null,
+      index: true,
+    },
+
+    deptDoctorId: {
+      type: String,
+      default: null,
+    },
+
+    // Revisit fields
+    revisitDate: {
+      type: String,
+      default: null,
+    },
+
+    parentBookingId: {
+      type: String,
+      default: null,
+      index: true,
+    },
+
+    // Loop monitoring
+    rescheduleLoopCount: {
+      type: Number,
+      default: 0,
+    },
+
+    // Reschedule request fields (for PG-initiated reschedules) - match audit spec
     rescheduleRequest: {
       requestedBy: {
         type: String, // PG Identity
@@ -67,18 +149,22 @@ const appointmentSchema = new mongoose.Schema(
         type: String,
         default: null,
       },
-      requestedDate: {
+      proposedDate: {
         type: String, // New date requested
         default: null,
       },
-      requestedTime: {
+      proposedTime: {
         type: String, // New time requested
+        default: null,
+      },
+      reason: {
+        type: String,
         default: null,
       },
       requestStatus: {
         type: String,
-        enum: ["none", "pending", "approved", "rejected"],
-        default: "none",
+        enum: ["pending", "approved", "rejected"],
+        default: "pending",
       },
       requestedAt: {
         type: Date,
@@ -92,6 +178,20 @@ const appointmentSchema = new mongoose.Schema(
         type: Date,
         default: null,
       },
+      iterationCount: {
+        type: Number,
+        default: 0,
+      },
+    },
+    
+    needsGeneralApproval: {
+      type: Boolean,
+      default: false,
+    },
+
+    needsPgApproval: {
+      type: Boolean,
+      default: false,
     },
   },
   {

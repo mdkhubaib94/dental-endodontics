@@ -37,10 +37,15 @@ const DoctorDashboard = () => {
   };
 
   const [isSideNavOpen, setIsSideNavOpen] = useState(true);
-  const [activeView, setActiveView] = useState('patient'); // 'patient', 'myPGs', 'pgAppointments', 'referrals', 'reports', 'analytics', 'caseFiles'
+  const [activeView, setActiveView] = useState('myAppointments'); // 'myAppointments', 'patient', 'myPGs', 'pgAppointments', 'referrals', 'reports', 'analytics', 'caseFiles'
   const [showLogoutDropdown, setShowLogoutDropdown] = useState(false);
   const dropdownRef = useRef(null);
   const hasAutoRestoredPatientRef = useRef(false);
+
+  // My Appointments State
+  const [myAppointments, setMyAppointments] = useState([]);
+  const [myAppointmentsLoading, setMyAppointmentsLoading] = useState(false);
+  const [myAppointmentsError, setMyAppointmentsError] = useState('');
 
   const [doctorId, setDoctorId] = useState('');
   const [doctorName, setDoctorName] = useState('');
@@ -159,6 +164,58 @@ const DoctorDashboard = () => {
 
   const buildApiUrl = (path) =>
     `${API_BASE_URL}${path.startsWith('/') ? path : `/${path}`}`;
+
+  // ================= MY APPOINTMENTS FUNCTIONS =================
+  const fetchMyAppointments = async ({ silent = false } = {}) => {
+    try {
+      if (!silent) setMyAppointmentsLoading(true);
+      setMyAppointmentsError('');
+
+      const token = user?.token || localStorage.getItem('token');
+      if (!token) {
+        setMyAppointmentsError('Authentication token missing');
+        return;
+      }
+
+      const res = await fetch(buildApiUrl('/api/appointment/my-appointments'), {
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (!res.ok) {
+        const errJson = await safeReadJson(res);
+        const msg = errJson?.message || (await res.text());
+        throw new Error(msg || `Failed to load appointments (${res.status})`);
+      }
+
+      const json = await res.json();
+      setMyAppointments(Array.isArray(json.appointments) ? json.appointments : []);
+    } catch (err) {
+      setMyAppointmentsError(err.message || 'Unable to load appointments');
+      setMyAppointments([]);
+    } finally {
+      if (!silent) setMyAppointmentsLoading(false);
+    }
+  };
+
+  const handleSelectPatientFromAppointment = async (appointment) => {
+    const patientId = String(appointment?.patientId || '').trim();
+    if (!patientId) {
+      setMessage('Patient ID missing for this appointment.');
+      return;
+    }
+
+    // Switch to patient view and load patient details
+    setActiveView('patient');
+    setFormData((prev) => ({ ...prev, uniqueId: patientId }));
+    setShowUserIdDisplay(false);
+    setShowForm(false);
+    setGeneratedUserId('');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    await handleGetDetails(patientId);
+  };
 
   const closeMessageBox = () => {
     setShowMessageBox(false);
@@ -634,8 +691,9 @@ const DoctorDashboard = () => {
     const dob = patientData.personalInfo?.dateOfBirth ? new Date(patientData.personalInfo.dateOfBirth).toISOString().split('T')[0] : '';
     const age = dob ? calculateAge(dob) : (patientData.personalInfo?.age || '');
     
+    // Overwrite the entire form state to avoid stale values remaining from previous patients
     setFormData({
-      ...formData,
+      uniqueId: '',
       firstName: patientData.personalInfo?.firstName || '',
       middleName: patientData.personalInfo?.middleName || '',
       lastName: patientData.personalInfo?.lastName || '',
@@ -652,7 +710,7 @@ const DoctorDashboard = () => {
       pastSurgeries: patientData.medicalInfo?.pastSurgeries?.join(', ') || 'None',
       pregnancyStatus: patientData.medicalInfo?.pregnancyStatus || '',
       primaryDentalConcerns: patientData.medicalInfo?.dentalConcerns?.join(', ') || 'None',
-      lastDentalVisit: patientData.medicalInfo?.lastDentalVisit ? new Date(patientData.medicalInfo.lastDentalVisit).toISOString().split('T')[0] : '',
+      lastDentalVisit: patientData.medicalInfo?.lastDentalVisit ? new Date(patientData.medicalInfo?.lastDentalVisit).toISOString().split('T')[0] : '',
       bloodGroup: patientData.vitals?.bloodGroup || '',
       drugAllergies: patientData.vitals?.drugAllergies?.join(', ') || '',
       dietAllergies: patientData.vitals?.dietAllergies?.join(', ') || ''
@@ -763,9 +821,8 @@ const DoctorDashboard = () => {
       populateFormWithPatientData(registeredPatient);
       setGeneratedUserId(resolvedPatientId);
       showMessage(`Patient details loaded for ID: ${resolvedPatientId}`, 'success');
-      if (resolvedPatientId) {
-        setStoredPatientId(resolvedPatientId);
-      }
+      
+      // Store patient name for display (no localStorage for patient ID)
       if (registeredPatient?.patientName || registeredPatient?.personalInfo?.firstName) {
         const fallbackName = [
           registeredPatient?.personalInfo?.firstName,
@@ -790,6 +847,43 @@ const DoctorDashboard = () => {
         console.log('No existing doctor-patient record to merge for ID:', enteredId, mergeErr.message);
       }
 
+      // 🔥 NEW: Check for latest appointment and fetch case statuses
+      try {
+        const token = localStorage.getItem('token');
+        const appointmentRes = await fetch(
+          buildApiUrl(`/api/appointment/appointments/patient/${encodeURIComponent(resolvedPatientId)}`),
+          {
+            headers: token ? { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' } : { 'Content-Type': 'application/json' },
+          }
+        );
+        
+        if (appointmentRes.ok) {
+          const appointmentData = await appointmentRes.json();
+          if (appointmentData.success && Array.isArray(appointmentData.appointments) && appointmentData.appointments.length > 0) {
+            // Sort by creation date to get the latest appointment
+            const sortedAppointments = appointmentData.appointments.sort((a, b) => 
+              new Date(b.createdAt || 0) - new Date(a.createdAt || 0)
+            );
+            const latestAppointment = sortedAppointments[0];
+            
+            // Update chief complaint if there's a new appointment
+            if (latestAppointment.chiefComplaint) {
+              setFormData(prev => ({
+                ...prev,
+                chiefComplaint: latestAppointment.chiefComplaint
+              }));
+            }
+            
+            console.log('✅ Latest appointment loaded for patient:', resolvedPatientId, latestAppointment);
+          }
+        }
+      } catch (appointmentErr) {
+        console.log('Could not fetch latest appointment:', appointmentErr.message);
+      }
+
+      // Fetch case statuses for this patient
+      await fetchCaseStatuses(resolvedPatientId);
+
       setShowUserIdDisplay(true);
       setShowForm(true);
       // Require a fresh save before navigating to case sheets for this patient
@@ -802,15 +896,8 @@ const DoctorDashboard = () => {
   };
 
   useEffect(() => {
-    if (hasAutoRestoredPatientRef.current) return;
-    hasAutoRestoredPatientRef.current = true;
-
-    const existingPatientId = getStoredPatientId();
-    if (!existingPatientId) return;
-
-    setActiveView('patient');
-    setFormData((prev) => ({ ...prev, uniqueId: existingPatientId }));
-    handleGetDetails(existingPatientId);
+    // Load appointments on mount
+    fetchMyAppointments();
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleInputChange = (e) => {
@@ -1166,9 +1253,20 @@ const DoctorDashboard = () => {
       }
 
       const json = await res.json();
-      setAssignedPGs(Array.isArray(json.pgs) ? json.pgs : []);
-      setAssignedAppointments(Array.isArray(json.appointments) ? json.appointments : []);
-      setPGAnalytics(Array.isArray(json.analytics) ? json.analytics : []);
+      // Defensive client-side filter: ensure department doctors see only PG/UG they supervise
+      const rawPgs = Array.isArray(json.pgs) ? json.pgs : [];
+      const rawAppointments = Array.isArray(json.appointments) ? json.appointments : [];
+      const rawAnalytics = Array.isArray(json.analytics) ? json.analytics : [];
+
+      if (currentRoleKey === 'doctor' && user && user._id) {
+        const supervised = rawPgs.filter(p => String(p.createdBy || '') === String(user._id));
+        setAssignedPGs(supervised);
+      } else {
+        setAssignedPGs(rawPgs);
+      }
+
+      setAssignedAppointments(rawAppointments);
+      setPGAnalytics(rawAnalytics);
     } catch (err) {
       setPGError(err.message || 'Unable to load assigned PG data');
       setAssignedPGs([]);
@@ -1867,6 +1965,19 @@ const DoctorDashboard = () => {
 
               <button
                 type="button"
+                className={`chief-nav-item ${activeView === 'myAppointments' ? 'active' : ''}`}
+                onClick={() => {
+                  setActiveView('myAppointments');
+                  fetchMyAppointments({ silent: true });
+                  window.scrollTo({ top: 0, behavior: 'smooth' });
+                }}
+              >
+                <span className="chief-nav-icon">📅</span>
+                <span>My Appointments</span>
+              </button>
+
+              <button
+                type="button"
                 className={`chief-nav-item ${activeView === 'patient' ? 'active' : ''}`}
                 onClick={() => {
                   setActiveView('patient');
@@ -1885,7 +1996,7 @@ const DoctorDashboard = () => {
                 }}
               >
                 <span className="chief-nav-icon">🗓️</span>
-                <span>Appointments</span>
+                <span>All Appointments</span>
               </button>
 
               <button
@@ -2038,6 +2149,63 @@ const DoctorDashboard = () => {
         )}
 
         <main className="chief-main" aria-label="Doctor content">
+          {/* My Appointments View */}
+          {activeView === 'myAppointments' && (
+            <section className="chief-section-card">
+              <div className="chief-section-header-row">
+                <h2>My Appointments</h2>
+                <button type="button" className="view-button" onClick={() => fetchMyAppointments()}>
+                  Refresh
+                </button>
+              </div>
+
+              {myAppointmentsError && <div className="error-message">{myAppointmentsError}</div>}
+
+              {myAppointmentsLoading ? (
+                <div className="chief-inline-loading">Loading appointments...</div>
+              ) : myAppointments.length === 0 ? (
+                <div className="chief-empty-state">No appointments assigned to you yet.</div>
+              ) : (
+                <table className="chief-simple-table">
+                  <thead>
+                    <tr>
+                      <th>S.No</th>
+                      <th>Booking ID</th>
+                      <th>Patient ID</th>
+                      <th>Patient Name</th>
+                      <th>Date</th>
+                      <th>Time</th>
+                      <th>Chief Complaint</th>
+                      <th>Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {myAppointments.map((appointment, index) => (
+                      <tr key={appointment.bookingId}>
+                        <td>{index + 1}</td>
+                        <td>{appointment.bookingId}</td>
+                        <td>{appointment.patientId}</td>
+                        <td>{appointment.patientName || '-'}</td>
+                        <td>{appointment.appointmentDate}</td>
+                        <td>{appointment.appointmentTime}</td>
+                        <td>{appointment.chiefComplaint}</td>
+                        <td>
+                          <button
+                            type="button"
+                            className="view-button"
+                            onClick={() => handleSelectPatientFromAppointment(appointment)}
+                          >
+                            View Patient
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              )}
+            </section>
+          )}
+
           {/* My PGs View */}
           {activeView === 'myPGs' && (
             <section className="chief-section-card">
@@ -2247,8 +2415,11 @@ const DoctorDashboard = () => {
                       <tr>
                           <th>S.No</th>
                         <th>PG Name</th>
+                        <th>Booking ID</th>
                         <th>Patient ID</th>
                         <th>Patient Name</th>
+                        <th>Appt Date</th>
+                        <th>Appt Time</th>
                         <th>Assigned On</th>
                         <th>Complaint</th>
                       </tr>
@@ -2271,8 +2442,11 @@ const DoctorDashboard = () => {
                           <tr key={appointment.referralId || `${appointment.pgIdentity}-${appointment.patientId}`}>
                             <td>{index + 1}</td>
                             <td>{appointment.pgName || '-'}</td>
+                            <td>{appointment.bookingId || '-'}</td>
                             <td>{appointment.patientId || '-'}</td>
                             <td>{appointment.patientName || '-'}</td>
+                            <td>{appointment.appointmentDate || '-'}</td>
+                            <td>{appointment.appointmentTime || '-'}</td>
                             <td>{appointment.assignedAt ? formatDate(appointment.assignedAt) : '-'}</td>
                             <td>{appointment.chiefComplaint || '-'}</td>
                           </tr>
@@ -3021,8 +3195,8 @@ const DoctorDashboard = () => {
                               </button>
                             </td>
                             <td>
-                              <div className="chief-actions-group">
-                                {status === 'Pending' ? (
+                                <div className="chief-actions-group">
+                                  {isSpecialistDoctor && status === 'Pending' ? (
                                   <div className="action-buttons">
                                     {actionLoadingCaseId === c._id ? (
                                       <div
@@ -3764,7 +3938,7 @@ const DoctorDashboard = () => {
               </div>
             )}
 
-            {caseSheetPreviewItem && getApprovalStatus(caseSheetPreviewItem) === 'Pending' && !hasOpenedDepartmentCaseSheet ? (
+            {isSpecialistDoctor && caseSheetPreviewItem && getApprovalStatus(caseSheetPreviewItem) === 'Pending' && !hasOpenedDepartmentCaseSheet ? (
               <div className="chief-case-preview-error" style={{ marginTop: 10 }}>
                 Open the Department Case Sheet to enable Approve/Redo.
               </div>
@@ -3783,7 +3957,7 @@ const DoctorDashboard = () => {
                 Department Case Sheet
               </button>
 
-              {caseSheetPreviewItem && getApprovalStatus(caseSheetPreviewItem) === 'Pending' ? (
+              {isSpecialistDoctor && caseSheetPreviewItem && getApprovalStatus(caseSheetPreviewItem) === 'Pending' ? (
                 <>
                   <button
                     type="button"

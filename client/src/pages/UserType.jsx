@@ -31,6 +31,18 @@ const UserType = () => {
         >
           New Patient
         </button>
+        <button
+          className="option-button"
+          onClick={() => navigate('/login/doctorlogin')}
+        >
+          Doctor Login
+        </button>
+        <button
+          className="option-button"
+          onClick={() => navigate('/login/adminlogin')}
+        >
+          Admin Login
+        </button>
         </center>
       </div>
     </div>

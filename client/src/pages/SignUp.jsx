@@ -43,14 +43,6 @@ const SignUp = () => {
     if (!emailRegex.test(email)) {
       return 'Invalid email format.';
     }
-    
-    const commonDomains = ['gmail.com', 'yahoo.com', 'outlook.com', 'hotmail.com', 'icloud.com', 'protonmail.com', 'eec.srmrmp.edu.in'];
-    const domain = email.split('@')[1];
-    
-    if (!commonDomains.some(d => domain.includes(d))) {
-      return 'Please use a valid email provider (Gmail, Yahoo, Outlook, etc.).';
-    }
-    
     return '';
   };
 

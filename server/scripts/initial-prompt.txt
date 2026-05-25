@@ -1,0 +1,99 @@
+<USER_REQUEST>
+You just told me these things were fixed:
+
+  1. Missing doctor subtype fields added to user model
+  2. Revisit approval now checks persisted general-doctor
+     flags with department fallback
+  3. "confirmed" added to appointment status enum
+  4. Prescription creation fixed to derive booking-linked
+     context and mark appointment completed via API
+  5. Doctor bootstrap scripts now create distinct
+     general-doctor and dept-doctor identities
+
+I am not accepting any of this until every single claim
+is proven with live output. Not code. Not descriptions.
+Live terminal output and live API responses.
+
+Prove each fix one at a time right now.
+
+════════════════════════════════════════════════════════
+PROOF 1 — Doctor subtype fields exist in user model
+════════════════════════════════════════════════════════
+
+Run in terminal:
+  grep -n "isGeneralDoctor\|isDeptDoctor\|doctorType\
+  \|subtype\|generalDoctor\|deptDoctor" \
+  server/models/User.js
+
+Print every line returned with line numbers.
+PASS if both general doctor and dept doctor
+subtype fields appear in the schema.
+FAIL if either is missing.
+
+Then verify the fields are actually saved on real users:
+  Run in mongosh:
+    db.users.find(
+      {email: /test_/},
+      {name:1, email:1, role:1,
+       isGeneralDoctor:1, isDeptDoctor:1}
+    ).pretty()
+
+Print raw result.
+PASS if test_generaldoc has isGeneralDoctor: true
+PASS if test_deptdoc has isDeptDoctor: true
+FAIL if either field is missing or false on the
+wrong user — re-run the bootstrap script and
+verify again.
+
+════════════════════════════════════════════════════════
+PROOF 2 — Revisit approval checks general-doctor flag
+══════════════
+<truncated 14482 bytes>
+4 | PG confirms | 200 | in_progress | |
+| 5 | PG reschedules | 200 | reschedule_requested | |
+| 6 | Dept rejects | 200 | reschedule_requested | |
+| 7 | PG reschedules again | 200 | reschedule_requested | |
+| 8 | Dept approves | 200 | rescheduled | |
+| 9 | Prescription signed | 200 | completed | |
+| 10 | Revisit created | 200 | revisit_scheduled | |
+| 11 | Doctor rejects revisit | 200 | revisit_pending_approval | |
+| 12 | PG confirms revisit | 200 | revisit_scheduled | |
+| 13 | Doctor approves revisit | 200 | closed | |
+| 14 | Final DB verify | N/A | closed | |
+
+## Notification Audit
+
+| Trigger | Recipient | General Doctor Notified | PASS/FAIL |
+|---------|-----------|------------------------|-----------|
+| PG reschedules | Dept Doctor | NO — must be absent | |
+| Dept approves | Patient + PG | NO — must be absent | |
+| Revisit created | General Doctor | YES — required | |
+| Revisit approved | Patient | YES — required | |
+
+## Role Boundary Audit
+
+| Caller | Endpoint | Expected | Actual | PASS/FAIL |
+|--------|----------|----------|--------|-----------|
+| Patient | /approve | 403 | | |
+| General Doctor | /reschedule/approve | 403 | | |
+| Dept Doctor | /revisit/approve | 403 | | |
+| PG | /reschedule/approve | 403 | | |
+
+## System Status
+
+  All 500 errors resolved:              YES / NO
+  All 403 role errors resolved:         YES / NO
+  Prescription marks appointment done:  YES / NO
+  Clean flow first-attempt pass:        YES / NO
+  No DB patches used in verification:   YES / NO
+  General doctor never notified of
+  reschedule events:                    YES / NO
+
+SYSTEM STATUS: ✅ BUG FREE / ❌ STILL HAS ISSUES
+</USER_REQUEST>
+<ADDITIONAL_METADATA>
+The current local time is: 2026-05-21T11:37:11+05:30.
+</ADDITIONAL_METADATA>
+<USER_SETTINGS_CHANGE>
+The user changed setting `Model Selection` from None to Gemini 3.5 Flash (High). No need to comment on this change if the user doesn't ask about it. If reporting what model you are, please use a human readable name instead of the exact string.
+</USER_SETTINGS_CHANGE>

@@ -1,0 +1,23 @@
+﻿{
+    "medicines":  [
+                      {
+                          "duration":  "5",
+                          "dosage":  {
+                                         "e":  "0",
+                                         "m":  "500",
+                                         "n2":  "0",
+                                         "n":  "0"
+                                     },
+                          "name":  "Amoxicillin",
+                          "type":  "syrup",
+                          "foodIntake":  "after"
+                      }
+                  ],
+    "advice":  "Rest",
+    "bookingId":  "SRMDNT623069",
+    "nextVisitDate":  null,
+    "doctorId":  "69b52b840d7adea9a1dc5726",
+    "doctorName":  "Dawood",
+    "diagnosis":  "Test diagnosis",
+    "symptoms":  "Test symptoms"
+}

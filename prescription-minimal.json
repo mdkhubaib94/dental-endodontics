@@ -1,0 +1,18 @@
+﻿{
+    "bookingId":  "SRMDNT623069",
+    "medicines":  [
+                      {
+                          "frequency":  "TDS",
+                          "dosage":  {
+                                         "e":  "0",
+                                         "m":  "500mg",
+                                         "n2":  "0",
+                                         "n":  "TDS"
+                                     },
+                          "name":  "Amoxicillin"
+                      }
+                  ],
+    "advice":  "Rest",
+    "diagnosis":  "Test diagnosis",
+    "signed":  true
+}

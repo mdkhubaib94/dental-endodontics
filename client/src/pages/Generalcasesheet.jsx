@@ -80,40 +80,22 @@ const GeneralCaseSheet = () => {
     const hydrateDraft = async () => {
       try {
         console.log('[GeneralCaseSheet] Starting async draft load');
-        const draft = await loadCaseDraft({ patientId, routeKey: DRAFT_ROUTE_KEY });
+        
+        // 🔥 FIX: Always start with a blank form for each appointment
+        // Clear any old draft to ensure fresh form for new appointment
+        console.log('[GeneralCaseSheet] Clearing any old draft for fresh form');
+        await clearCaseDraft({ patientId, routeKey: DRAFT_ROUTE_KEY });
         
         if (cancelled) {
           console.log('[GeneralCaseSheet] Hydration was cancelled');
           return;
         }
         
-        if (!draft?.data) {
-          console.log('[GeneralCaseSheet] No draft data found, form will use default state');
-          return;
-        }
-
-        console.log('[GeneralCaseSheet] Draft loaded, applying to form');
-        const draftData = draft.data;
-        if (draftData.formData) {
-          setFormData((prev) => ({ ...prev, ...draftData.formData }));
-        }
-        if (Array.isArray(draftData.selectedDepartments)) {
-          setSelectedDepartments(draftData.selectedDepartments);
-        }
-        if (typeof draftData.enableTreatment === 'boolean') {
-          setEnableTreatment(draftData.enableTreatment);
-        }
-        if (draftData.showOutputs && typeof draftData.showOutputs === 'object') {
-          setShowOutputs((prev) => ({ ...prev, ...draftData.showOutputs }));
-        }
-        if (typeof draftData.previewUrl === 'string' && draftData.previewUrl.trim()) {
-          setPreviewUrl(draftData.previewUrl);
-        }
+        console.log('[GeneralCaseSheet] Form will use default blank state');
+        setIsDraftHydrated(true);
       } catch (error) {
         console.error('[GeneralCaseSheet] Error during draft hydration:', error);
-      } finally {
         if (!cancelled) {
-          console.log('[GeneralCaseSheet] Setting isDraftHydrated=true');
           setIsDraftHydrated(true);
         }
       }

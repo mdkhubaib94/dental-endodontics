@@ -27,6 +27,7 @@ import prescriptionRoutes from './routes/prescription.js';
 import patientDetailsRoutes from './routes/patient-details-route.js';
 import reportsRoutes from './routes/reports.js';
 import billingRoutes from './routes/bill-route.js';
+import debugQueryRoutes from './routes/debug-query.js';
 
 dotenv.config();
 
@@ -270,6 +271,9 @@ console.log('✓ Billing routes registered at /api/billing');
 
 app.use('/api/consent-forms', consentFormRoutes);
 console.log('✓ Consent form routes registered at /api/consent-forms');
+
+app.use('/api/debug', debugQueryRoutes);
+console.log('✓ Debug routes registered at /api/debug');
 
 // React Router fallback (GET non-API routes)
 if (isProduction) {

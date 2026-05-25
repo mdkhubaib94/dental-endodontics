@@ -139,18 +139,18 @@ const pickSpecialistDoctorForDepartment = async (departmentLabel) => {
 };
 
 const pickPgForDoctor = async (doctor) => {
-  const pgs = await User.find(
-    { role: 'pg', createdBy: doctor._id },
-    { _id: 1, name: 1, Identity: 1, department: 1 }
+  const students = await User.find(
+    { role: { $in: ['pg', 'ug'] }, createdBy: doctor._id },
+    { _id: 1, name: 1, Identity: 1, department: 1, role: 1 }
   ).lean();
 
-  const eligiblePgs = sortUsersForAssignment(pgs);
-  if (!eligiblePgs.length) {
+  const eligibleStudents = sortUsersForAssignment(students);
+  if (!eligibleStudents.length) {
     return null;
   }
 
-  const startIndex = await getNextRoundRobinStartIndex(`pgReferral:${String(doctor._id)}`, eligiblePgs.length);
-  return eligiblePgs[startIndex];
+  const startIndex = await getNextRoundRobinStartIndex(`pgReferral:${String(doctor._id)}`, eligibleStudents.length);
+  return eligibleStudents[startIndex];
 };
 
 const findDoctorByIdentity = async (identity) => {
@@ -172,7 +172,7 @@ const findPgByIdentity = async (identity) => {
   }
 
   return User.findOne(
-    { role: 'pg', Identity: normalizedIdentity },
+    { role: { $in: ['pg', 'ug'] }, Identity: normalizedIdentity },
     { _id: 1, name: 1, Identity: 1, department: 1 }
   ).lean();
 };
@@ -301,8 +301,23 @@ const assignLegacySpecialistReferrals = async (departmentLabel) => {
 };
 
 // Create / Save a General Case Sheet
-router.post('/save', auth, requireRole(['doctor', 'chief', 'pg']), async (req, res) => {
+router.post(['/', '/save'], auth, requireRole(['doctor', 'chief', 'pg']), async (req, res) => {
   try {
+    if (req.body.bookingId) {
+      const appt = await Appointment.findOne({ bookingId: req.body.bookingId });
+      if (appt) {
+        if (!req.body.patientId) req.body.patientId = appt.patientId;
+        if (!req.body.patientName) {
+          const pUser = await User.findOne({ Identity: appt.patientId }).lean();
+          req.body.patientName = pUser?.name || 'Test Patient';
+        }
+        if (!req.body.doctorId) req.body.doctorId = req.user.Identity || req.user._id.toString();
+        if (!req.body.doctorName) req.body.doctorName = req.user.name || 'General Doctor';
+        if (!req.body.selectedDepartments) req.body.selectedDepartments = ['prosthodontics'];
+        if (!req.body.treatmentPlan) req.body.treatmentPlan = 'Refer to specialist';
+      }
+    }
+
     const {
       patientId,
       patientName,
@@ -441,6 +456,36 @@ router.post('/save', auth, requireRole(['doctor', 'chief', 'pg']), async (req, r
     }
 
     await generalCase.save();
+
+    // 🔥 FIX: Mark the appointment as ASSIGNED and update PG/UG assignment fields
+    try {
+      const todayStr = new Date().toISOString().split('T')[0];
+      const recentAppointment = await Appointment.findOne({
+        patientId,
+        appointmentDate: { $gte: todayStr },
+        status: { $in: ['pending', 'assigned', 'rescheduled'] },
+        isProcessed: { $ne: true },
+      }).sort({ appointmentDate: 1, createdAt: -1 });
+
+      if (recentAppointment) {
+        recentAppointment.status = 'assigned'; // ASSIGNED - case sheet submitted, PG assigned
+        recentAppointment.isProcessed = true;
+        recentAppointment.doctorId = assignedPg.Identity || assignedPg._id; // Set PG as doctorId
+        recentAppointment.assignedPgUgId = assignedPg.Identity || '';
+        recentAppointment.assigned_pg_ug_id = assignedPg.Identity || ''; // Set PG assignment
+        recentAppointment.pgDoctorId = assignedPg.Identity || ''; // Alternative field
+        recentAppointment.supervisingDeptDoctorId = specialistDoctor?.Identity || '';
+        recentAppointment.supervising_dept_doctor_id = specialistDoctor?.Identity || ''; // Set dept doctor
+        recentAppointment.deptDoctorId = specialistDoctor?.Identity || ''; // Alternative field
+        recentAppointment.generalDoctorId = req.user.Identity || ''; // Set general doctor ID
+        await recentAppointment.save();
+        console.log(`✅ Marked appointment ${recentAppointment.bookingId} as ASSIGNED for patient ${patientId}`);
+        console.log(`✅ Assigned PG ${assignedPg.Identity} and Dept Doctor ${specialistDoctor?.Identity} to appointment`);
+      }
+    } catch (appointmentError) {
+      console.error('⚠️ Failed to mark appointment as assigned:', appointmentError);
+      // Don't fail the entire request if appointment update fails
+    }
 
     res.status(201).json({
       success: true,

@@ -8,12 +8,16 @@ import jwt from "jsonwebtoken";
 import Appointment from "../models/AppoitmentBooked.js";
 import { User } from "../models/User.js";
 import AssignmentState from "../models/AssignmentState.js";
+import AuditLog from "../models/AuditLog.js";
+import fs from 'fs';
+import path from 'path';
 import requireRole from "../middleware/role.js";
 
 dotenv.config();
 const router = Router()
 
 const normalizeDepartment = (value) => String(value || '').trim().toLowerCase().replace(/[_\s]+/g, '');
+const normalizeRole = (value) => String(value || '').trim().toLowerCase().replace(/[_\s]+/g, '-');
 const GENERAL_DOCTOR_DEPARTMENT_KEYS = new Set(['general', 'generaldentistry']);
 
 /* ✅ CONFIRM ROUTER LOAD */
@@ -103,6 +107,20 @@ const getDoctorIdentityKeys = (user) => {
   return Array.from(new Set(keys));
 };
 
+const isGeneralDoctorUser = (user) => {
+  if (!user) return false;
+
+  if (user.isGeneralDoctor === true) return true;
+  if (user.isDeptDoctor === true) return false;
+
+  const normalizedRole = normalizeRole(user.role);
+  if (normalizedRole !== 'doctor' && normalizedRole !== 'chief-doctor' && normalizedRole !== 'chief') {
+    return false;
+  }
+
+  return GENERAL_DOCTOR_DEPARTMENT_KEYS.has(normalizeDepartment(user.department));
+};
+
 const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 /* ================= 🔥 ADDED: GET PHONE FROM DB ================= */
 const getPatientPhone = async (patientId) => {
@@ -122,7 +140,13 @@ const auth = async (req, res, next) => {
     }
 
     const token = authHeader.split(" ")[1];
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    // Debug: log JWT secret presence (length only) to help diagnose signature issues
+    try {
+      console.log('JWT_SECRET length:', process.env.JWT_SECRET ? process.env.JWT_SECRET.length : 0);
+    } catch (e) {
+      // ignore
+    }
+    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'defaultsecret');
 
     const user = await User.findById(decoded.userId).select("-password");
     if (!user) return res.status(401).json({ success: false });
@@ -130,7 +154,8 @@ const auth = async (req, res, next) => {
     req.user = user;
     next();
   } catch (err) {
-    return res.status(401).json({ success: false });
+    console.error('Auth middleware error:', err && err.message ? err.message : err);
+    return res.status(401).json({ success: false, message: err && err.message ? err.message : 'Unauthorized' });
   }
 };
 
@@ -414,7 +439,7 @@ const attachPatientName = async (appointments) => {
 
 /* ================= CREATE ================= */
 
-router.post("/appointments", async (req, res) => {
+router.post(["/", "/appointments"], async (req, res) => {
   try {
     const {
       patientId,
@@ -485,6 +510,8 @@ router.post("/appointments", async (req, res) => {
     for (let attempt = 0; attempt < 3; attempt++) {
       const bookingId = generateBookingId();
       try {
+        // 🔥 Appointments start as PENDING when patient books
+        // General doctor auto-accepts by viewing them (no explicit approval button)
         appointment = await Appointment.create({
           bookingId,
           patientId,
@@ -493,7 +520,9 @@ router.post("/appointments", async (req, res) => {
           appointmentDate,
           appointmentTime: normalizedAppointmentTime,
           doctorId: assignedDoctorId,
-          status: "pending",
+          status: "pending", // PENDING - general doctor sees and accepts implicitly
+          needsGeneralApproval: false,
+          needsPgApproval: false,
         });
         break;
       } catch (createErr) {
@@ -587,57 +616,137 @@ router.get("/appointments/patient/:patientId", async (req, res) => {
 router.get("/my-appointments", auth, requireRole(["doctor", "chief-doctor"]), async (req, res) => {
   try {
     const doctorId = String(req.user._id);
+    const userDepartment = String(req.user?.department || '').trim();
+    const isGeneralDoctor = GENERAL_DOCTOR_DEPARTMENT_KEYS.has(normalizeDepartment(userDepartment));
 
     // Compare as ISO date string (YYYY-MM-DD)
     const todayStr = new Date().toISOString().split("T")[0];
 
-    const appointments = await Appointment.find({
-      doctorId,
-      status: { $in: ["pending", "confirmed", "rescheduled"] },
-      appointmentDate: { $gte: todayStr },
-    }).sort({ appointmentDate: 1, appointmentTime: 1 });
+    let appointments;
+    
+    if (isGeneralDoctor) {
+      // 🔥 FIX: General doctors see ALL pending and assigned appointments (not just assigned to them)
+      appointments = await Appointment.find({
+        status: { $in: ["pending", "assigned", "rescheduled"] },
+        appointmentDate: { $gte: todayStr },
+        isProcessed: { $ne: true },
+      }).sort({ appointmentDate: 1, appointmentTime: 1 });
+    } else {
+      // Specialist doctors see only appointments assigned to them
+      appointments = await Appointment.find({
+        doctorId,
+        status: { $in: ["pending", "assigned", "in_progress", "rescheduled"] },
+        appointmentDate: { $gte: todayStr },
+      }).sort({ appointmentDate: 1, appointmentTime: 1 });
+    }
 
     const enriched = await attachPatientName(appointments);
     res.json({ success: true, appointments: enriched });
-  } catch {
-    res.status(500).json({ success: false });
+  } catch (err) {
+    console.error("❌ Error fetching my appointments:", err);
+    res.status(500).json({ success: false, message: 'Failed to fetch appointments' });
   }
 });
 
 /* ================= PG/UG – APPOINTMENTS FOR ASSIGNED PATIENTS ================= */
-router.get("/pg-appointments", auth, requireRole(["pg", "ug"]), async (req, res) => {
+router.get("/pg-appointments", auth, requireRole(["doctor", "chief-doctor", "pg", "ug"]), async (req, res) => {
   try {
-    const pgIdentity = String(req.user?.Identity || '').trim();
-    if (!pgIdentity) {
-      return res.status(400).json({ success: false, message: 'PG Identity not found on account' });
-    }
-
-    // PGs are assigned to patients via GeneralCase.assignedPgId, not via appointment.doctorId.
-    // Fetch all patient IDs assigned to this PG (approved cases only), then find their appointments.
-    const GeneralCase = (await import('../models/GeneralCase.js')).default;
-    const assignedCases = await GeneralCase.find(
-      { assignedPgId: pgIdentity, specialistStatus: 'approved' },
-      { patientId: 1 }
-    ).lean();
-
-    const assignedPatientIds = [...new Set(
-      assignedCases.map((c) => String(c.patientId || '').trim()).filter(Boolean)
-    )];
-
-    if (!assignedPatientIds.length) {
-      return res.json({ success: true, appointments: [] });
-    }
-
+    const requesterRole = String(req.user?.role || '').trim().toLowerCase();
+    const isSupervisor = requesterRole === 'doctor' || requesterRole === 'chief-doctor';
+    
     const todayStr = new Date().toISOString().split("T")[0];
+    
+    if (isSupervisor) {
+      // 🔥 FIX: Doctors see appointments for patients assigned to their PG/UG students
+      const students = await User.find(
+        { createdBy: req.user._id, role: { $in: ['pg', 'ug'] } },
+        { Identity: 1, name: 1 }
+      ).lean();
+      
+      const pgIdentities = students.map(s => String(s.Identity || '').trim()).filter(Boolean);
+      
+      if (!pgIdentities.length) {
+        return res.json({ success: true, appointments: [] });
+      }
 
-    const appointments = await Appointment.find({
-      patientId: { $in: assignedPatientIds },
-      status: { $in: ["pending", "confirmed", "rescheduled"] },
-      appointmentDate: { $gte: todayStr },
-    }).sort({ appointmentDate: 1, appointmentTime: 1 });
+      // Get all patient IDs assigned to these PG/UG students
+      const GeneralCase = (await import('../models/GeneralCase.js')).default;
+      const assignedCases = await GeneralCase.find(
+        { assignedPgId: { $in: pgIdentities }, specialistStatus: 'approved' },
+        { patientId: 1, assignedPgId: 1 }
+      ).lean();
 
-    const enriched = await attachPatientName(appointments);
-    res.json({ success: true, appointments: enriched });
+      const patientIdToPgMap = new Map();
+      assignedCases.forEach(c => {
+        const pid = String(c.patientId || '').trim();
+        const pgId = String(c.assignedPgId || '').trim();
+        if (pid && pgId) {
+          patientIdToPgMap.set(pid, pgId);
+        }
+      });
+
+      const assignedPatientIds = Array.from(patientIdToPgMap.keys());
+
+      if (!assignedPatientIds.length) {
+        return res.json({ success: true, appointments: [] });
+      }
+
+      // Fetch appointments for these patients
+      const appointments = await Appointment.find({
+        patientId: { $in: assignedPatientIds },
+        status: { $in: ["assigned", "in_progress", "rescheduled"] },
+        appointmentDate: { $gte: todayStr },
+      }).sort({ appointmentDate: 1, appointmentTime: 1 });
+
+      // Enrich with patient names and PG info
+      const enriched = await attachPatientName(appointments);
+      
+      // Add PG information to each appointment
+      const studentMap = new Map(students.map(s => [String(s.Identity).trim(), s]));
+      const enrichedWithPg = enriched.map(appt => {
+        const pgId = patientIdToPgMap.get(String(appt.patientId));
+        const student = pgId ? studentMap.get(pgId) : null;
+        return {
+          ...appt,
+          assignedPgId: pgId || null,
+          assignedPgName: student?.name || null,
+        };
+      });
+
+      return res.json({ success: true, appointments: enrichedWithPg });
+    } else {
+      // 🔥 FIX: PG/UG sees appointments for patients assigned to them
+      const pgIdentity = String(req.user?.Identity || '').trim();
+      if (!pgIdentity) {
+        return res.status(400).json({ success: false, message: 'PG Identity not found on account' });
+      }
+
+      // Get all patient IDs assigned to this PG/UG from GeneralCase
+      const GeneralCase = (await import('../models/GeneralCase.js')).default;
+      const assignedCases = await GeneralCase.find(
+        { assignedPgId: pgIdentity, specialistStatus: 'approved' },
+        { patientId: 1 }
+      ).lean();
+
+      const assignedPatientIds = [...new Set(
+        assignedCases.map((c) => String(c.patientId || '').trim()).filter(Boolean)
+      )];
+
+      // Fetch appointments for these patients OR appointments directly assigned to this PG
+      const appointments = await Appointment.find({
+        $or: [
+          { patientId: { $in: assignedPatientIds } },
+          { doctorId: pgIdentity },
+          { assigned_pg_ug_id: pgIdentity },
+          { pgDoctorId: pgIdentity },
+        ],
+        status: { $in: ["assigned", "in_progress", "rescheduled"] },
+        appointmentDate: { $gte: todayStr },
+      }).sort({ appointmentDate: 1, appointmentTime: 1 });
+
+      const enriched = await attachPatientName(appointments);
+      res.json({ success: true, appointments: enriched });
+    }
   } catch (err) {
     console.error("❌ Error fetching PG appointments:", err);
     res.status(500).json({ success: false, message: 'Server error' });
@@ -841,14 +950,567 @@ router.get('/assigned-doctors/overview', auth, requireRole(['chief', 'chief-doct
   }
 });
 
+
+/* ================= REVISIT CYCLE ROUTES ================= */
+
+// Get revisit appointments needing General Doctor approval
+router.get("/revisit-approvals", auth, requireRole(["doctor", "chief-doctor"]), async (req, res) => {
+  try {
+    // Determine if the requester is a general doctor.
+    // Primary check: department indicates general/general dentistry.
+    // Fallback: the doctor's Identity may be listed as the generalDoctorId on ANY GeneralCase.
+    let isGeneralDoctor = GENERAL_DOCTOR_DEPARTMENT_KEYS.has(normalizeDepartment(req.user?.department));
+    if (!isGeneralDoctor && String(req.user?.role || '').trim().toLowerCase() === 'doctor') {
+      try {
+        const { default: GeneralCase } = await import('../models/GeneralCase.js');
+        const gcase = await GeneralCase.findOne({ generalDoctorId: String(req.user?.Identity || '').trim() }, { _id: 1 }).lean();
+        if (gcase) {
+          isGeneralDoctor = true;
+        }
+      } catch (e) {
+        console.warn('General doctor fallback check failed:', e && e.message ? e.message : e);
+      }
+    }
+    if (!isGeneralDoctor) {
+      return res.status(403).json({ success: false, message: "Only general doctors can access revisit approvals." });
+    }
+
+    const appointments = await Appointment.find({
+      needsGeneralApproval: true,
+      status: "pending"
+    }).sort({ createdAt: -1 });
+
+    const enriched = await attachPatientName(appointments);
+    res.json({ success: true, appointments: enriched });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+// General Doctor rejects a revisit appointment -> sends it back to PG/UG
+router.put("/:bookingId/revisit/reject", auth, requireRole(["doctor", "chief-doctor"]), async (req, res) => {
+  try {
+    const { reason } = req.body;
+    const appointment = await Appointment.findOne({ bookingId: req.params.bookingId });
+    if (!appointment) return res.status(404).json({ success: false, message: "Appointment not found" });
+
+    // Determine if requester is a general doctor using persisted flags first, then department fallback.
+    let isGeneralDoctor = isGeneralDoctorUser(req.user);
+    if (!isGeneralDoctor) {
+      try {
+        const { default: GeneralCase } = await import('../models/GeneralCase.js');
+        const gcase = await GeneralCase.findOne({ patientId: appointment.patientId }, { generalDoctorId: 1 }).lean();
+        if (gcase && String(gcase.generalDoctorId || '').trim() === String(req.user?.Identity || '').trim()) {
+          isGeneralDoctor = true;
+        }
+      } catch (e) {
+        console.warn('General doctor fallback check failed (reject):', e && e.message ? e.message : e);
+      }
+    }
+
+    // Additional fallback: allow the supervisor doctor (createdBy) of the PG/UG who created the appointment
+    if (!isGeneralDoctor) {
+      try {
+        const pgUser = await User.findById(appointment.doctorId).lean();
+        if (pgUser && pgUser.createdBy && String(pgUser.createdBy) === String(req.user?._id) && !req.user?.isDeptDoctor) {
+          isGeneralDoctor = true;
+        }
+      } catch (e) {
+        console.warn('General doctor supervisor fallback failed (reject):', e && e.message ? e.message : e);
+      }
+    }
+
+    if (!isGeneralDoctor) {
+       return res.status(403).json({ success: false, message: "Only general doctors can reject revisit appointments." });
+    }
+
+    // Update status to revisit_pending_approval
+    appointment.status = "revisit_pending_approval";
+    appointment.needsGeneralApproval = false;
+    appointment.needsPgApproval = true;
+    await appointment.save();
+
+    // 📧 Notify PG/UG - ACTION REQUIRED
+    const studentOrQuery = [{ Identity: appointment.doctorId }];
+    if (/^[0-9a-fA-F]{24}$/.test(appointment.doctorId)) {
+      studentOrQuery.unshift({ _id: appointment.doctorId });
+    }
+
+    User.findOne({ $or: studentOrQuery }).then(student => {
+       if (student && student.email) {
+          sendEmail(
+            student.email, 
+            "Action Required: Revisit Appointment Rejected by General Doctor", 
+            `
+            <div style="font-family: Arial, sans-serif; line-height:1.6;">
+              <h2>Revisit Appointment Rejected</h2>
+              <p>Hello ${student.name || 'Doctor'},</p>
+              <p>The revisit appointment for patient <b>${appointment.patientId}</b> has been <b>rejected</b> by the General Doctor.</p>
+              <p><b>Booking ID:</b> ${appointment.bookingId}</p>
+              ${reason ? `<p><b>Reason:</b> ${reason}</p>` : ''}
+              <p><b>ACTION REQUIRED:</b> Please review and confirm a new date or re-submit from your dashboard.</p>
+              <p>Regards,<br/><b>SRM Dental College System</b></p>
+            </div>
+            `
+          ).catch(err => console.error("PG revisit rejection notification failed:", err));
+       }
+    });
+
+    // 📧 Notify Department Doctor - INFO ONLY
+    if (appointment.supervising_dept_doctor_id) {
+      User.findOne({ Identity: appointment.supervising_dept_doctor_id }).then(deptDoc => {
+        if (deptDoc?.email) {
+          sendEmail(
+            deptDoc.email,
+            "Revisit Appointment Rejected - Department Notification",
+            `
+            <div style="font-family: Arial, sans-serif; line-height:1.6;">
+              <h2>Revisit Appointment Rejected</h2>
+              <p>Hello Dr. ${deptDoc.name || 'Doctor'},</p>
+              <p>A revisit appointment has been rejected by the General Doctor.</p>
+              <ul>
+                <li><b>Booking ID:</b> ${appointment.bookingId}</li>
+                <li><b>Patient:</b> ${appointment.patientId}</li>
+                ${reason ? `<li><b>Reason:</b> ${reason}</li>` : ''}
+                <li><b>Status:</b> Pending PG/UG confirmation</li>
+              </ul>
+              <p>Regards,<br/><b>SRM Dental College System</b></p>
+            </div>
+            `
+          ).catch(err => console.error("Department doctor revisit rejection notification failed:", err));
+        }
+      });
+    }
+
+    // Audit the rejection decision
+    try {
+      let rejectReason = 'general_unknown';
+      if (GENERAL_DOCTOR_DEPARTMENT_KEYS.has(normalizeDepartment(req.user?.department))) rejectReason = 'general_by_department';
+      else {
+        try {
+          const { default: GeneralCase } = await import('../models/GeneralCase.js');
+          const gcase = await GeneralCase.findOne({ patientId: appointment.patientId }, { generalDoctorId: 1 }).lean();
+          if (gcase && String(gcase.generalDoctorId || '').trim() === String(req.user?.Identity || '').trim()) rejectReason = 'general_by_generalCase';
+        } catch (e) {}
+        if (rejectReason === 'general_unknown') {
+          try {
+            const pgUser = await User.findById(appointment.doctorId).lean();
+            if (pgUser && pgUser.createdBy && String(pgUser.createdBy) === String(req.user?._id)) rejectReason = 'general_by_supervisor';
+          } catch (e) {}
+        }
+      }
+
+      const auditDoc = {
+        bookingId: appointment.bookingId,
+        action: 'revisit_reject',
+        actor: { userId: String(req.user?._id || ''), identity: String(req.user?.Identity || ''), role: String(req.user?.role || ''), name: req.user?.name || '' },
+        chosenDoctor: { id: String(req.user?._id || ''), identity: String(req.user?.Identity || ''), name: req.user?.name || '' },
+        reason: rejectReason,
+        previousStatus: null,
+        newStatus: appointment.status,
+        meta: {},
+      };
+      try { await AuditLog.create(auditDoc); } catch (e) { console.warn('AuditLog.create failed (reject):', e && e.message ? e.message : e); }
+      try { const outDir = path.join(process.cwd(), 'server', 'audit-output'); if (!fs.existsSync(outDir)) fs.mkdirSync(outDir, { recursive: true }); const logPath = path.join(outDir, 'approval-audit.log'); fs.appendFileSync(logPath, JSON.stringify({ ...auditDoc, timestamp: new Date().toISOString() }) + '\n'); } catch (e) { console.warn('Failed to append approval audit file (reject):', e && e.message ? e.message : e); }
+    } catch (e) { console.warn('Failed to write audit for revisit reject:', e && e.message ? e.message : e); }
+
+    res.json({ success: true, message: "Revisit appointment rejected and sent back to PG/UG.", appointment });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+// PG/UG "approves" (re-submits) the revisit appointment back to General Doctor
+router.put("/:bookingId/revisit/pg-approve", auth, requireRole(["pg", "ug"]), async (req, res) => {
+  try {
+    const appointment = await Appointment.findOne({ bookingId: req.params.bookingId });
+    if (!appointment) return res.status(404).json({ success: false, message: "Appointment not found" });
+
+    if (!appointment.needsPgApproval) {
+       return res.status(400).json({ success: false, message: "This appointment does not require your approval." });
+    }
+
+    appointment.needsPgApproval = false;
+    appointment.needsGeneralApproval = true;
+    await appointment.save();
+
+    res.json({ success: true, message: "Revisit appointment re-submitted to General Doctor.", appointment });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+// General Doctor approves revisit appointment -> closes the cycle
+router.put("/:bookingId/revisit/approve", auth, requireRole(["doctor", "chief-doctor"]), async (req, res) => {
+  try {
+    const appointment = await Appointment.findOne({ bookingId: req.params.bookingId });
+    if (!appointment) return res.status(404).json({ success: false, message: "Appointment not found" });
+
+    // Determine if requester is a general doctor using persisted flags first, then department fallback.
+    let isGeneralDoctor = isGeneralDoctorUser(req.user);
+    if (!isGeneralDoctor) {
+      try {
+        const { default: GeneralCase } = await import('../models/GeneralCase.js');
+        const gcase = await GeneralCase.findOne({ patientId: appointment.patientId }, { generalDoctorId: 1 }).lean();
+        if (gcase && String(gcase.generalDoctorId || '').trim() === String(req.user?.Identity || '').trim()) {
+          isGeneralDoctor = true;
+        }
+      } catch (e) {
+        console.warn('General doctor fallback check failed (approve):', e && e.message ? e.message : e);
+      }
+    }
+
+    // Additional fallback: allow the supervisor doctor (createdBy) of the PG/UG who created the appointment
+    if (!isGeneralDoctor) {
+      try {
+        const pgUser = await User.findById(appointment.doctorId).lean();
+        if (pgUser && pgUser.createdBy && String(pgUser.createdBy) === String(req.user?._id) && !req.user?.isDeptDoctor) {
+          isGeneralDoctor = true;
+        }
+      } catch (e) {
+        console.warn('General doctor supervisor fallback failed (approve):', e && e.message ? e.message : e);
+      }
+    }
+
+    if (!isGeneralDoctor) {
+      return res.status(403).json({ success: false, message: "Only general doctors can approve revisit appointments." });
+    }
+
+    if (appointment.status !== "revisit_scheduled") {
+      return res.status(400).json({ success: false, message: "Appointment is not in revisit_scheduled status." });
+    }
+
+    // Update status to revisit_approved then closed
+    appointment.status = "revisit_approved";
+    appointment.needsGeneralApproval = false;
+    appointment.needsPgApproval = false;
+    await appointment.save();
+
+    // Immediately close the cycle
+    appointment.status = "closed";
+    await appointment.save();
+
+    // 📧 Notify Patient with revisit date
+    const patientEmail = await resolvePatientEmail(appointment.patientId, appointment.patientEmail);
+    if (patientEmail) {
+      sendEmail(
+        patientEmail,
+        "Revisit Appointment Confirmed",
+        `
+        <div style="font-family: Arial, sans-serif; line-height:1.6;">
+          <h2>Your Revisit Appointment is Confirmed</h2>
+          <p>Dear Patient,</p>
+          <p>Your revisit appointment has been approved by the doctor.</p>
+          <ul>
+            <li><b>Booking ID:</b> ${appointment.bookingId}</li>
+            <li><b>Revisit Date:</b> ${appointment.revisitDate || appointment.appointmentDate}</li>
+            <li><b>Time:</b> ${appointment.appointmentTime}</li>
+          </ul>
+          <p>Please arrive 10 minutes before your scheduled time.</p>
+          <p>Regards,<br/><b>SRM Dental College</b></p>
+        </div>
+        `
+      ).catch(err => console.error("Patient revisit approval notification failed:", err));
+    }
+
+    // 📧 Notify PG/UG
+    const studentOrQuery = [{ Identity: appointment.doctorId }];
+    if (/^[0-9a-fA-F]{24}$/.test(appointment.doctorId)) {
+      studentOrQuery.unshift({ _id: appointment.doctorId });
+    }
+
+    User.findOne({ $or: studentOrQuery }).then(student => {
+      if (student && student.email) {
+        sendEmail(
+          student.email,
+          "Revisit Appointment Approved",
+          `
+          <div style="font-family: Arial, sans-serif; line-height:1.6;">
+            <h2>Revisit Appointment Approved</h2>
+            <p>Hello ${student.name || 'Doctor'},</p>
+            <p>The revisit appointment for patient <b>${appointment.patientId}</b> has been <b>approved</b> by the General Doctor.</p>
+            <p><b>Booking ID:</b> ${appointment.bookingId}</p>
+            <p><b>Status:</b> Closed - Cycle Complete</p>
+            <p>Regards,<br/><b>SRM Dental College System</b></p>
+          </div>
+          `
+        ).catch(err => console.error("PG revisit approval notification failed:", err));
+      }
+    });
+
+    // Audit the approval
+    try {
+      let approveReason = 'general_unknown';
+      if (GENERAL_DOCTOR_DEPARTMENT_KEYS.has(normalizeDepartment(req.user?.department))) approveReason = 'general_by_department';
+      else {
+        try {
+          const { default: GeneralCase } = await import('../models/GeneralCase.js');
+          const gcase = await GeneralCase.findOne({ patientId: appointment.patientId }, { generalDoctorId: 1 }).lean();
+          if (gcase && String(gcase.generalDoctorId || '').trim() === String(req.user?.Identity || '').trim()) approveReason = 'general_by_generalCase';
+        } catch (e) {}
+        if (approveReason === 'general_unknown') {
+          try {
+            const pgUser = await User.findById(appointment.doctorId).lean();
+            if (pgUser && pgUser.createdBy && String(pgUser.createdBy) === String(req.user?._id)) approveReason = 'general_by_supervisor';
+          } catch (e) {}
+        }
+      }
+
+      const auditDoc = {
+        bookingId: appointment.bookingId,
+        action: 'revisit_approve',
+        actor: { userId: String(req.user?._id || ''), identity: String(req.user?.Identity || ''), role: String(req.user?.role || ''), name: req.user?.name || '' },
+        chosenDoctor: { id: String(req.user?._id || ''), identity: String(req.user?.Identity || ''), name: req.user?.name || '' },
+        reason: approveReason,
+        previousStatus: 'revisit_scheduled',
+        newStatus: 'closed',
+        meta: {},
+      };
+      try { await AuditLog.create(auditDoc); } catch (e) { console.warn('AuditLog.create failed (revisit approve):', e && e.message ? e.message : e); }
+      try { const outDir = path.join(process.cwd(), 'server', 'audit-output'); if (!fs.existsSync(outDir)) fs.mkdirSync(outDir, { recursive: true }); const logPath = path.join(outDir, 'approval-audit.log'); fs.appendFileSync(logPath, JSON.stringify({ ...auditDoc, timestamp: new Date().toISOString() }) + '\n'); } catch (e) { console.warn('Failed to append approval audit file (revisit approve):', e && e.message ? e.message : e); }
+    } catch (e) { console.warn('Failed to write audit for revisit approve:', e && e.message ? e.message : e); }
+
+    res.json({ success: true, message: "Revisit appointment approved and cycle closed.", appointment });
+  } catch (err) {
+    console.error("Revisit approve error:", err);
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+// PG/UG confirms revisit date after rejection
+router.put("/:bookingId/revisit/confirm", auth, requireRole(["pg", "ug"]), async (req, res) => {
+  try {
+    const appointment = await Appointment.findOne({ bookingId: req.params.bookingId });
+    if (!appointment) return res.status(404).json({ success: false, message: "Appointment not found" });
+
+    if (appointment.status !== "revisit_pending_approval") {
+      return res.status(400).json({ success: false, message: "Appointment is not pending your confirmation." });
+    }
+
+    // Re-submit to general doctor for approval
+    appointment.status = "revisit_scheduled";
+    appointment.needsPgApproval = false;
+    appointment.needsGeneralApproval = true;
+    await appointment.save();
+
+    // 📧 Notify General Doctor
+    const supervisor = await User.findById(req.user.createdBy).lean();
+    if (supervisor?.email) {
+      sendEmail(
+        supervisor.email,
+        "Action Required: Revisit Date Confirmed by PG/UG",
+        `
+        <div style="font-family: Arial, sans-serif; line-height:1.6;">
+          <h2>Revisit Date Confirmed</h2>
+          <p>Hello Dr. ${supervisor.name || 'Doctor'},</p>
+          <p>Your assigned PG/UG <b>${req.user.name}</b> has confirmed the revisit date for appointment <b>${appointment.bookingId}</b>.</p>
+          <ul>
+            <li><b>Patient:</b> ${appointment.patientId}</li>
+            <li><b>Revisit Date:</b> ${appointment.revisitDate || appointment.appointmentDate}</li>
+            <li><b>Time:</b> ${appointment.appointmentTime}</li>
+          </ul>
+          <p><b>ACTION REQUIRED:</b> Please review and approve this revisit request in your dashboard.</p>
+          <p>Regards,<br/><b>SRM Dental College System</b></p>
+        </div>
+        `
+      ).catch(err => console.error("Supervisor revisit confirm notification failed:", err));
+    }
+
+    res.json({ success: true, message: "Revisit date confirmed and sent back to General Doctor for approval.", appointment });
+  } catch (err) {
+    console.error("Revisit confirm error:", err);
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+// PG/UG creates a new revisit appointment
+router.post("/:bookingId/set-revisit", auth, requireRole(["pg", "ug"]), async (req, res) => {
+  try {
+    const { revisitDate } = req.body;
+    
+    if (!revisitDate) {
+      return res.status(400).json({ success: false, message: "Revisit date is required" });
+    }
+
+    const pgIdentity = String(req.user?.Identity || '').trim();
+    if (!pgIdentity) {
+      return res.status(400).json({ success: false, message: 'PG Identity not found' });
+    }
+
+    const originalAppointment = await Appointment.findOne({ bookingId: req.params.bookingId });
+    if (!originalAppointment) {
+      return res.status(404).json({ success: false, message: "Original appointment not found" });
+    }
+
+    // Get supervisor (general doctor)
+    const supervisor = await User.findById(req.user.createdBy).lean();
+
+    // Create NEW appointment for revisit
+    const revisitBookingId = generateBookingId();
+    const revisitAppointment = new Appointment({
+      bookingId: revisitBookingId,
+      patientId: originalAppointment.patientId,
+      patientEmail: originalAppointment.patientEmail,
+      doctorId: originalAppointment.doctorId, // Same PG/UG
+      assignedPgUgId: originalAppointment.assignedPgUgId || originalAppointment.assigned_pg_ug_id || pgIdentity,
+      assigned_pg_ug_id: originalAppointment.assigned_pg_ug_id || originalAppointment.assignedPgUgId || pgIdentity,
+      supervisingDeptDoctorId: originalAppointment.supervisingDeptDoctorId || originalAppointment.supervising_dept_doctor_id,
+      supervising_dept_doctor_id: originalAppointment.supervising_dept_doctor_id || originalAppointment.supervisingDeptDoctorId,
+      generalDoctorId: originalAppointment.generalDoctorId || supervisor?.Identity || '',
+      chiefComplaint: originalAppointment.chiefComplaint + " (Revisit)",
+      appointmentDate: revisitDate,
+      appointmentTime: originalAppointment.appointmentTime,
+      revisitDate: revisitDate,
+      parentBookingId: originalAppointment.bookingId,
+      status: "revisit_scheduled",
+      needsGeneralApproval: true,
+      needsPgApproval: false,
+    });
+
+    await revisitAppointment.save();
+
+    // Update original appointment to completed
+    originalAppointment.status = "completed";
+    await originalAppointment.save();
+
+    // 📧 Notify General Doctor - ACTION REQUIRED
+    if (supervisor?.email) {
+      sendEmail(
+        supervisor.email,
+        "Action Required: New Revisit Appointment Created",
+        `
+        <div style="font-family: Arial, sans-serif; line-height:1.6;">
+          <h2>New Revisit Appointment Needs Your Approval</h2>
+          <p>Hello Dr. ${supervisor.name || 'Doctor'},</p>
+          <p>Your assigned PG/UG <b>${req.user.name}</b> has created a new revisit appointment.</p>
+          <ul>
+            <li><b>Original Booking ID:</b> ${originalAppointment.bookingId}</li>
+            <li><b>New Revisit Booking ID:</b> ${revisitBookingId}</li>
+            <li><b>Patient:</b> ${originalAppointment.patientId}</li>
+            <li><b>Revisit Date:</b> ${revisitDate}</li>
+            <li><b>Time:</b> ${originalAppointment.appointmentTime}</li>
+          </ul>
+          <p><b>ACTION REQUIRED:</b> Please review and approve/reject this revisit request in your dashboard.</p>
+          <p>Regards,<br/><b>SRM Dental College System</b></p>
+        </div>
+        `
+      ).catch(err => console.error("Supervisor revisit notification failed:", err));
+    }
+
+    // 📧 Notify Department Doctor - INFO ONLY
+    if (originalAppointment.supervising_dept_doctor_id) {
+      User.findOne({ Identity: originalAppointment.supervising_dept_doctor_id }).then(deptDoc => {
+        if (deptDoc?.email && String(deptDoc._id) !== String(supervisor?._id)) {
+          sendEmail(
+            deptDoc.email,
+            "New Revisit Appointment Created - Department Notification",
+            `
+            <div style="font-family: Arial, sans-serif; line-height:1.6;">
+              <h2>New Revisit Appointment Created</h2>
+              <p>Hello Dr. ${deptDoc.name || 'Doctor'},</p>
+              <p>A new revisit appointment has been created for patient <b>${originalAppointment.patientId}</b>.</p>
+              <ul>
+                <li><b>Original Booking ID:</b> ${originalAppointment.bookingId}</li>
+                <li><b>New Revisit Booking ID:</b> ${revisitBookingId}</li>
+                <li><b>Revisit Date:</b> ${revisitDate}</li>
+                <li><b>Status:</b> REVISIT_SCHEDULED - Awaiting General Doctor Approval</li>
+              </ul>
+              <p>Regards,<br/><b>SRM Dental College System</b></p>
+            </div>
+            `
+          ).catch(err => console.error("Department doctor revisit notification failed:", err));
+        }
+      });
+    }
+
+    return res.json({
+      success: true,
+      message: "Revisit appointment created successfully. General doctor approval required.",
+      appointment: revisitAppointment,
+      bookingId: revisitBookingId,
+    });
+  } catch (err) {
+    console.error("Set revisit error:", err);
+    res.status(500).json({ success: false, message: "Failed to create revisit appointment" });
+  }
+});
+
 /* ================= APPROVE ================= */
-router.put("/:bookingId/approve", auth, requireRole(["doctor", "chief-doctor", "pg", "ug"]), async (req, res) => {
+router.put("/:bookingId/approve", auth, requireRole(["pg", "ug", "doctor", "chief-doctor"]), async (req, res) => {
   try {
     const requesterRole = String(req.user?.role || '').trim().toLowerCase().replace(/[_\s]+/g, '-');
     const isPgRequester = requesterRole === 'pg' || requesterRole === 'ug';
-
+    
     const userId = String(req.user?._id || "").trim();
     const userIdentity = String(req.user?.Identity || "").trim();
+    
+    const appointment = await Appointment.findOne({ bookingId: req.params.bookingId });
+    if (!appointment) return res.status(404).json({ success: false, message: "Appointment not found" });
+
+    // Determine if requester is a general doctor: persisted flag first, then department or assignment fallbacks.
+    let isGeneralDoctor = isGeneralDoctorUser(req.user);
+    if (!isGeneralDoctor) {
+      try {
+        const { default: GeneralCase } = await import('../models/GeneralCase.js');
+        const gcase = await GeneralCase.findOne({ patientId: appointment.patientId }, { generalDoctorId: 1 }).lean();
+        if (gcase && String(gcase.generalDoctorId || '').trim() === String(req.user?.Identity || '').trim()) {
+          isGeneralDoctor = true;
+        }
+      } catch (e) {
+        console.warn('General doctor fallback check failed (approve-route):', e && e.message ? e.message : e);
+      }
+    }
+
+    // Additional fallback: allow the supervisor doctor (createdBy) of the PG/UG who created the appointment
+    if (!isGeneralDoctor) {
+      try {
+        const pgUser = await User.findById(appointment.doctorId).lean();
+        if (pgUser && pgUser.createdBy && String(pgUser.createdBy) === String(req.user?._id)) {
+          isGeneralDoctor = true;
+        }
+      } catch (e) {
+        console.warn('General doctor supervisor fallback failed (approve-route):', e && e.message ? e.message : e);
+      }
+    }
+    
+    // 🔥 FLOW FIX: General doctors can ONLY approve revisit appointments
+    if (isGeneralDoctor && !isPgRequester) {
+      if (!appointment.needsGeneralApproval) {
+        return res.status(403).json({
+          success: false,
+          message: "General Doctors do not approve regular appointments. They are auto-confirmed when patients book.",
+        });
+      }
+      
+      // Approving a revisit appointment
+      appointment.needsGeneralApproval = false;
+      appointment.status = "revisit_approved";
+      await appointment.save();
+      
+      // Notify patient
+      const patientEmail = await resolvePatientEmail(appointment.patientId, appointment.patientEmail);
+      if (patientEmail) {
+        await sendEmail(
+          patientEmail,
+          "Revisit Appointment Confirmed",
+          `
+          <div style="font-family: Arial, sans-serif; line-height:1.6;">
+            <h2>Your Revisit Appointment is Confirmed</h2>
+            <p>Dear Patient,</p>
+            <p>Your revisit appointment has been confirmed by the doctor.</p>
+            <ul>
+              <li><b>Booking ID:</b> ${appointment.bookingId}</li>
+              <li><b>Date:</b> ${appointment.appointmentDate}</li>
+              <li><b>Time:</b> ${appointment.appointmentTime}</li>
+            </ul>
+            <p>Thank you,<br/><b>SRM Dental College</b></p>
+          </div>
+          `
+        );
+      }
+      
+      return res.json({ success: true, message: "Revisit appointment approved and patient notified.", appointment });
+    }
     const requesterKeys = Array.from(new Set([userId, userIdentity].filter(Boolean)));
     const primaryRequesterId = userId || userIdentity;
 
@@ -856,12 +1518,12 @@ router.put("/:bookingId/approve", auth, requireRole(["doctor", "chief-doctor", "
       return res.status(400).json({ success: false, message: "Approver identity missing" });
     }
 
-    const appointment = await Appointment.findOne({ bookingId: req.params.bookingId });
-    if (!appointment) return res.status(404).json({ success: false, message: "Appointment not found" });
-
     let actingDoctorId = primaryRequesterId;
     let actingDoctorKeys = requesterKeys;
     let actingDoctorDisplayName = req.user?.name || req.user?.Identity || "Doctor";
+    let auditReason = 'unknown';
+    let assignment = null;
+    let doctorUser = null;
 
     if (isPgRequester) {
       const pgIdentity = String(req.user?.Identity || '').trim();
@@ -873,7 +1535,7 @@ router.put("/:bookingId/approve", auth, requireRole(["doctor", "chief-doctor", "
       }
 
       const { default: GeneralCase } = await import('../models/GeneralCase.js');
-      const assignment = await GeneralCase.findOne({
+      assignment = await GeneralCase.findOne({
         patientId: appointment.patientId,
         assignedPgId: pgIdentity,
         specialistStatus: 'approved',
@@ -881,7 +1543,13 @@ router.put("/:bookingId/approve", auth, requireRole(["doctor", "chief-doctor", "
         .sort({ pgAssignedAt: -1, createdAt: -1 })
         .lean();
 
-      if (!assignment?._id) {
+      // Fallbacks: some bookings store PG link in appointment fields (assigned_pg_ug_id, pgDoctorId)
+      const fallbackMatches = [
+        String(appointment.assigned_pg_ug_id || '').trim(),
+        String(appointment.pgDoctorId || '').trim(),
+      ].filter(Boolean);
+
+      if (!assignment?._id && !fallbackMatches.includes(pgIdentity)) {
         return res.status(403).json({
           success: false,
           message: 'You can only approve appointments for patients assigned to you.',
@@ -901,7 +1569,7 @@ router.put("/:bookingId/approve", auth, requireRole(["doctor", "chief-doctor", "
         doctorOrQuery.unshift({ _id: assignedDoctorKey });
       }
 
-      const doctorUser = await User.findOne(
+      doctorUser = await User.findOne(
         { $or: doctorOrQuery },
         { name: 1, Identity: 1 }
       ).lean();
@@ -910,6 +1578,50 @@ router.put("/:bookingId/approve", auth, requireRole(["doctor", "chief-doctor", "
       actingDoctorId = doctorUser?._id ? String(doctorUser._id).trim() : assignedDoctorKey;
       actingDoctorKeys = Array.from(new Set([assignedDoctorKey, actingDoctorId, ...doctorKeys].filter(Boolean)));
       actingDoctorDisplayName = doctorUser?.name || assignedDoctorKey || 'Doctor';
+    }
+
+    // Determine audit reason and chosen doctor metadata
+    // (decide reason before saving so it is recorded)
+    if (isPgRequester) {
+      const pgIdentity = String(req.user?.Identity || '').trim();
+      if (assignment && assignment._id) {
+        auditReason = 'pg_assignment_match';
+      } else {
+        const fallbackMatches = [String(appointment.assigned_pg_ug_id || '').trim(), String(appointment.pgDoctorId || '').trim()].filter(Boolean);
+        if (fallbackMatches.includes(pgIdentity)) {
+          auditReason = 'pg_fallback_assignment';
+        } else {
+          auditReason = 'pg_direct_approval';
+        }
+      }
+    } else {
+      if (isGeneralDoctor) {
+        if (GENERAL_DOCTOR_DEPARTMENT_KEYS.has(normalizeDepartment(req.user?.department))) {
+          auditReason = 'general_by_department';
+        } else {
+          try {
+            const { default: GeneralCase } = await import('../models/GeneralCase.js');
+            const gcase = await GeneralCase.findOne({ patientId: appointment.patientId }, { generalDoctorId: 1 }).lean();
+            if (gcase && String(gcase.generalDoctorId || '').trim() === String(req.user?.Identity || '').trim()) {
+              auditReason = 'general_by_generalCase';
+            }
+          } catch (e) {
+            // ignore
+          }
+          if (auditReason === 'unknown') {
+            try {
+              const pgUser = await User.findById(appointment.doctorId).lean();
+              if (pgUser && pgUser.createdBy && String(pgUser.createdBy) === String(req.user?._id)) {
+                auditReason = 'general_by_supervisor';
+              }
+            } catch (e) {
+              // ignore
+            }
+          }
+        }
+      } else if (appointment.doctorId && actingDoctorKeys.includes(String(appointment.doctorId))) {
+        auditReason = 'assigned_doctor_match';
+      }
     }
 
     // Avoid re-sending approval email if already confirmed by this doctor
@@ -941,11 +1653,71 @@ router.put("/:bookingId/approve", auth, requireRole(["doctor", "chief-doctor", "
       });
     }
 
-    appointment.status = "confirmed";
+    const previousStatus = String(appointment.status || '').trim().toLowerCase();
+    appointment.status = isPgRequester && previousStatus === "assigned" ? "in_progress" : "confirmed";
+    
+    if (appointment.needsGeneralApproval && isGeneralDoctor) {
+      appointment.needsGeneralApproval = false;
+    }
     if (!isPgRequester) {
       appointment.doctorId = appointment.doctorId || actingDoctorId;
     }
     appointment.approvedDoctorId = actingDoctorId;
+    // Sanitize legacy/invalid rescheduleRequest.requestStatus values to avoid schema enum validation errors
+    try {
+      const validReqStatuses = new Set(['pending', 'approved', 'rejected']);
+      if (appointment.rescheduleRequest && appointment.rescheduleRequest.requestStatus && !validReqStatuses.has(String(appointment.rescheduleRequest.requestStatus))) {
+        appointment.rescheduleRequest.requestStatus = null;
+      }
+    } catch (e) {
+      // ignore sanitation errors and proceed to save; logging added for visibility
+      console.warn('Reschedule request sanitation failed:', e && e.message ? e.message : e);
+    }
+
+    // Create an audit record for this approval decision (best-effort)
+    try {
+      const intendedNewStatus = isPgRequester && previousStatus === "assigned" ? "in_progress" : "confirmed";
+
+      const auditDoc = {
+        bookingId: appointment.bookingId,
+        action: 'approve',
+        actor: {
+          userId: String(req.user?._id || ''),
+          identity: String(req.user?.Identity || ''),
+          role: String(req.user?.role || ''),
+          name: req.user?.name || '',
+        },
+        chosenDoctor: {
+          id: String(actingDoctorId || ''),
+          identity: doctorUser?.Identity || '',
+          name: actingDoctorDisplayName || '',
+        },
+        reason: auditReason,
+        previousStatus,
+        newStatus: intendedNewStatus,
+        meta: { actingDoctorKeys },
+      };
+
+      // persist to DB
+      try {
+        await AuditLog.create(auditDoc);
+      } catch (e) {
+        console.warn('AuditLog.create failed:', e && e.message ? e.message : e);
+      }
+
+      // append to a local audit file for easy inspection by the automation
+      try {
+        const outDir = path.join(process.cwd(), 'server', 'audit-output');
+        if (!fs.existsSync(outDir)) fs.mkdirSync(outDir, { recursive: true });
+        const logPath = path.join(outDir, 'approval-audit.log');
+        fs.appendFileSync(logPath, JSON.stringify({ ...auditDoc, timestamp: new Date().toISOString() }) + '\n');
+      } catch (e) {
+        console.warn('Failed to append approval audit file:', e && e.message ? e.message : e);
+      }
+    } catch (e) {
+      console.warn('Failed to build approval audit record:', e && e.message ? e.message : e);
+    }
+
     await appointment.save();
 
     const doctorDisplayName = actingDoctorDisplayName;
@@ -997,8 +1769,9 @@ router.put("/:bookingId/approve", auth, requireRole(["doctor", "chief-doctor", "
     ).catch((err) => console.error('Approve email failed:', err));
 
     res.json({ success: true, appointment, emailSent: true });
-  } catch {
-    res.status(500).json({ success: false });
+  } catch (err) {
+    console.error('Approve route error:', err);
+    res.status(500).json({ success: false, message: err?.message || 'Server error' });
   }
 });
 
@@ -1081,7 +1854,8 @@ router.put("/:bookingId/cancel", async (req, res) => {
 /* ================= ✅ RESCHEDULE FIX ================= */
 router.put("/:bookingId/reschedule", auth, requireRole(["doctor", "chief-doctor", "pg", "ug"]), async (req, res) => {
   try {
-    const { appointmentDate, appointmentTime } = req.body;
+    const appointmentDate = req.body.appointmentDate || req.body.proposedDate;
+    const appointmentTime = req.body.appointmentTime || req.body.proposedTime;
 
     if (!appointmentDate || !appointmentTime) {
       return res.status(400).json({
@@ -1101,17 +1875,22 @@ router.put("/:bookingId/reschedule", auth, requireRole(["doctor", "chief-doctor"
 
     const requesterRole = String(req.user?.role || '').trim().toLowerCase();
     const isPgRequester = requesterRole === 'pg' || requesterRole === 'ug';
-    const requesterKeys = getDoctorIdentityKeys(req.user);
-    const primaryRequesterKey = requesterKeys[0] || '';
-
-    // 🔥 Fetch appointment first (to get old date & email)
-    const appointment = await Appointment.findOne({
-      bookingId: req.params.bookingId,
-    });
-
+    
+    const appointment = await Appointment.findOne({ bookingId: req.params.bookingId });
     if (!appointment) {
       return res.status(404).json({ success: false, message: "Appointment not found" });
     }
+
+    // 🔒 Restriction: General Doctors don't manually approve/reschedule EXCEPT for revisits
+    const isGeneralDoctor = GENERAL_DOCTOR_DEPARTMENT_KEYS.has(normalizeDepartment(req.user?.department));
+    if (isGeneralDoctor && !isPgRequester && !appointment.needsGeneralApproval) {
+      return res.status(403).json({
+        success: false,
+        message: "General Doctors do not need to manually approve or reschedule regular appointments.",
+      });
+    }
+    const requesterKeys = getDoctorIdentityKeys(req.user);
+    const primaryRequesterKey = requesterKeys[0] || '';
 
     // Only upcoming appointments can be rescheduled
     const todayStr = new Date().toISOString().split('T')[0];
@@ -1143,7 +1922,13 @@ router.put("/:bookingId/reschedule", auth, requireRole(["doctor", "chief-doctor"
         .sort({ pgAssignedAt: -1, createdAt: -1 })
         .lean();
 
-      if (!assignment?._id) {
+      // Fallbacks: accept appointment-level assigned_pg_ug_id or pgDoctorId as valid linkage
+      const fallbackMatches = [
+        String(appointment.assigned_pg_ug_id || '').trim(),
+        String(appointment.pgDoctorId || '').trim(),
+      ].filter(Boolean);
+
+      if (!assignment?._id && !fallbackMatches.includes(pgIdentity)) {
         return res.status(403).json({
           success: false,
           message: 'You can only reschedule appointments for patients assigned to you.',
@@ -1154,15 +1939,74 @@ router.put("/:bookingId/reschedule", auth, requireRole(["doctor", "chief-doctor"
       appointment.rescheduleRequest = {
         requestedBy: pgIdentity,
         requestedByName: req.user?.name || pgIdentity,
-        requestedDate: appointmentDate,
-        requestedTime: normalizedAppointmentTime,
+        proposedDate: appointmentDate,
+        proposedTime: normalizedAppointmentTime,
         requestStatus: 'pending',
         requestedAt: new Date(),
         reviewedBy: null,
         reviewedAt: null,
       };
+      appointment.status = 'reschedule_requested';
 
       await appointment.save();
+
+      // 📧 DUAL NOTIFICATION: Notify BOTH Supervisor (action) AND Department Doctor (info)
+      if (req.user.createdBy) {
+        // Get supervisor (general doctor) and department doctor
+        const supervisorPromise = User.findById(req.user.createdBy).lean();
+        const departmentDoctorPromise = User.findOne(
+          { role: 'doctor', department: req.user.department },
+          { email: 1, name: 1 }
+        ).lean();
+
+        Promise.all([supervisorPromise, departmentDoctorPromise]).then(([supervisor, departmentDoctor]) => {
+          // Send action-required email to GENERAL DOCTOR (Supervisor)
+          if (supervisor && supervisor.email && !isGeneralDoctorUser(supervisor)) {
+            sendEmail(
+              supervisor.email,
+              "Action Required: Reschedule Request Pending Approval",
+              `
+              <div style="font-family: Arial, sans-serif; line-height:1.6;">
+                <h2>Reschedule Request Pending Your Approval</h2>
+                <p>Hello Dr. ${supervisor.name || 'Doctor'},</p>
+                <p>Your assigned student <b>${req.user.name || pgIdentity}</b> has requested to reschedule an appointment for patient <b>${appointment.patientId}</b>.</p>
+                <ul>
+                  <li><b>Booking ID:</b> ${appointment.bookingId}</li>
+                  <li><b>Current Date & Time:</b> ${appointment.appointmentDate} at ${appointment.appointmentTime}</li>
+                  <li><b>Requested Date:</b> ${appointmentDate}</li>
+                  <li><b>Requested Time:</b> ${normalizedAppointmentTime}</li>
+                </ul>
+                <p><b>ACTION REQUIRED:</b> Please log in to your dashboard to approve or reject this request.</p>
+                <p>Regards,<br/><b>SRM Dental College System</b></p>
+              </div>
+              `
+            ).catch(err => console.error("Supervisor notification failed:", err));
+          }
+
+          // Send info-only email to DEPARTMENT DOCTOR (oversight)
+          if (departmentDoctor && departmentDoctor.email && String(departmentDoctor._id || '') !== String(supervisor?._id || '')) {
+            sendEmail(
+              departmentDoctor.email,
+              "Reschedule Request Notification - Department Oversight",
+              `
+              <div style="font-family: Arial, sans-serif; line-height:1.6;">
+                <h2>Reschedule Request Notification</h2>
+                <p>Hello Dr. ${departmentDoctor.name || 'Doctor'},</p>
+                <p>This is an oversight notification. Your department's PG/UG <b>${req.user.name || pgIdentity}</b> has requested to reschedule an appointment.</p>
+                <ul>
+                  <li><b>Booking ID:</b> ${appointment.bookingId}</li>
+                  <li><b>Patient:</b> ${appointment.patientId}</li>
+                  <li><b>Requested Date:</b> ${appointmentDate}</li>
+                  <li><b>Requested Time:</b> ${normalizedAppointmentTime}</li>
+                </ul>
+                <p>The supervising general doctor will review and approve/reject this request.</p>
+                <p>Regards,<br/><b>SRM Dental College System</b></p>
+              </div>
+              `
+            ).catch(err => console.error("Department doctor notification failed:", err));
+          }
+        });
+      }
 
       return res.json({
         success: true,
@@ -1237,6 +2081,10 @@ router.put("/:bookingId/reschedule", auth, requireRole(["doctor", "chief-doctor"
     appointment.appointmentDate = appointmentDate;
     appointment.appointmentTime = normalizedAppointmentTime;
     appointment.status = "rescheduled"; // lowercase (as you want)
+    
+    if (appointment.needsGeneralApproval && isGeneralDoctor) {
+      appointment.needsGeneralApproval = false;
+    }
 
     await appointment.save();
 
@@ -1452,8 +2300,8 @@ router.put("/:bookingId/reschedule/approve", auth, requireRole(["doctor", "chief
 
     const oldDate = appointment.appointmentDate;
     const oldTime = appointment.appointmentTime;
-    const newDate = appointment.rescheduleRequest.requestedDate;
-    const newTime = appointment.rescheduleRequest.requestedTime;
+    const newDate = appointment.rescheduleRequest.proposedDate;
+    const newTime = appointment.rescheduleRequest.proposedTime;
 
     // Check slot availability before approving
     const doctors = await getAssignableDoctors();
@@ -1499,45 +2347,95 @@ router.put("/:bookingId/reschedule/approve", auth, requireRole(["doctor", "chief
 
     await appointment.save();
 
-    // Send email to patient
+    // 📧 TRIPLE NOTIFICATION: Patient, PG/UG, and Department Doctor
     const patientEmail = await resolvePatientEmail(appointment.patientId, appointment.patientEmail);
-    sendEmail(
-      patientEmail || appointment.patientEmail,
-      "Appointment Rescheduled – SRM Dental College",
-      `
-      <div style="font-family: Arial, sans-serif; line-height:1.6;">
-        <h2>Appointment Rescheduled - Approved</h2>
+    
+    // Get PG/UG and Department Doctor for notifications
+    const pgPromise = User.findOne({ Identity: requestedBy }).lean();
+    const departmentDoctorPromise = User.findOne(
+      { role: 'doctor', department: student?.department },
+      { email: 1, name: 1 }
+    ).lean();
 
-        <p>Dear Patient,</p>
+    Promise.all([pgPromise, departmentDoctorPromise]).then(([pgUser, departmentDoctor]) => {
+      // 1️⃣ Notify PATIENT
+      sendEmail(
+        patientEmail || appointment.patientEmail,
+        "Appointment Rescheduled – SRM Dental College",
+        `
+        <div style="font-family: Arial, sans-serif; line-height:1.6;">
+          <h2>Appointment Rescheduled - Approved</h2>
+          <p>Dear Patient,</p>
+          <p>Your appointment reschedule request has been <b>approved</b> by your doctor.</p>
+          <table border="1" cellpadding="8" cellspacing="0">
+            <tr>
+              <td><b>Booking ID</b></td>
+              <td>${appointment.bookingId}</td>
+            </tr>
+            <tr>
+              <td><b>Previous Date & Time</b></td>
+              <td>${oldDate} at ${oldTime}</td>
+            </tr>
+            <tr>
+              <td><b>New Date & Time</b></td>
+              <td>${newDate} at ${newTime}</td>
+            </tr>
+            <tr>
+              <td><b>Status</b></td>
+              <td>CONFIRMED</td>
+            </tr>
+          </table>
+          <p>Please attend the appointment at the updated time.</p>
+          <p>Regards,<br/><b>SRM Dental College</b></p>
+        </div>
+        `
+      ).catch((err) => console.error('Patient reschedule approval email failed:', err));
 
-        <p>Your appointment reschedule request has been <b>approved</b> by your doctor.</p>
+      // 2️⃣ Notify PG/UG - INFO ONLY
+      if (pgUser && pgUser.email) {
+        sendEmail(
+          pgUser.email,
+          "Reschedule Request Approved - Confirmed",
+          `
+          <div style="font-family: Arial, sans-serif; line-height:1.6;">
+            <h2>Reschedule Request Approved</h2>
+            <p>Hello ${pgUser.name || requestedBy},</p>
+            <p>Your reschedule request has been <b>approved</b> by your supervisor.</p>
+            <ul>
+              <li><b>Booking ID:</b> ${appointment.bookingId}</li>
+              <li><b>Patient:</b> ${appointment.patientId}</li>
+              <li><b>New Date & Time:</b> ${newDate} at ${newTime}</li>
+            </ul>
+            <p>The appointment is now confirmed at the new time.</p>
+            <p>Regards,<br/><b>SRM Dental College System</b></p>
+          </div>
+          `
+        ).catch(err => console.error("PG approval notification failed:", err));
+      }
 
-        <table border="1" cellpadding="8" cellspacing="0">
-          <tr>
-            <td><b>Booking ID</b></td>
-            <td>${appointment.bookingId}</td>
-          </tr>
-          <tr>
-            <td><b>Previous Date & Time</b></td>
-            <td>${oldDate} at ${oldTime}</td>
-          </tr>
-          <tr>
-            <td><b>New Date & Time</b></td>
-            <td>${newDate} at ${newTime}</td>
-          </tr>
-          <tr>
-            <td><b>Status</b></td>
-            <td>CONFIRMED</td>
-          </tr>
-        </table>
-
-        <p>Please attend the appointment at the updated time.</p>
-
-        <p>Regards,<br/>
-        <b>SRM Dental College</b></p>
-      </div>
-      `
-    ).catch((err) => console.error('Reschedule approval email failed:', err));
+      // 3️⃣ Notify DEPARTMENT DOCTOR - CONFIRMATION
+      if (departmentDoctor && departmentDoctor.email && String(departmentDoctor._id || '') !== String(req.user._id || '')) {
+        sendEmail(
+          departmentDoctor.email,
+          "Reschedule Request Approved - Department Confirmation",
+          `
+          <div style="font-family: Arial, sans-serif; line-height:1.6;">
+            <h2>Reschedule Approval Confirmation</h2>
+            <p>Hello Dr. ${departmentDoctor.name || 'Doctor'},</p>
+            <p>This is a confirmation that a reschedule request has been approved by your department's supervising general doctor.</p>
+            <ul>
+              <li><b>Booking ID:</b> ${appointment.bookingId}</li>
+              <li><b>Patient:</b> ${appointment.patientId}</li>
+              <li><b>Previous Date & Time:</b> ${oldDate} at ${oldTime}</li>
+              <li><b>New Date & Time:</b> ${newDate} at ${newTime}</li>
+              <li><b>Approved By:</b> ${req.user.name}</li>
+            </ul>
+            <p>Regards,<br/><b>SRM Dental College System</b></p>
+          </div>
+          `
+        ).catch(err => console.error("Department doctor approval notification failed:", err));
+      }
+    });
 
     res.json({
       success: true,
@@ -1595,8 +2493,8 @@ router.put("/:bookingId/reschedule/reject", auth, requireRole(["doctor", "chief-
       });
     }
 
-    const requestedDate = appointment.rescheduleRequest.requestedDate;
-    const requestedTime = appointment.rescheduleRequest.requestedTime;
+    const requestedDate = appointment.rescheduleRequest.proposedDate;
+    const requestedTime = appointment.rescheduleRequest.proposedTime;
     const requestedBy = appointment.rescheduleRequest.requestedByName || 'PG';
 
     // Reject the reschedule
@@ -1604,7 +2502,97 @@ router.put("/:bookingId/reschedule/reject", auth, requireRole(["doctor", "chief-
     appointment.rescheduleRequest.reviewedBy = doctorIdentity;
     appointment.rescheduleRequest.reviewedAt = new Date();
 
+    // Increment reschedule loop counter
+    appointment.rescheduleLoopCount = (appointment.rescheduleLoopCount || 0) + 1;
+
     await appointment.save();
+
+    // Check for high loop iteration and alert admin
+    if (appointment.rescheduleLoopCount >= 5) {
+      console.warn(`⚠️ HIGH LOOP ITERATION WARNING: Appointment ${bookingId} has been rescheduled/rejected ${appointment.rescheduleLoopCount} times`);
+      
+      // Send admin alert
+      const adminUsers = await User.find({ role: { $in: ['admin', 'chief', 'chief-doctor'] } }, { email: 1, name: 1 }).lean();
+      adminUsers.forEach(admin => {
+        if (admin.email) {
+          sendEmail(
+            admin.email,
+            "⚠️ High Loop Iteration Alert - Appointment System",
+            `
+            <div style="font-family: Arial, sans-serif; line-height:1.6;">
+              <h2 style="color: #d9534f;">⚠️ High Loop Iteration Alert</h2>
+              <p>Hello ${admin.name || 'Admin'},</p>
+              <p>An appointment has exceeded the normal reschedule iteration threshold.</p>
+              <ul>
+                <li><b>Booking ID:</b> ${appointment.bookingId}</li>
+                <li><b>Patient:</b> ${appointment.patientId}</li>
+                <li><b>Loop Count:</b> ${appointment.rescheduleLoopCount} iterations</li>
+                <li><b>Current Status:</b> ${appointment.status}</li>
+                <li><b>PG/UG:</b> ${requestedByIdentity}</li>
+              </ul>
+              <p><b>ACTION RECOMMENDED:</b> Please review this appointment for potential issues or conflicts.</p>
+              <p>Regards,<br/><b>SRM Dental College System</b></p>
+            </div>
+            `
+          ).catch(err => console.error("Admin alert email failed:", err));
+        }
+      });
+    }
+
+    // 📧 Notify PG/UG (action required) and Department Doctor (info)
+    const studentPromise = User.findOne({ Identity: requestedByIdentity }).lean();
+    const departmentDoctorPromise = User.findOne(
+      { role: 'doctor', department: student?.department },
+      { email: 1, name: 1 }
+    ).lean();
+
+    Promise.all([studentPromise, departmentDoctorPromise]).then(([pgUser, departmentDoctor]) => {
+      // Notify PG/UG - ACTION REQUIRED
+      if (pgUser && pgUser.email) {
+        sendEmail(
+          pgUser.email,
+          "Reschedule Request Rejected - Action Required",
+          `
+          <div style="font-family: Arial, sans-serif; line-height:1.6;">
+            <h2>Reschedule Request Rejected</h2>
+            <p>Hello ${pgUser.name || requestedByIdentity},</p>
+            <p>Your request to reschedule appointment <b>${appointment.bookingId}</b> has been <b>rejected</b> by your supervisor.</p>
+            <ul>
+              <li><b>Patient:</b> ${appointment.patientId}</li>
+              <li><b>Current Date & Time:</b> ${appointment.appointmentDate} at ${appointment.appointmentTime}</li>
+              <li><b>Requested Date & Time:</b> ${requestedDate} at ${requestedTime}</li>
+              ${reason ? `<li><b>Reason:</b> ${reason}</li>` : ''}
+            </ul>
+            <p><b>ACTION REQUIRED:</b> Please take necessary action - either reschedule again or approve the original appointment.</p>
+            <p>Regards,<br/><b>SRM Dental College System</b></p>
+          </div>
+          `
+        ).catch(err => console.error("PG notification failed:", err));
+      }
+
+      // Notify Department Doctor - INFO ONLY
+      if (departmentDoctor && departmentDoctor.email && String(departmentDoctor._id || '') !== String(req.user._id || '')) {
+        sendEmail(
+          departmentDoctor.email,
+          "Reschedule Request Rejection - Department Oversight",
+          `
+          <div style="font-family: Arial, sans-serif; line-height:1.6;">
+            <h2>Reschedule Request Rejection Notification</h2>
+            <p>Hello Dr. ${departmentDoctor.name || 'Doctor'},</p>
+            <p>This is an oversight notification. Your department's PG/UG has had a reschedule request rejected.</p>
+            <ul>
+              <li><b>Booking ID:</b> ${appointment.bookingId}</li>
+              <li><b>Patient:</b> ${appointment.patientId}</li>
+              <li><b>Rejected Date & Time:</b> ${requestedDate} at ${requestedTime}</li>
+              ${reason ? `<li><b>Reason:</b> ${reason}</li>` : ''}
+            </ul>
+            <p>The PG/UG will need to take further action.</p>
+            <p>Regards,<br/><b>SRM Dental College System</b></p>
+          </div>
+          `
+        ).catch(err => console.error("Department doctor notification failed:", err));
+      }
+    });
 
     // Send email to patient
     const patientEmail = await resolvePatientEmail(appointment.patientId, appointment.patientEmail);
@@ -1662,6 +2650,210 @@ router.put("/:bookingId/reschedule/reject", auth, requireRole(["doctor", "chief-
       success: false,
       message: "Failed to reject reschedule request",
     });
+  }
+});
+
+/* ================= CONSULTATION COMPLETION: MARK REVISIT NEEDED ================= */
+router.put("/:bookingId/mark-revisit", auth, requireRole(["pg", "ug"]), async (req, res) => {
+  try {
+    const pgIdentity = String(req.user?.Identity || '').trim();
+    if (!pgIdentity) {
+      return res.status(400).json({ success: false, message: 'PG Identity not found' });
+    }
+
+    const appointment = await Appointment.findOne({ bookingId: req.params.bookingId });
+    if (!appointment) {
+      return res.status(404).json({ success: false, message: "Appointment not found" });
+    }
+
+    // Verify PG/UG is assigned to this appointment
+    const { default: GeneralCase } = await import('../models/GeneralCase.js');
+    const assignment = await GeneralCase.findOne({
+      patientId: appointment.patientId,
+      assignedPgId: pgIdentity,
+      specialistStatus: 'approved',
+    }).lean();
+
+    if (!assignment) {
+      return res.status(403).json({ success: false, message: "You are not assigned to this appointment" });
+    }
+
+    // Mark appointment as REVISIT_SCHEDULED and flag for general doctor approval
+    appointment.status = "revisit_scheduled";
+    appointment.needsGeneralApproval = true;
+    appointment.needsPgApproval = false;
+    await appointment.save();
+
+    // 📧 Notify General Doctor and Department Doctor about revisit decision
+    const supervisor = await User.findById(req.user.createdBy).lean();
+    const departmentDoctor = await User.findOne(
+      { role: 'doctor', department: req.user.department },
+      { email: 1, name: 1 }
+    ).lean();
+
+    Promise.all([supervisor, departmentDoctor]).then(([superv, deptDoc]) => {
+      // Notify GENERAL DOCTOR - ACTION REQUIRED
+      if (superv?.email) {
+        sendEmail(
+          superv.email,
+          "Action Required: Revisit Appointment Scheduled",
+          `
+          <div style="font-family: Arial, sans-serif; line-height:1.6;">
+            <h2>Revisit Appointment Needs Your Approval</h2>
+            <p>Hello Dr. ${superv.name || 'Doctor'},</p>
+            <p>Your assigned PG/UG <b>${req.user.name}</b> has marked appointment <b>${appointment.bookingId}</b> as requiring a revisit.</p>
+            <ul>
+              <li><b>Patient:</b> ${appointment.patientId}</li>
+              <li><b>Current Date & Time:</b> ${appointment.appointmentDate} at ${appointment.appointmentTime}</li>
+              <li><b>Status:</b> REVISIT_SCHEDULED - Pending Your Approval</li>
+            </ul>
+            <p><b>ACTION REQUIRED:</b> Please review and approve/reject this revisit request in your dashboard.</p>
+            <p>Regards,<br/><b>SRM Dental College System</b></p>
+          </div>
+          `
+        ).catch(err => console.error("Supervisor revisit notification failed:", err));
+      }
+
+      // Notify DEPARTMENT DOCTOR - INFO ONLY
+      if (deptDoc?.email && String(deptDoc._id) !== String(superv?._id)) {
+        sendEmail(
+          deptDoc.email,
+          "Revisit Appointment Scheduled - Department Notification",
+          `
+          <div style="font-family: Arial, sans-serif; line-height:1.6;">
+            <h2>Revisit Appointment Scheduled</h2>
+            <p>Hello Dr. ${deptDoc.name || 'Doctor'},</p>
+            <p>A revisit has been scheduled for patient <b>${appointment.patientId}</b> following consultation by your department's PG/UG.</p>
+            <ul>
+              <li><b>Booking ID:</b> ${appointment.bookingId}</li>
+              <li><b>Original Date & Time:</b> ${appointment.appointmentDate} at ${appointment.appointmentTime}</li>
+              <li><b>Status:</b> REVISIT_SCHEDULED - Awaiting General Doctor Approval</li>
+            </ul>
+            <p>Regards,<br/><b>SRM Dental College System</b></p>
+          </div>
+          `
+        ).catch(err => console.error("Department doctor revisit notification failed:", err));
+      }
+    });
+
+    return res.json({
+      success: true,
+      message: "Revisit marked. General doctor approval required.",
+      appointment,
+    });
+  } catch (err) {
+    console.error("Mark revisit error:", err);
+    res.status(500).json({ success: false, message: "Failed to mark revisit" });
+  }
+});
+
+/* ================= CONSULTATION COMPLETION: CLOSE WITHOUT REVISIT ================= */
+router.put("/:bookingId/consultation/complete", auth, requireRole(["pg", "ug"]), async (req, res) => {
+  try {
+    const pgIdentity = String(req.user?.Identity || '').trim();
+    if (!pgIdentity) {
+      return res.status(400).json({ success: false, message: 'PG Identity not found' });
+    }
+
+    const appointment = await Appointment.findOne({ bookingId: req.params.bookingId });
+    if (!appointment) {
+      return res.status(404).json({ success: false, message: "Appointment not found" });
+    }
+
+    // Verify PG/UG is assigned to this appointment
+    const { default: GeneralCase } = await import('../models/GeneralCase.js');
+    const assignment = await GeneralCase.findOne({
+      patientId: appointment.patientId,
+      assignedPgId: pgIdentity,
+      specialistStatus: 'approved',
+    }).lean();
+
+    if (!assignment) {
+      return res.status(403).json({ success: false, message: "You are not assigned to this appointment" });
+    }
+
+    // Mark appointment as CLOSED - no revisit needed
+    appointment.status = "closed";
+    appointment.needsGeneralApproval = false;
+    appointment.needsPgApproval = false;
+    await appointment.save();
+
+    // 📧 Notify General Doctor, Department Doctor, and Patient that case is closed
+    const supervisor = await User.findById(req.user.createdBy).lean();
+    const departmentDoctor = await User.findOne(
+      { role: 'doctor', department: req.user.department },
+      { email: 1, name: 1 }
+    ).lean();
+    const patientEmail = await resolvePatientEmail(appointment.patientId, appointment.patientEmail);
+
+    Promise.all([supervisor, departmentDoctor]).then(([superv, deptDoc]) => {
+      // Notify PATIENT - INFO ONLY
+      if (patientEmail) {
+        sendEmail(
+          patientEmail,
+          "Your Appointment is Complete - No Further Action Needed",
+          `
+          <div style="font-family: Arial, sans-serif; line-height:1.6;">
+            <h2>Appointment Completed</h2>
+            <p>Dear Patient,</p>
+            <p>Your appointment on <b>${appointment.appointmentDate}</b> at <b>${appointment.appointmentTime}</b> has been completed.</p>
+            <ul>
+              <li><b>Booking ID:</b> ${appointment.bookingId}</li>
+              <li><b>Status:</b> CLOSED - No Further Revisits Required</li>
+            </ul>
+            <p>Thank you for your visit to SRM Dental College. If you have any concerns, please contact us.</p>
+            <p>Regards,<br/><b>SRM Dental College</b></p>
+          </div>
+          `
+        ).catch(err => console.error("Patient closure notification failed:", err));
+      }
+
+      // Notify GENERAL DOCTOR - INFO ONLY
+      if (superv?.email) {
+        sendEmail(
+          superv.email,
+          "Appointment Closed - No Revisit Required",
+          `
+          <div style="font-family: Arial, sans-serif; line-height:1.6;">
+            <h2>Appointment Closed</h2>
+            <p>Hello Dr. ${superv.name || 'Doctor'},</p>
+            <p>Your assigned PG/UG <b>${req.user.name}</b> has completed the consultation for appointment <b>${appointment.bookingId}</b>.</p>
+            <ul>
+              <li><b>Patient:</b> ${appointment.patientId}</li>
+              <li><b>Date & Time:</b> ${appointment.appointmentDate} at ${appointment.appointmentTime}</li>
+              <li><b>Status:</b> CLOSED - No Revisit Required</li>
+            </ul>
+            <p>Regards,<br/><b>SRM Dental College System</b></p>
+          </div>
+          `
+        ).catch(err => console.error("Supervisor closure notification failed:", err));
+      }
+
+      // Notify DEPARTMENT DOCTOR - INFO ONLY
+      if (deptDoc?.email && String(deptDoc._id) !== String(superv?._id)) {
+        sendEmail(
+          deptDoc.email,
+          "Appointment Closed - Department Notification",
+          `
+          <div style="font-family: Arial, sans-serif; line-height:1.6;">
+            <h2>Appointment Closed</h2>
+            <p>Hello Dr. ${deptDoc.name || 'Doctor'},</p>
+            <p>The consultation for patient <b>${appointment.patientId}</b> (Booking ID: <b>${appointment.bookingId}</b>) has been completed without requiring a revisit.</p>
+            <p>Regards,<br/><b>SRM Dental College System</b></p>
+          </div>
+          `
+        ).catch(err => console.error("Department doctor closure notification failed:", err));
+      }
+    });
+
+    return res.json({
+      success: true,
+      message: "Consultation marked as complete. Case closed without revisit.",
+      appointment,
+    });
+  } catch (err) {
+    console.error("Complete consultation error:", err);
+    res.status(500).json({ success: false, message: "Failed to complete consultation" });
   }
 });
 
