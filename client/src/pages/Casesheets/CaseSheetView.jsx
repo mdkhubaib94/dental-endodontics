@@ -4,7 +4,7 @@ import FpdCaseSheetView from "./FpdCaseSheetView";
 import ImplantView from "./Implantview";
 import PartialView from "./Partialview";
 import ImplantPatientView from "./ImplantPatientView";
-import OralMedicineView from "./OralMedicineView";
+import ConservativeView from "./ConservativeView";
 
 const CaseSheetView = ({ caseSheet }) => {
   switch (caseSheet.department) {
@@ -27,9 +27,9 @@ const CaseSheetView = ({ caseSheet }) => {
     case "partial_denture":
       return <PartialView caseData={caseSheet} />;
 
-    case "oral":
-    case "Oral Medicine and Radiology":
-      return <OralMedicineView caseData={caseSheet} />;
+    case "conservativedentistryandendodontics":
+    case "Conservative Dentistry and Endodontics":
+      return <ConservativeView caseData={caseSheet} />;
 
     default:
       return <p>Department not supported</p>;
