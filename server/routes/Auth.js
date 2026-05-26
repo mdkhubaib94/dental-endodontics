@@ -18,12 +18,28 @@ const findUserByIdentifier = async (identifier) => {
   // Escape regex special chars to prevent injection, then match email case-insensitively.
   const escapedIdentifier = normalizedIdentifier.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
-  return User.findOne({
-    $or: [
-      { email: { $regex: new RegExp(`^${escapedIdentifier}$`, 'i') } },
-      { Identity: normalizedIdentifier },
-    ],
-  });
+  // Normalize phone digits for a loose phone match (handles +91 prefix, spaces, etc.)
+  const phoneDigits = normalizedIdentifier.replace(/\D/g, '');
+  const normalizedPhone =
+    phoneDigits.length === 12 && phoneDigits.startsWith('91')
+      ? phoneDigits.slice(2)
+      : phoneDigits;
+  const loosePhoneRegex =
+    normalizedPhone.length >= 10
+      ? new RegExp(`^(?:\\+?91\\D*)?${normalizedPhone.split('').join('\\D*')}\\D*$`)
+      : null;
+
+  const orConditions = [
+    { email: { $regex: new RegExp(`^${escapedIdentifier}$`, 'i') } },
+    { Identity: normalizedIdentifier },
+    { staffId: normalizedIdentifier },
+  ];
+
+  if (loosePhoneRegex) {
+    orConditions.push({ phone: { $regex: loosePhoneRegex } });
+  }
+
+  return User.findOne({ $or: orConditions });
 };
 
 const normalizeRoleName = (role) => {
@@ -121,12 +137,17 @@ router.post('/login/patientlogin', async (req, res) => {
   console.log("➡️ Login attempt with identifier:", normalizedIdentifier);
 
   try {
-    let user = await User.findOne({
-      $or: [
-        { Identity: normalizedIdentifier },
-        { phone: normalizedIdentifier }
-      ]
-    });
+    // Build the initial $or conditions — include both the raw identifier and
+    // the normalized 10-digit phone so we catch "+91XXXXXXXXXX" inputs too.
+    const patientOrConditions = [
+      { Identity: normalizedIdentifier },
+      { phone: normalizedIdentifier },
+    ];
+    if (normalizedPhone && normalizedPhone !== normalizedIdentifier) {
+      patientOrConditions.push({ phone: normalizedPhone });
+    }
+
+    let user = await User.findOne({ $or: patientOrConditions });
 
     if (!user && loosePhoneRegex) {
       user = await User.findOne({
