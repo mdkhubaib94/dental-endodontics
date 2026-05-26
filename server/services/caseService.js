@@ -186,6 +186,8 @@ const saveSpecialistCase = async ({ Model, payload, user, departmentLabel }) => 
     treatmentPlan,
     xrayImage,
     digitalSignature,
+    criticalMedicalIllness,
+    treatmentPictures,
   } = payload || {};
 
   if (!patientId || !patientName) {
@@ -209,6 +211,7 @@ const saveSpecialistCase = async ({ Model, payload, user, departmentLabel }) => 
     doctorName,
     chiefComplaint: chiefComplaint || '',
     presentIllness: presentIllness || '',
+    criticalMedicalIllness: criticalMedicalIllness || '',
     pastMedical: pastMedical || '',
     pastDental: pastDental || '',
     clinicalFindings: clinicalFindings || '',
@@ -218,6 +221,17 @@ const saveSpecialistCase = async ({ Model, payload, user, departmentLabel }) => 
     treatmentPlan: treatmentPlan || '',
     xrayImage: String(xrayImage || '').trim(),
     digitalSignature: digitalSignature || null,
+    treatmentPictures: (() => {
+      if (Array.isArray(treatmentPictures)) return treatmentPictures;
+      if (!treatmentPictures) return [];
+      try {
+        const parsed = typeof treatmentPictures === 'string' ? JSON.parse(treatmentPictures) : treatmentPictures;
+        if (Array.isArray(parsed)) return parsed;
+      } catch (e) {
+        // ignore parse errors
+      }
+      return [];
+    })(),
     referredDepartment,
     specialistDoctorId: specialistDoctor?.Identity || '',
     specialistDoctorName: specialistDoctor?.name || '',

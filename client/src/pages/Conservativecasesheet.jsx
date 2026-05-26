@@ -34,6 +34,7 @@ const ConservativeCaseSheet = () => {
     differentialDiagnosis: [],
     finalDiagnosis: '',
     prognosis: '',
+  criticalMedicalIllness: '',
     staffSignature: '',
     referral: '',
     investigationsDetail: { pulpTesting: { thermalTest: '', ept: '' }, radiographic: '' },
@@ -50,8 +51,25 @@ const ConservativeCaseSheet = () => {
   const [saving, setSaving] = useState(false);
   const [allergyMessage, setAllergyMessage] = useState('None');
   const [showAllergy, setShowAllergy] = useState(true);
+  const [patientAllergyData, setPatientAllergyData] = useState({ drug: '', known: '', diet: '' });
+  const [treatmentPictures, setTreatmentPictures] = useState([]);
   const navigateToPrescriptions = () => {
     window.location.href = '/prescriptions';
+  };
+
+  // Small standalone banner component rendered via portal so it is outside all layout wrappers
+  const DrugAllergyBanner = ({ drug, onClose }) => {
+    return (
+      <div className="allergy-alert show" id="patientAllergyAlert" role="status" aria-live="polite">
+        <div className="allergy-inner">
+          <span className="alert-icon">⚠️</span>
+          <div className="allergy-flow-window">
+            <span id="allergyMessage">{`Drug Allergies: ${drug}`}</span>
+          </div>
+          <button className="close-btn" onClick={onClose} aria-label="Close allergy alert" style={{ marginLeft: 8, background: 'transparent', border: 'none', cursor: 'pointer' }}>✖</button>
+        </div>
+      </div>
+    );
   };
 
   const handleSessionExpired = (apiMessage) => {
@@ -119,7 +137,10 @@ const ConservativeCaseSheet = () => {
         const known = toListString(p.medicalInfo?.knownAllergies);
         const diet = toListString(p.vitals?.dietAllergies);
 
-        if (!cancelled) setAllergyMessage(drug || known || diet || 'None');
+        if (!cancelled) {
+          setPatientAllergyData({ drug: drug || '', known: known || '', diet: diet || '' });
+          setAllergyMessage(drug || known || diet || 'None');
+        }
       } catch (e) {
         if (!cancelled) setAllergyMessage('None');
       }
@@ -183,6 +204,10 @@ const ConservativeCaseSheet = () => {
           treatmentPlan: latest.treatmentPlan || prev.treatmentPlan,
           date: latest.createdAt ? new Date(latest.createdAt).toLocaleDateString() : prev.date
         }));
+        // hydrate any existing treatment pictures for edit/view
+        if (Array.isArray(latest.treatmentPictures) && latest.treatmentPictures.length) {
+          setTreatmentPictures(latest.treatmentPictures.map(p => ({ fileName: p.fileName || '', dataUrl: p.dataUrl || p })));
+        }
       } catch (err) {
         console.error('Failed to fetch general case for prefill:', err);
       }
@@ -285,6 +310,33 @@ const ConservativeCaseSheet = () => {
       return { ...prev, pastMedical: [...existing, option] };
     });
   };
+
+  // Ensure page-level horizontal spacing is removed while the allergy banner is visible
+  useEffect(() => {
+    if (typeof document === 'undefined') return undefined;
+    const htmlEl = document.documentElement;
+    const bodyEl = document.body;
+    const rootEl = document.getElementById('root');
+
+    const cls = 'has-drug-allergy-banner';
+    const apply = () => {
+      try {
+        if (htmlEl) htmlEl.classList.add(cls);
+        if (bodyEl) bodyEl.classList.add(cls);
+        if (rootEl) rootEl.classList.add(cls);
+      } catch (e) { /* ignore */ }
+    };
+    const restore = () => {
+      try {
+        if (htmlEl) htmlEl.classList.remove(cls);
+        if (bodyEl) bodyEl.classList.remove(cls);
+        if (rootEl) rootEl.classList.remove(cls);
+      } catch (e) { /* ignore */ }
+    };
+
+    if (showAllergy && patientAllergyData?.drug) apply();
+    return () => { restore(); };
+  }, [showAllergy, patientAllergyData?.drug]);
 
   // Custom dropdown for multi-select with checkbox list
   const PastMedicalDropdown = ({ value, onChange, options }) => {
@@ -396,6 +448,32 @@ const ConservativeCaseSheet = () => {
 
   const updateQuadrant = (idx, value) => setForm(prev => ({ ...prev, quadrants: prev.quadrants.map((q, i) => i === idx ? { ...q, details: value } : q) }));
 
+  // Treatment pictures handlers
+  const onTreatmentFiles = async (files) => {
+    const list = Array.from(files || []);
+    const allowed = ['image/jpeg', 'image/jpg', 'image/png'];
+    const toAdd = [];
+    for (const f of list) {
+      if (!allowed.includes(f.type)) continue;
+      const dataUrl = await new Promise((res, rej) => {
+        const r = new FileReader();
+        r.onload = () => res(r.result);
+        r.onerror = rej;
+        r.readAsDataURL(f);
+      });
+      toAdd.push({ fileName: f.name, dataUrl });
+    }
+    if (toAdd.length) setTreatmentPictures(prev => ([...prev, ...toAdd]));
+  };
+
+  const onTreatmentFileInput = (e) => {
+    const files = e.target.files; if (!files) return; onTreatmentFiles(files);
+    // reset input
+    e.target.value = '';
+  };
+
+  const removeTreatmentPicture = (idx) => setTreatmentPictures(prev => prev.filter((_, i) => i !== idx));
+
   const handleSave = async () => {
     try {
       setSaving(true);
@@ -441,6 +519,7 @@ const ConservativeCaseSheet = () => {
       formData.append('doctorName', doctorName);
       formData.append('chiefComplaint', form.chiefComplaint || '');
       formData.append('presentIllness', form.presentIllness || '');
+  formData.append('criticalMedicalIllness', form.criticalMedicalIllness || '');
       formData.append('pastMedical', Array.isArray(form.pastMedical) ? form.pastMedical.join('/') : (form.pastMedical || ''));
       formData.append('pastDental', form.pastDental || '');
       formData.append('habits', Array.isArray(form.habits) ? form.habits.join('/') : (form.habits || ''));
@@ -464,6 +543,7 @@ const ConservativeCaseSheet = () => {
       }
 
       formData.append('investigations', investigationsCombined);
+  formData.append('treatmentPictures', JSON.stringify(treatmentPictures || []));
       formData.append('clinicalFindings', JSON.stringify({ extraOral: form.extraOral, intraOral: form.intraOral }));
       formData.append('provisionalDiagnosis', form.provisionalDiagnosis || '');
       formData.append('finalDiagnosis', form.finalDiagnosis || '');
@@ -524,7 +604,13 @@ const ConservativeCaseSheet = () => {
   };
 
   return (
-    <div className="login-page conservative-case-sheet">
+    <div className={"login-page conservative-case-sheet" + ((showAllergy && patientAllergyData?.drug) ? ' has-allergy' : '')}>
+      {/* Top alert banner: render outside the card so it floats above the case sheet */}
+      { (showAllergy && patientAllergyData?.drug) ? createPortal(
+        <DrugAllergyBanner drug={patientAllergyData.drug} onClose={() => setShowAllergy(false)} />,
+        document.body
+      ) : null }
+
       <div className="login-box">
         <div className="logo">
           <img src="/logo.png" alt="SRM Logo" className="conservative-logo" />
@@ -579,6 +665,16 @@ const ConservativeCaseSheet = () => {
           <div className="input-group">
             <label>History of Present Illness</label>
             <textarea name="presentIllness" value={form.presentIllness} onChange={handleChange} rows={4} />
+          </div>
+          <div className="input-group">
+            <label>Critical Medical Illness</label>
+            <textarea
+              name="criticalMedicalIllness"
+              value={form.criticalMedicalIllness}
+              onChange={handleChange}
+              rows={3}
+              placeholder="Enter major medical conditions, allergies, emergency issues, or important health risks."
+            />
           </div>
           <div className="input-group">
             <label>Past Medical History</label>
@@ -727,6 +823,26 @@ const ConservativeCaseSheet = () => {
             ))}
             <div style={{ textAlign: 'right', marginTop: 8 }}>
               <button className="button" type="button" onClick={addTreatment}>Add Treatment</button>
+            </div>
+          </div>
+
+          {/* Treatment Pictures section */}
+          <h3 style={{ color: '#e6eefc', marginTop: 6 }}>Treatment Pictures</h3>
+          <div style={{ display: 'flex', gap: 12, alignItems: 'flex-start', marginBottom: 12 }}>
+            <label style={{ display: 'inline-block' }}>
+              <div style={{ width: 96, height: 96, border: '2px dashed rgba(255,255,255,0.2)', borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', background: 'rgba(255,255,255,0.06)' }}>
+                <span style={{ fontSize: 28, color: '#e6eefc', fontWeight: 700 }}>+</span>
+              </div>
+              <input type="file" accept="image/png,image/jpeg,image/jpg" multiple onChange={onTreatmentFileInput} style={{ display: 'none' }} />
+            </label>
+
+            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+              {treatmentPictures && treatmentPictures.length ? treatmentPictures.map((t, idx) => (
+                <div key={idx} style={{ width: 96, height: 96, position: 'relative', borderRadius: 8, overflow: 'hidden', background: '#fff' }}>
+                  <img src={t.dataUrl} alt={t.fileName || `pic-${idx}`} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                  <button type="button" onClick={() => removeTreatmentPicture(idx)} style={{ position: 'absolute', top: 4, right: 4, background: 'rgba(0,0,0,0.6)', color: 'white', border: 'none', borderRadius: 6, padding: '2px 6px', cursor: 'pointer' }}>×</button>
+                </div>
+              )) : null}
             </div>
           </div>
 

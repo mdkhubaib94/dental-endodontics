@@ -10,6 +10,7 @@ const ConservativeCaseSchema = new mongoose.Schema({
   dentalHistory: String,
   currentMedications: String,
   allergies: String,
+  criticalMedicalIllness: String,
 
   // Clinical Findings
   chiefComplaint: String,
@@ -34,6 +35,14 @@ const ConservativeCaseSchema = new mongoose.Schema({
     contentType: String,
     fileName: String,
   },
+
+  // Treatment pictures (stored as data URLs for easy preview in frontend)
+  treatmentPictures: [
+    {
+      fileName: String,
+      dataUrl: String,
+    }
+  ],
 
   chiefApproval: String,
   approvedBy: String,

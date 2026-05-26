@@ -18,6 +18,7 @@ const ConservativeDentistry = () => {
     xrayImage: ''
   });
   const [signatureFile, setSignatureFile] = useState(null);
+  const [treatmentPictures, setTreatmentPictures] = useState([]);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState('');
 
@@ -31,6 +32,21 @@ const ConservativeDentistry = () => {
     setSignatureFile(file);
   };
 
+  const handleTreatmentFiles = async (e) => {
+    const list = Array.from(e.target.files || []);
+    const allowed = ['image/jpeg','image/jpg','image/png'];
+    const toAdd = [];
+    for (const f of list) {
+      if (!allowed.includes(f.type)) continue;
+      const dataUrl = await new Promise((res, rej) => {
+        const r = new FileReader(); r.onload = () => res(r.result); r.onerror = rej; r.readAsDataURL(f);
+      });
+      toAdd.push({ fileName: f.name, dataUrl });
+    }
+    if (toAdd.length) setTreatmentPictures(prev => ([...prev, ...toAdd]));
+    e.target.value = '';
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setSaving(true);
@@ -41,6 +57,7 @@ const ConservativeDentistry = () => {
       const payload = new FormData();
       Object.keys(form).forEach((k) => { if (form[k]) payload.append(k, form[k]); });
       if (signatureFile) payload.append('digitalSignature', signatureFile);
+        if (treatmentPictures && treatmentPictures.length) payload.append('treatmentPictures', JSON.stringify(treatmentPictures));
 
       const headers = token ? { Authorization: `Bearer ${token}` } : {};
 
@@ -124,6 +141,26 @@ const ConservativeDentistry = () => {
         <div className="form-row">
           <label>X-ray Image (Data URL) - optional</label>
           <textarea name="xrayImage" value={form.xrayImage} onChange={handleChange} placeholder="data:image/png;base64,..." />
+        </div>
+
+        <div className="form-row">
+          <label>Treatment Pictures</label>
+          <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+            <label style={{ display: 'inline-block' }}>
+              <div style={{ width: 72, height: 72, border: '2px dashed rgba(0,0,0,0.12)', borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', background: '#f6f8fb' }}>
+                <span style={{ fontSize: 28, color: '#0b2340', fontWeight: 700 }}>+</span>
+              </div>
+              <input type="file" accept="image/png,image/jpeg,image/jpg" multiple onChange={handleTreatmentFiles} style={{ display: 'none' }} />
+            </label>
+
+            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+              {treatmentPictures.map((p, i) => (
+                <div key={i} style={{ width: 72, height: 72, borderRadius: 8, overflow: 'hidden', background: '#fff', position: 'relative' }}>
+                  <img src={p.dataUrl} alt={p.fileName || `pic-${i}`} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                </div>
+              ))}
+            </div>
+          </div>
         </div>
 
         <div className="form-row">

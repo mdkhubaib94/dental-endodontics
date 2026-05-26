@@ -405,22 +405,78 @@ hr {
     position: fixed;
     top: 0;
     left: 0;
-    right: 0;
-    background: rgba(255,255,255,0.95);
-    color: #111;
-    padding: 8px 14px;
-    border-radius: 0 0 10px 10px;
+    right: 0; /* ensure it stretches to the right edge */
     width: 100%;
+    margin: 0;
+    border-radius: 0;
+    padding: 0; /* no outer padding */
+    background: rgba(255,255,255,0.98);
+    color: #111;
     box-sizing: border-box;
     display: flex;
     align-items: center;
-    gap: 8px;
-    z-index: 2000;
-    border: 1px solid rgba(0,0,0,0.06);
+    z-index: 99999; /* ensure on top of other UI */
+    border: none;
+    box-shadow: none;
+    height: 48px; /* fixed height to match layout and push content below */
+}
+
+/* inner content wrapper gives visual spacing while keeping banner full-bleed */
+.allergy-alert .allergy-inner {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    width: 100%;
+    padding: 8px 16px; /* visual inner spacing, not outer */
 }
 
 .allergy-alert .alert-icon { font-size: 16px; color: #d97706; flex-shrink: 0; }
 .allergy-alert .allergy-flow-window { flex: 1; min-width: 0; overflow: hidden; white-space: nowrap; }
 .allergy-alert #allergyMessage { display: inline-block; white-space: nowrap; padding-right: 2rem; color: #111; font-weight: 600; animation: allergyTextFlow 12s linear infinite; }
 
-.conservative-case-sheet .allergy-alert { left: 0 !important; right: 0 !important; width: 100vw !important; max-width: 100vw !important; }
+/* When page wrapper has allergy banner, push the login-box/card down so they do not overlap */
+.login-page.conservative-case-sheet.has-allergy .login-box {
+    margin-top: 48px; /* equals .allergy-alert height */
+}
+
+/* HIGH-SPECIFICITY OVERRIDES: ensure the portal banner is truly full-bleed edge-to-edge */
+#patientAllergyAlert.allergy-alert {
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    width: 100vw !important;
+    min-width: 100vw !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    border-radius: 0 !important;
+    display: flex !important;
+    box-sizing: border-box !important;
+    background: rgba(255,255,255,0.98) !important;
+    z-index: 2147483647 !important; /* max z-index to stay on top */
+    border: none !important;
+    overflow: visible !important;
+}
+
+/* Inner wrapper handles padding while outer container remains full-bleed */
+#patientAllergyAlert.allergy-alert .allergy-inner {
+    display: flex !important;
+    justify-content: space-between !important;
+    align-items: center !important;
+    width: 100% !important;
+    padding: 8px 16px !important; /* internal spacing only */
+}
+
+/* Ensure the displayed message can scroll without clipping */
+#patientAllergyAlert.allergy-alert .allergy-flow-window { overflow: hidden !important; white-space: nowrap !important; }
+
+/* Close button placement */
+#patientAllergyAlert.allergy-alert .close-btn { margin-left: 12px !important; }
+
+/* Scoped override applied to html/body/#root while the allergy banner is visible.
+   This uses !important to override other layout rules that add horizontal padding/margins. */
+.has-drug-allergy-banner, html.has-drug-allergy-banner, body.has-drug-allergy-banner, #root.has-drug-allergy-banner {
+    margin: 0 !important;
+    padding: 0 !important;
+    overflow-x: hidden !important;
+}
