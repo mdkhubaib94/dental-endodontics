@@ -3761,8 +3761,9 @@ const DoctorDashboard = () => {
             </div>
 
             {/* HPI, Past Medical History, Personal Habits, Medical History
-                — hidden for Oral Medicine department (captured in the oral case sheet) */}
-            {!String(doctorDepartmentLabel).toLowerCase().replace(/[\s_]+/g, '').includes('oral') && (<>
+                — hidden for Oral Medicine and Endodontics departments */}
+            {!String(doctorDepartmentLabel).toLowerCase().replace(/[\s_]+/g, '').includes('oral') && 
+             !String(doctorDepartmentLabel).toLowerCase().replace(/[\s_]+/g, '').includes('endo') && (<>
 
             {/* HPI Checkboxes */}
             <div className="input-group">

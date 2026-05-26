@@ -14,6 +14,16 @@ const ConservativeCaseSheet = () => {
   const navigate = useNavigate();
   const location = useLocation();
 
+  // Post-entry consent prompt
+  useEffect(() => {
+    if (location.state?.requestConsentAfterEntry && !location.state?.[CASE_CONSENT_NAV_STATE_KEY]) {
+      const confirmed = window.confirm('Please complete the consent form before proceeding. Click OK to open the consent form.');
+      if (confirmed) {
+        navigate(`/consent-form?redirect=${encodeURIComponent(location.pathname + location.search)}`, { replace: true });
+      }
+    }
+  }, []);
+
   const initialData = {
     regNo: '',
     id: '',
@@ -42,7 +52,7 @@ const ConservativeCaseSheet = () => {
     differentialDiagnosis: [],
     finalDiagnosis: '',
     prognosis: '',
-  criticalMedicalIllness: '',
+    criticalMedicalIllness: '',
     staffSignature: '',
     referral: '',
     investigationsDetail: { pulpTesting: { thermalTest: '', ept: '' }, radiographic: '' },
@@ -541,7 +551,7 @@ const ConservativeCaseSheet = () => {
       formData.append('doctorName', doctorName);
       formData.append('chiefComplaint', form.chiefComplaint || '');
       formData.append('presentIllness', form.presentIllness || '');
-  formData.append('criticalMedicalIllness', form.criticalMedicalIllness || '');
+      formData.append('criticalMedicalIllness', form.criticalMedicalIllness || '');
       formData.append('pastMedical', Array.isArray(form.pastMedical) ? form.pastMedical.join('/') : (form.pastMedical || ''));
       formData.append('pastDental', form.pastDental || '');
       formData.append('habits', Array.isArray(form.habits) ? form.habits.join('/') : (form.habits || ''));
@@ -565,7 +575,7 @@ const ConservativeCaseSheet = () => {
       }
 
       formData.append('investigations', investigationsCombined);
-  formData.append('treatmentPictures', JSON.stringify(treatmentPictures || []));
+      formData.append('treatmentPictures', JSON.stringify(treatmentPictures || []));
       formData.append('clinicalFindings', JSON.stringify({ extraOral: form.extraOral, intraOral: form.intraOral }));
       formData.append('provisionalDiagnosis', form.provisionalDiagnosis || '');
       formData.append('finalDiagnosis', form.finalDiagnosis || '');
@@ -628,10 +638,10 @@ const ConservativeCaseSheet = () => {
   return (
     <div className={"login-page conservative-case-sheet" + ((showAllergy && patientAllergyData?.drug) ? ' has-allergy' : '')}>
       {/* Top alert banner: render outside the card so it floats above the case sheet */}
-      { (showAllergy && patientAllergyData?.drug) ? createPortal(
+      {(showAllergy && patientAllergyData?.drug) ? createPortal(
         <DrugAllergyBanner drug={patientAllergyData.drug} onClose={() => setShowAllergy(false)} />,
         document.body
-      ) : null }
+      ) : null}
 
       <div className="login-box">
         <div className="logo">
@@ -662,7 +672,7 @@ const ConservativeCaseSheet = () => {
             </div>
           </div>
 
-          
+
 
           <div className="form-row-wide">
             <div className="input-group">
@@ -714,7 +724,7 @@ const ConservativeCaseSheet = () => {
             <input name="familyHistory" value={form.familyHistory} onChange={handleChange} />
           </div>
 
-          
+
 
           <div className="input-group">
             <label>Past Dental History</label>
@@ -731,7 +741,7 @@ const ConservativeCaseSheet = () => {
               />
             </div>
           </div>
-           {/* Clinical Examination */}
+          {/* Clinical Examination */}
           <h3 style={{ color: '#e6eefc' }}>Clinical Examination</h3>
           {/* Extra Oral & Intra Oral Examination tiles (added after Habits) */}
           <h3 style={{ color: '#e6eefc', marginTop: 6 }}>Extra Oral Examination</h3>
@@ -810,7 +820,7 @@ const ConservativeCaseSheet = () => {
             <textarea value={form.investigationsDetail?.radiographic || ''} onChange={(e) => updateInvestigationRadiographic(e.target.value)} />
           </div>
 
-          
+
 
 
           <div className="input-group">
@@ -823,7 +833,7 @@ const ConservativeCaseSheet = () => {
             <textarea value={form.prognosis || ''} onChange={(e) => setForm(p => ({ ...p, prognosis: e.target.value }))} />
           </div>
 
-         
+
           <div className="input-group">
             <label>Referral (multiple referrals allowed)</label>
             <input value={form.referral || ''} onChange={(e) => setForm(p => ({ ...p, referral: e.target.value }))} />
@@ -872,46 +882,46 @@ const ConservativeCaseSheet = () => {
             <label>Follow Up Plan</label>
             <textarea value={form.followUpPlan} onChange={(e) => setForm(p => ({ ...p, followUpPlan: e.target.value }))} />
           </div>
-           <div className="doctor-auth-section" style={{ marginTop: '30px', paddingTop: '20px', borderTop: '1px solid rgba(255,255,255,0.2)' }}>
-        <h2>Doctor's Authentication</h2>
-        <div className="form-group">
-          <label htmlFor="doctorName">Doctor's Name *</label>
-          <input
-            type="text"
-            id="doctorName"
-            placeholder="Enter full name"
-            value={localStorage.getItem('doctorName') || ''}
-            disabled
-            style={{ background: '#f0f0f0' }}
-          />
-        </div>
-        <div className="form-group">
-          <label htmlFor="digitalSignature">Upload Digital Signature *</label>
-          <input
-            type="file"
-            id="digitalSignature"
-            accept="image/*"
-            onChange={(e) => handleFileChange(e.target.files[0])}
-            required
-          />
-          {signaturePreview && (
-            <div id="signaturePreview" style={{ marginTop: '10px' }}>
-              <img
-                src={signaturePreview}
-                alt="Signature Preview"
-                style={{ maxWidth: '150px', maxHeight: '100px', marginTop: '10px' }}
+          <div className="doctor-auth-section" style={{ marginTop: '30px', paddingTop: '20px', borderTop: '1px solid rgba(255,255,255,0.2)' }}>
+            <h2>Doctor's Authentication</h2>
+            <div className="form-group">
+              <label htmlFor="doctorName">Doctor's Name *</label>
+              <input
+                type="text"
+                id="doctorName"
+                placeholder="Enter full name"
+                value={localStorage.getItem('doctorName') || ''}
+                disabled
+                style={{ background: '#f0f0f0' }}
               />
             </div>
-          )}
-        </div>
-        </div>
+            <div className="form-group">
+              <label htmlFor="digitalSignature">Upload Digital Signature *</label>
+              <input
+                type="file"
+                id="digitalSignature"
+                accept="image/*"
+                onChange={(e) => handleFileChange(e.target.files[0])}
+                required
+              />
+              {signaturePreview && (
+                <div id="signaturePreview" style={{ marginTop: '10px' }}>
+                  <img
+                    src={signaturePreview}
+                    alt="Signature Preview"
+                    style={{ maxWidth: '150px', maxHeight: '100px', marginTop: '10px' }}
+                  />
+                </div>
+              )}
+            </div>
+          </div>
 
           <div style={{ display: 'flex', gap: 12, justifyContent: 'flex-end', marginTop: 14 }}>
             <button className="button" onClick={handleSave}>Submit Case Sheet</button>
           </div>
 
-         
-           
+
+
         </div>
       </div>
     </div>
