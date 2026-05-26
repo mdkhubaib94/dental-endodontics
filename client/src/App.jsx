@@ -45,6 +45,7 @@ import DoctorProfile from './pages/Doctorprofilepage';
 import PGDashboard from './pages/PGDashboard';
 import UGDashboard from './pages/UGDashboard';
 import ConsentForm from './pages/consentform';
+import ConservativeDentistry from './pages/departments/ConservativeDentistry';
 
 const getDashboardRouteByRole = (role) => {
   const normalizedRole = String(role || '').trim().toLowerCase();
@@ -388,6 +389,18 @@ const AppRoutes = () => {
               allowedDepartments={['prosthodontics', 'prothodontics', 'prosthondontics', 'partialdenture', 'partial']}
             >
               <Partial />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/conservative-dentistry"
+          element={
+            <ProtectedRoute
+              allowedRoles={['doctor', 'chief', 'chief-doctor', 'pg', 'ug']}
+              allowedDepartments={['conservative', 'conservativedentistry', 'endodontics', 'conservativedentistryandendodontics']}
+            >
+              <ConservativeDentistry />
             </ProtectedRoute>
           }
         />

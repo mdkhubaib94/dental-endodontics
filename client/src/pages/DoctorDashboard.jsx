@@ -560,7 +560,7 @@ const DoctorDashboard = () => {
     if (departmentKey === 'pedodontics') return '/pedodontics';
     if (departmentKey === 'periodontics') return '/casePortal?dept=periodontics';
     if (departmentKey.includes('oral') || departmentKey.includes('maxillofacial')) return '/oral-medicine';
-    if (departmentKey.includes('conservative') || departmentKey.includes('endodontic')) return '/casePortal';
+    if (departmentKey.includes('conservative') || departmentKey.includes('endodontic')) return '/conservative-dentistry';
     if (departmentKey === 'general' || departmentKey === 'generaldentistry') return '/general-case-sheet';
     return '/casePortal?dept=prosthodontics';
   };

@@ -24,6 +24,19 @@ const UGDashboard = () => {
     implant_patient: '/ImplantPatient',
     partial_denture: '/partial_denture',
     oral: '/oral-medicine',
+    conservative: '/conservative-dentistry',
+    endodontics: '/conservative-dentistry',
+    conservativedentistry: '/conservative-dentistry',
+  };
+
+  const getCaseRouteForDepartment = (departmentValue) => {
+    const key = String(departmentValue || '').trim().toLowerCase().replace(/[\s_]+/g, '');
+    if (key === 'pedodontics') return '/pedodontics';
+    if (key === 'periodontics') return '/casePortal?dept=periodontics';
+    if (key.includes('oral') || key.includes('maxillofacial')) return '/oral-medicine';
+    if (key.includes('conservative') || key.includes('endodontic')) return '/conservative-dentistry';
+    if (key === 'general' || key === 'generaldentistry') return '/general-case-sheet';
+    return '/casePortal?dept=prosthodontics';
   };
 
   const formatDateInput = (date) => {
@@ -889,17 +902,6 @@ const UGDashboard = () => {
     return Array.from(byKey.values()).sort(
       (left, right) => getAssignedCaseTimestamp(right) - getAssignedCaseTimestamp(left)
     );
-  };
-
-  const getCaseRouteForDepartment = (departmentValue) => {
-    const departmentKey = normalizeDepartment(departmentValue);
-
-    if (departmentKey === 'pedodontics') return '/pedodontics';
-    if (departmentKey === 'periodontics') return '/casePortal?dept=periodontics';
-    if (departmentKey.includes('oral') || departmentKey.includes('maxillofacial')) return '/casePortal?dept=oral';
-    if (departmentKey.includes('conservative') || departmentKey.includes('endodontic')) return '/casePortal';
-    if (departmentKey === 'general' || departmentKey === 'generaldentistry') return '/general-case-sheet';
-    return '/casePortal?dept=prosthodontics';
   };
 
   const handleLogout = () => {
