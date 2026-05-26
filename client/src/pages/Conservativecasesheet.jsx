@@ -14,16 +14,6 @@ const ConservativeCaseSheet = () => {
   const navigate = useNavigate();
   const location = useLocation();
 
-  // Post-entry consent prompt
-  useEffect(() => {
-    if (location.state?.requestConsentAfterEntry && !location.state?.[CASE_CONSENT_NAV_STATE_KEY]) {
-      const confirmed = window.confirm('Please complete the consent form before proceeding. Click OK to open the consent form.');
-      if (confirmed) {
-        navigate(`/consent-form?redirect=${encodeURIComponent(location.pathname + location.search)}`, { replace: true });
-      }
-    }
-  }, []);
-
   const initialData = {
     regNo: '',
     id: '',
