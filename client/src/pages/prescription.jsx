@@ -1265,10 +1265,12 @@ const Prescription = () => {
 
       console.log('Sending prescription data:', prescriptionData);
 
+      const token = localStorage.getItem('token');
       const response = await fetch('http://localhost:5000/api/prescriptions', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          ...(token ? { 'Authorization': `Bearer ${token}` } : {})
         },
         body: JSON.stringify(prescriptionData)
       });
@@ -1480,14 +1482,7 @@ const Prescription = () => {
         >
           ← Back to Dashboard
         </button>
-        <button
-          onClick={() => window.history.back()}
-          className="dashboard-back"
-          type="button"
-          style={{ marginLeft: 8, background: 'rgba(99,102,241,0.15)', borderColor: 'rgba(165,180,252,0.4)' }}
-        >
-          ← Back to Case Sheet
-        </button>
+
 
         <div className="logo-container">
           <img
