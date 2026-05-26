@@ -153,7 +153,7 @@ const PrintPrescription = ({
       <div className="print-page">
         {/* Watermark (large faint logo) */}
         <div className="watermark">
-          <img src="/public/images/logo2.png" alt="img" />
+          <img src="/images/logo2.png" alt="img" />
         </div>
         {/* Header with Logo */}
         <div style={{ 

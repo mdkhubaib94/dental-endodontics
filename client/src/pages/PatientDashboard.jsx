@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import dentalLogo from '/public/logo.png';
+import dentalLogo from '/logo.png';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from './context/AuthContext';
 import './PatientDashboard.css';

@@ -50,7 +50,7 @@ const ConservativeCaseSchema = new mongoose.Schema({
 
   createdAt: { type: Date, default: Date.now },
   updatedAt: { type: Date, default: Date.now },
-});
+}, { strict: false });
 
 ConservativeCaseSchema.pre('save', function (next) {
   this.updatedAt = Date.now();
