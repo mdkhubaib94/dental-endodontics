@@ -161,13 +161,6 @@ const isPublicHealthDepartment = (department) => {
 };
 
 const UgDashboardRoute = () => {
-  const { user } = useAuth();
-  const ugDepartment = user?.department || localStorage.getItem('ugDepartment') || localStorage.getItem('department') || '';
-
-  if (isPublicHealthDepartment(ugDepartment)) {
-    return <PGDashboard brandTitleOverride="UG Dashboard" />;
-  }
-
   return <UGDashboard />;
 };
 

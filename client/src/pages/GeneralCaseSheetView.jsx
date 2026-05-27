@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import './generalCaseSheet.css';
 import { API_BASE_URL } from '../config/api';
+import PublicHealthDentistryView from './Casesheets/PublicHealthDentistryView';
 
 const buildApiUrl = (path) => `${API_BASE_URL}${path.startsWith('/') ? path : `/${path}`}`;
 
@@ -213,63 +214,18 @@ const GeneralCaseSheetView = () => {
 
   if (isPublicHealthDentistry) {
     return (
-      <div className="general-case-sheet phd-print-page">
-        <div className="phd-sheet-shell">
-          <div className="phd-sheet-header">
-            <div className="phd-sheet-sn">Sl.No.: C {patientId ? patientId.replace(/\D+/g, '') || patientId : '—'}</div>
-            <div className="phd-sheet-title-block">
-              <h1>DENTAL CAMP</h1>
-              <h2>DEPARTMENT OF PUBLIC HEALTH DENTISTRY</h2>
-            </div>
-          </div>
-
-          <div className="phd-sheet-grid">
-            <div className="phd-field phd-field-wide">
-              <span className="phd-label">Name of the Venue</span>
-              <span className="phd-value">{venueName || '—'}</span>
-            </div>
-            <div className="phd-field">
-              <span className="phd-label">Date</span>
-              <span className="phd-value">{generalCase?.createdAt ? new Date(generalCase.createdAt).toLocaleDateString('en-GB') : '—'}</span>
-            </div>
-
-            <div className="phd-field phd-field-wide">
-              <span className="phd-label">Name of the Patient</span>
-              <span className="phd-value">{titlePatientName}</span>
-            </div>
-            <div className="phd-field">
-              <span className="phd-label">Age</span>
-              <span className="phd-value">{patientAge || '—'}</span>
-            </div>
-            <div className="phd-field">
-              <span className="phd-label">Sex</span>
-              <span className="phd-value">{patientGender || '—'}</span>
-            </div>
-
-            <div className="phd-field phd-field-wide phd-field-stack">
-              <span className="phd-label">Diagnosis</span>
-              <div className="phd-box">{diagnosisText || '—'}</div>
-            </div>
-
-            <div className="phd-field phd-field-wide phd-field-stack">
-              <span className="phd-label">Treatment Plan</span>
-              <div className="phd-box phd-treatment-box">{treatmentPlanText || '—'}</div>
-            </div>
-
-            <div className="phd-signature-row">
-              <div className="phd-signature-name">{doctorDisplayName || '—'}</div>
-              <div className="phd-signature-line" />
-              <div className="phd-signature-label">Doctors Name</div>
-            </div>
-          </div>
-        </div>
-
-        <div className="general-case-flex general-case-justify-center general-case-mt-4" style={{ gap: 12, flexWrap: 'wrap', marginBottom: 24 }}>
-          <button type="button" className="general-case-button" onClick={handleBack}>
-            Back
-          </button>
-        </div>
-      </div>
+      <PublicHealthDentistryView
+        patientId={patientId}
+        titlePatientName={titlePatientName}
+        patientAge={patientAge}
+        patientGender={patientGender}
+        venueName={venueName}
+        doctorDisplayName={doctorDisplayName}
+        diagnosisText={diagnosisText}
+        treatmentPlanText={treatmentPlanText}
+        generalCase={generalCase}
+        onBack={handleBack}
+      />
     );
   }
 

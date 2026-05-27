@@ -212,167 +212,142 @@ const CampDashboard = () => {
   };
 
   const downloadCampExcel = async () => {
-    const campDateText = institutionInfo.campDate ? new Date(institutionInfo.campDate).toLocaleDateString('en-GB') : '-';
+    const campDateText = institutionInfo.campDate
+      ? new Date(institutionInfo.campDate).toLocaleDateString('en-GB')
+      : '-';
     const institutionNameText = institutionInfo.institutionName || '-';
     const institutionAddressText = institutionInfo.institutionAddress || '-';
+    const safeDate = campDateText === '-' ? 'camp-report' : campDateText.replace(/\//g, '-');
 
-    // Create workbook and worksheet
-    const workbook = new ExcelJS.Workbook();
-    const worksheet = workbook.addWorksheet('Camp Report');
+    const wb = new ExcelJS.Workbook();
+    const ws = wb.addWorksheet('Camp Report');
 
-    // Set column widths
-    worksheet.columns = [
-      { width: 15 }, // Patient ID
-      { width: 25 }, // Patient Name
-      { width: 12 }, // Age
-      { width: 10 }, // Gender
-      { width: 15 }  // Phone
+    // ── Column widths ─────────────────────────────────────────────
+    ws.columns = [
+      { key: 'a', width: 18 },  // A – logo column
+      { key: 'b', width: 36 },  // B – title / data
+      { key: 'c', width: 20 },  // C
+      { key: 'd', width: 12 },  // D
+      { key: 'e', width: 12 },  // E
+      { key: 'f', width: 14 },  // F
     ];
 
+    // ── Row 1: logo + title side by side ──────────────────────────
+    // Reserve two rows for the header block (logo height ~50px ≈ 2 rows at 25px each)
+    ws.getRow(1).height = 30;
+    ws.getRow(2).height = 22;
+    ws.getRow(3).height = 18;
+
+    // Title text goes in B1, logo will sit in A1 immediately to its left
+    const titleCell = ws.getCell('B1');
+    titleCell.value = 'SRM DENTAL COLLEGE';
+    titleCell.font = { bold: true, size: 16 };
+    titleCell.alignment = { vertical: 'middle', horizontal: 'left' };
+    ws.mergeCells('B1:F1');
+
+    const subCell = ws.getCell('B2');
+    subCell.value = 'Department of Public Health Dentistry';
+    subCell.font = { bold: true, size: 11 };
+    subCell.alignment = { vertical: 'middle', horizontal: 'left' };
+    ws.mergeCells('B2:F2');
+
+    const reportCell = ws.getCell('B3');
+    reportCell.value = 'Camp Report';
+    reportCell.font = { italic: true, size: 10 };
+    reportCell.alignment = { vertical: 'middle', horizontal: 'left' };
+    ws.mergeCells('B3:F3');
+
+    // ── Embed logo in A1, same row as title ───────────────────────
     try {
-      // Load and add logo image
-      const logoResponse = await fetch('/images/logo.png');
-      const logoBlob = await logoResponse.blob();
-      const logoArrayBuffer = await logoBlob.arrayBuffer();
-      
-      const logoId = workbook.addImage({
-        buffer: logoArrayBuffer,
-        extension: 'png',
+      const logoRes = await fetch('/images/logo2.png');
+      const logoBlob = await logoRes.blob();
+      const logoBuffer = await logoBlob.arrayBuffer();
+      const logoId = wb.addImage({ buffer: logoBuffer, extension: 'png' });
+      ws.addImage(logoId, {
+        tl: { col: 0, row: 0 },       // top-left of A1
+        ext: { width: 100, height: 68 }, // fits within the 3-row header block
       });
-
-      // Add logo image (positioned in cell A1, spanning 2 rows and 2 columns)
-      worksheet.addImage(logoId, {
-        tl: { col: 0, row: 0 }, // top-left position
-        ext: { width: 80, height: 80 } // size in pixels
-      });
-    } catch (error) {
-      console.warn('Could not load logo image:', error);
+    } catch (_) {
+      // Logo fetch failed — continue without it
     }
 
-    // Add header text (starting from row 1, but offset to account for logo)
-    worksheet.mergeCells('C1:E1');
-    worksheet.getCell('C1').value = 'SRM DENTAL COLLEGE CHENNAI';
-    worksheet.getCell('C1').font = { bold: true, size: 16, color: { argb: '0066CC' } };
-    worksheet.getCell('C1').alignment = { horizontal: 'center', vertical: 'middle' };
+    ws.addRow([]); // row 3 spacer
 
-    worksheet.mergeCells('A2:E2');
-    worksheet.getCell('A2').value = 'Department of Public Health Dentistry';
-    worksheet.getCell('A2').font = { bold: true, size: 14 };
-    worksheet.getCell('A2').alignment = { horizontal: 'center', vertical: 'middle' };
+    ws.addRow([]); // spacer
 
-    worksheet.mergeCells('A3:E3');
-    worksheet.getCell('A3').value = 'Camp Report';
-    worksheet.getCell('A3').font = { bold: true, size: 12 };
-    worksheet.getCell('A3').alignment = { horizontal: 'center', vertical: 'middle' };
-
-    // Add camp information
-    let currentRow = 5;
-    worksheet.getCell(`A${currentRow}`).value = 'Date of Camp:';
-    worksheet.getCell(`A${currentRow}`).font = { bold: true };
-    worksheet.getCell(`B${currentRow}`).value = campDateText;
-
-    currentRow++;
-    worksheet.getCell(`A${currentRow}`).value = 'Institution Name:';
-    worksheet.getCell(`A${currentRow}`).font = { bold: true };
-    worksheet.getCell(`B${currentRow}`).value = institutionNameText;
-
-    currentRow++;
-    worksheet.getCell(`A${currentRow}`).value = 'Institution Address:';
-    worksheet.getCell(`A${currentRow}`).font = { bold: true };
-    worksheet.getCell(`B${currentRow}`).value = institutionAddressText;
-
-    // Add table headers
-    currentRow += 2;
-    const headerRow = worksheet.getRow(currentRow);
-    headerRow.values = ['Patient ID', 'Patient Name', 'Age', 'Gender', 'Phone'];
-    headerRow.font = { bold: true, color: { argb: 'FFFFFF' } };
-    headerRow.fill = {
-      type: 'pattern',
-      pattern: 'solid',
-      fgColor: { argb: '4472C4' }
+    // ── Meta info ─────────────────────────────────────────────────
+    const addMeta = (label, value) => {
+      const r = ws.addRow([label, value]);
+      r.getCell('A').font = { bold: true };
     };
-    headerRow.alignment = { horizontal: 'center', vertical: 'middle' };
-    headerRow.border = {
-      top: { style: 'thin' },
-      left: { style: 'thin' },
-      bottom: { style: 'thin' },
-      right: { style: 'thin' }
-    };
+    addMeta('Date of Camp:', campDateText);
+    addMeta('Institution Name:', institutionNameText);
+    addMeta('Institution Address:', institutionAddressText);
 
-    // Add table data
-    currentRow++;
-    if (campStudents.length === 0) {
-      const noDataRow = worksheet.getRow(currentRow);
-      worksheet.mergeCells(`A${currentRow}:E${currentRow}`);
-      noDataRow.getCell(1).value = 'No patients added yet for this camp.';
-      noDataRow.getCell(1).alignment = { horizontal: 'center', vertical: 'middle' };
-      noDataRow.getCell(1).fill = {
-        type: 'pattern',
-        pattern: 'solid',
-        fgColor: { argb: 'F2F2F2' }
-      };
-      noDataRow.border = {
-        top: { style: 'thin' },
-        left: { style: 'thin' },
+    ws.addRow([]); // spacer
+
+    // ── Section heading ───────────────────────────────────────────
+    const sectionRow = ws.addRow(['Student Attendance']);
+    sectionRow.getCell('A').font = { bold: true, size: 11 };
+
+    // ── Table header ──────────────────────────────────────────────
+    const colHeaders = ['S.No', 'Patient ID', 'Student Name', 'Age', 'Gender', 'Phone'];
+    const headerRow = ws.addRow(colHeaders);
+    headerRow.eachCell((cell) => {
+      cell.font = { bold: true };
+      cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFD9E1F2' } };
+      cell.border = {
+        top:    { style: 'thin' },
         bottom: { style: 'thin' },
-        right: { style: 'thin' }
+        left:   { style: 'thin' },
+        right:  { style: 'thin' },
       };
+      cell.alignment = { horizontal: 'center', vertical: 'middle' };
+    });
+
+    // ── Data rows ─────────────────────────────────────────────────
+    if (campStudents.length === 0) {
+      ws.addRow(['No students added yet for this camp.']);
     } else {
-      campStudents.forEach((student, index) => {
-        const dataRow = worksheet.getRow(currentRow);
-        dataRow.values = [
-          student.patientId || '-',
-          `${student.personalInfo?.firstName || ''}${student.personalInfo?.lastName ? ` ${student.personalInfo.lastName}` : ''}`.trim() || '-',
-          student.personalInfo?.dateOfBirth ? calculateAge(student.personalInfo.dateOfBirth) + ' years' : '-',
-          student.personalInfo?.gender || '-',
-          student.personalInfo?.phone || '-'
-        ];
+      campStudents.forEach((s, idx) => {
+        const dob = s.personalInfo?.dateOfBirth;
+        const age = dob
+          ? Math.floor((Date.now() - new Date(dob).getTime()) / (365.25 * 24 * 60 * 60 * 1000))
+          : '-';
+        const name = [s.personalInfo?.firstName, s.personalInfo?.lastName]
+          .filter(Boolean).join(' ') || '-';
 
-        // Alternating row colors
-        const isEvenRow = index % 2 === 0;
-        dataRow.fill = {
-          type: 'pattern',
-          pattern: 'solid',
-          fgColor: { argb: isEvenRow ? 'F2F2F2' : 'FFFFFF' }
-        };
-
-        // Alignment
-        dataRow.getCell(1).alignment = { horizontal: 'center', vertical: 'middle' }; // Patient ID
-        dataRow.getCell(2).alignment = { horizontal: 'left', vertical: 'middle' };   // Patient Name
-        dataRow.getCell(3).alignment = { horizontal: 'center', vertical: 'middle' }; // Age
-        dataRow.getCell(4).alignment = { horizontal: 'center', vertical: 'middle' }; // Gender
-        dataRow.getCell(5).alignment = { horizontal: 'center', vertical: 'middle' }; // Phone
-
-        // Borders
-        dataRow.border = {
-          top: { style: 'thin' },
-          left: { style: 'thin' },
-          bottom: { style: 'thin' },
-          right: { style: 'thin' }
-        };
-
-        currentRow++;
+        const dataRow = ws.addRow([
+          idx + 1,
+          s.patientId || '-',
+          name,
+          age,
+          s.personalInfo?.gender || '-',
+          s.personalInfo?.phone || '-',
+        ]);
+        dataRow.eachCell((cell) => {
+          cell.border = {
+            top:    { style: 'thin' },
+            bottom: { style: 'thin' },
+            left:   { style: 'thin' },
+            right:  { style: 'thin' },
+          };
+          cell.alignment = { vertical: 'middle' };
+        });
       });
     }
 
-    // Set row heights for better appearance
-    worksheet.getRow(1).height = 60; // Logo row
-    worksheet.getRow(2).height = 25; // Department title
-    worksheet.getRow(3).height = 20; // Camp report title
-
-    // Generate filename and download
-    const safeDate = campDateText === '-' ? 'camp-report' : campDateText.replace(/[\/]/g, '-');
-    const filename = `${safeDate}-camp-report.xlsx`;
-
-    // Write to buffer and download
-    const buffer = await workbook.xlsx.writeBuffer();
-    const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
-    const url = window.URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = filename;
-    link.click();
-    window.URL.revokeObjectURL(url);
+    // ── Save ──────────────────────────────────────────────────────
+    const buffer = await wb.xlsx.writeBuffer();
+    const blob = new Blob([buffer], {
+      type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${safeDate}-camp-report.xlsx`;
+    a.click();
+    URL.revokeObjectURL(url);
   };
 
   const handleSelectPatient = async (patient) => {
@@ -466,21 +441,6 @@ const CampDashboard = () => {
     setInstitutionInfo(prev => ({ ...prev, [name]: value }));
   };
 
-  // Calculate age from date of birth
-  const calculateAge = (dateOfBirth) => {
-    if (!dateOfBirth) return null;
-    const today = new Date();
-    const birthDate = new Date(dateOfBirth);
-    let age = today.getFullYear() - birthDate.getFullYear();
-    const monthDiff = today.getMonth() - birthDate.getMonth();
-    
-    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
-      age--;
-    }
-    
-    return age;
-  };
-
   const fetchSignupDetailsById = async (patientId) => {
     try {
       setFetchingSignupDetails(true);
@@ -509,7 +469,7 @@ const CampDashboard = () => {
       
       // Validate required fields
       if (!newPatient.patientId || !newPatient.firstName || !newPatient.phone) {
-        alert('Please fill in all required fields: Patient ID, Patient Name, and Phone Number');
+        alert('Please fill in all required fields: Patient ID, Student Name, and Phone Number');
         return;
       }
       
@@ -582,16 +542,16 @@ const CampDashboard = () => {
       
       // Show success message
       const account = result.account || {};
-      const summaryLines = [`Patient added successfully with Patient ID: ${createdPatient.patientId}`];
+      const summaryLines = [`Student added successfully with Patient ID: ${createdPatient.patientId}`];
       if (account.created) {
-        summaryLines.push('', 'Patient login account created.', `Login ID: ${createdPatient.patientId}`, `Temporary Password: ${account.generatedPassword || '123456'}`, 'Patient can log in with Patient ID and password.');
+        summaryLines.push('', 'Patient login account created.', `Login ID: ${createdPatient.patientId}`, `Temporary Password: ${account.generatedPassword || '123456'}`, 'Student can log in with Patient ID and password.');
       } else if (account.linked) {
         summaryLines.push('', 'Existing patient login account linked to this registration.');
       }
       alert(summaryLines.join('\n'));
       
     } catch (err) {
-      alert(`Failed to add patient: ${err.message}`);
+      alert(`Failed to add student: ${err.message}`);
     } finally {
       setLoading(false);
     }
@@ -1065,9 +1025,9 @@ const CampDashboard = () => {
                         </div>
                         <div style={{ display: 'flex', gap: 8 }}>
                           <button className="btn-secondary" type="button" onClick={() => { setCampStudents([]); }}>Clear List</button>
-                          <button className="btn-primary" type="button" onClick={() => {
+                          <button className="btn-primary" type="button" onClick={async () => {
                             try {
-                              downloadCampExcel();
+                              await downloadCampExcel();
                             } catch (err) {
                               alert('Failed to generate Excel: ' + err.message);
                             }
@@ -1088,13 +1048,13 @@ const CampDashboard = () => {
                           </thead>
                           <tbody>
                             {campStudents.length === 0 && (
-                              <tr><td colSpan={5} style={{ padding: '12px', color: 'rgba(255,255,255,0.6)' }}>No patients added yet for this camp.</td></tr>
+                              <tr><td colSpan={5} style={{ padding: '12px', color: 'rgba(255,255,255,0.6)' }}>No students added yet for this camp.</td></tr>
                             )}
                             {campStudents.map((s, idx) => (
                               <tr key={s.patientId || idx} style={{ borderBottom: '1px solid rgba(255,255,255,0.03)' }}>
                                 <td style={{ padding: '8px' }}>{s.patientId}</td>
                                 <td style={{ padding: '8px' }}>{(s.personalInfo?.firstName || '') + (s.personalInfo?.lastName ? ` ${s.personalInfo.lastName}` : '')}</td>
-                                <td style={{ padding: '8px' }}>{s.personalInfo?.dateOfBirth ? calculateAge(s.personalInfo.dateOfBirth) + ' years' : '-'}</td>
+                                <td style={{ padding: '8px' }}>{s.personalInfo?.dateOfBirth ? Math.floor((Date.now() - new Date(s.personalInfo.dateOfBirth).getTime()) / (365.25 * 24 * 60 * 60 * 1000)) : '-'}</td>
                                 <td style={{ padding: '8px' }}>{s.personalInfo?.gender || '-'}</td>
                                 <td style={{ padding: '8px' }}>{s.personalInfo?.phone || '-'}</td>
                               </tr>

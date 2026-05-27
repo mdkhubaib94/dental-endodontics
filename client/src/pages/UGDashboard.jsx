@@ -49,6 +49,11 @@ const UGDashboard = () => {
   };
 
   const ugDepartmentLabel = String(user?.department || localStorage.getItem('ugDepartment') || '').trim();
+  const ugDepartmentKey = String(ugDepartmentLabel).trim().toLowerCase().replace(/[\s_]+/g, '');
+  const isPublicHealthDentistry =
+    ugDepartmentKey.includes('publichealthdentistry') ||
+    ugDepartmentKey.includes('publichealth') ||
+    ugDepartmentKey.includes('communitydentistry');
 
   const [isSideNavOpen, setIsSideNavOpen] = useState(true);
   const [activeView, setActiveView] = useState('patient');
@@ -979,12 +984,20 @@ const UGDashboard = () => {
   }, []);
 
   const fetchAssignedCases = async () => {
+    // PHD UG doctors don't use the PG-assigned-cases endpoint.
+    // Their "assigned cases" are the general case sheets they created themselves,
+    // which are already shown in the Case Sheet tab via fetchPgCaseSheetHistory().
+    if (isPublicHealthDentistry) {
+      setAssignedCases([]);
+      return [];
+    }
+
     try {
       setAssignedCasesLoading(true);
       setAssignedCasesError('');
 
       const token = localStorage.getItem('token');
-      const res = await fetch(buildApiUrl('/api/general/assigned-pg-cases'), {
+      const res = await fetch(buildApiUrl('/api/general/assigned-ug-cases'), {
         headers: {
           Authorization: `Bearer ${token}`,
           'Content-Type': 'application/json',
@@ -993,6 +1006,12 @@ const UGDashboard = () => {
 
       if (res.status === 401) {
         await ensureActiveSession(res, 'Token expired');
+        return [];
+      }
+
+      // If the UG-specific endpoint doesn't exist yet, fall back gracefully
+      if (res.status === 404 || res.status === 403) {
+        setAssignedCases([]);
         return [];
       }
 
@@ -1006,7 +1025,7 @@ const UGDashboard = () => {
       setAssignedCases(uniqueCases);
       return uniqueCases;
     } catch (error) {
-      console.error('Failed to fetch PG assigned cases', error);
+      console.error('Failed to fetch UG assigned cases', error);
       setAssignedCasesError(error.message || 'Failed to load assigned cases');
       setAssignedCases([]);
       return [];
@@ -1136,54 +1155,9 @@ const UGDashboard = () => {
         return rows;
       }
 
-      const res = await fetch(buildApiUrl('/api/casesheets/pg/history'), {
-        headers: {
-          Authorization: `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
-      });
-
-      if (res.status === 401) {
-        await ensureActiveSession(res, 'Token expired');
-        return [];
-      }
-
-      const json = await res.json();
-      console.debug('[UGDashboard] /api/casesheets/pg/history response:', { status: res.status, ok: res.ok, json });
-      if (!res.ok || !json?.success) {
-        throw new Error(json?.message || 'Failed to load case sheet history');
-      }
-
-      const rows = Array.isArray(json.data) ? json.data : [];
-      setPgCaseSheetHistory(rows);
-      // Fallback: if no rows but a patient is selected, try loading general cases for that patient
-      if ((!Array.isArray(rows) || rows.length === 0)) {
-        const currentPatientId = localStorage.getItem('CurrentpatientId') || '';
-        if (currentPatientId) {
-          try {
-            const genRes = await fetch(buildApiUrl(`/api/general/patient/${encodeURIComponent(currentPatientId)}`), { headers: { Authorization: token ? `Bearer ${token}` : '' } });
-            if (genRes.ok) {
-              const genJson = await genRes.json().catch(() => null);
-              const genRows = Array.isArray(genJson?.data) ? genJson.data : [];
-              const mapped = genRows.map(item => ({
-                caseId: String(item._id || ''),
-                department: 'General Case',
-                departmentKey: 'general',
-                patientId: String(item.patientId || '').trim(),
-                patientName: String(item.patientName || '').trim(),
-                doctorId: String(item.doctorId || '').trim(),
-                doctorName: String(item.doctorName || '').trim(),
-                chiefApproval: String(item.chiefApproval || ''),
-                createdAt: item.createdAt || null,
-              }));
-              if (mapped.length) setPgCaseSheetHistory(mapped);
-            }
-          } catch (err) {
-            console.error('[UGDashboard] fallback general/patient fetch failed', err);
-          }
-        }
-      }
-      return rows;
+      // UG non-PHD doctors: no case sheet history endpoint — show empty
+      setPgCaseSheetHistory([]);
+      return [];
     } catch (error) {
       console.error('Failed to fetch PG case sheet history', error);
       setPgCaseSheetHistoryError(error.message || 'Failed to load case sheet history');
@@ -1585,33 +1559,44 @@ const UGDashboard = () => {
   //validate
   const validateForm = () => {
     const errors = {};
-    const requiredFields = {
-      firstName: 'First Name',
-      lastName: 'Last Name',
-      dob: 'Date of Birth',
-      gender: 'Gender',
-      maritalStatus: 'Marital Status',
-      preferredLanguage: 'Preferred Language',
-      chiefComplaint: 'Chief Complaint',
-      bloodGroup: 'Blood Group'
-    };
 
-    // Check required fields
+    // PHD doctors have a simpler, camp-focused form
+    const requiredFields = isPublicHealthDentistry
+      ? {
+          firstName: 'First Name',
+          dob: 'Date of Birth',
+          gender: 'Gender',
+          diagnosis: 'Diagnosis',
+          treatmentPlan: 'Treatment Plan',
+        }
+      : {
+          firstName: 'First Name',
+          lastName: 'Last Name',
+          dob: 'Date of Birth',
+          gender: 'Gender',
+          maritalStatus: 'Marital Status',
+          preferredLanguage: 'Preferred Language',
+          chiefComplaint: 'Chief Complaint',
+          bloodGroup: 'Blood Group',
+        };
+
     for (const [field, label] of Object.entries(requiredFields)) {
       if (!formData[field] || formData[field].trim() === '') {
-        errors[field] = 'This field must be filled';
+        errors[field] = `${label} is required`;
       }
     }
 
-    // Check if preferred language is "Other" and otherLanguage is empty
-    if (formData.preferredLanguage === 'Other' && (!formData.otherLanguage || formData.otherLanguage.trim() === '')) {
+    // Non-PHD only: preferred language "Other" must be specified
+    if (!isPublicHealthDentistry && formData.preferredLanguage === 'Other' && (!formData.otherLanguage || formData.otherLanguage.trim() === '')) {
       errors.otherLanguage = 'This field must be filled';
     }
 
-    // Check pregnancy status if conditions are met
-    const showPregnancyStatus = formData.gender === 'Female' && formData.maritalStatus === 'Married';
-    if (showPregnancyStatus && (!formData.pregnancyStatus || formData.pregnancyStatus.trim() === '')) {
-      errors.pregnancyStatus = 'This field must be filled';
+    // Non-PHD only: pregnancy status when applicable
+    if (!isPublicHealthDentistry) {
+      const showPregnancyStatus = formData.gender === 'Female' && formData.maritalStatus === 'Married';
+      if (showPregnancyStatus && (!formData.pregnancyStatus || formData.pregnancyStatus.trim() === '')) {
+        errors.pregnancyStatus = 'This field must be filled';
+      }
     }
 
     setFieldErrors(errors);
@@ -1813,41 +1798,59 @@ const UGDashboard = () => {
     if (!validateForm()) return;
     try {
       setIsLoading(true);
-      
-      // Prepare the data in the format your backend expects
+
       const shouldIncludePregnancyStatus = formData.gender === 'Female' && formData.maritalStatus === 'Married';
 
-      const patientData = {
-        patientId: generatedUserId,
-        personalInfo: {
-          firstName: formData.firstName,
-          middleName: formData.middleName,
-          lastName: formData.lastName,
-          dateOfBirth: formData.dob,
-          age: parseInt(formData.age) || 0,
-          gender: formData.gender,
-          maritalStatus: formData.maritalStatus,
-          preferredLanguage: formData.preferredLanguage === 'Other' ? formData.otherLanguage : formData.preferredLanguage
-        },
-        medicalInfo: {
-          chiefComplaint: formData.chiefComplaint,
-          hpi: hpiSelections,
-          pastMedicalHistory: pastMedicalHistory,
-          personalHabits: personalHabits,
-          currentMedications: formData.currentMedications.split(',').map(item => item.trim()).filter(item => item && item !== 'None'),
-          knownAllergies: formData.knownAllergies.split(',').map(item => item.trim()).filter(item => item && item !== 'None'),
-          chronicConditions: formData.chronicConditions.split(',').map(item => item.trim()).filter(item => item && item !== 'None'),
-          pastSurgeries: formData.pastSurgeries.split(',').map(item => item.trim()).filter(item => item && item !== 'None'),
-          pregnancyStatus: shouldIncludePregnancyStatus ? formData.pregnancyStatus : 'N/A',
-          dentalConcerns: formData.primaryDentalConcerns.split(',').map(item => item.trim()).filter(item => item && item !== 'None'),
-          lastDentalVisit: formData.lastDentalVisit || null
-        },
-        vitals: {
-          bloodGroup: formData.bloodGroup,
-          drugAllergies: formData.drugAllergies.split(',').map(item => item.trim()).filter(item => item),
-          dietAllergies: formData.dietAllergies.split(',').map(item => item.trim()).filter(item => item)
-        }
-      };
+      // PHD doctors only need basic personal info + diagnosis/treatment plan
+      const patientData = isPublicHealthDentistry
+        ? {
+            patientId: generatedUserId,
+            personalInfo: {
+              firstName: formData.firstName,
+              middleName: formData.middleName,
+              lastName: formData.lastName,
+              dateOfBirth: formData.dob,
+              age: parseInt(formData.age) || 0,
+              gender: formData.gender,
+              maritalStatus: formData.maritalStatus || '',
+              preferredLanguage: formData.preferredLanguage === 'Other' ? formData.otherLanguage : formData.preferredLanguage,
+            },
+            medicalInfo: {
+              diagnosis: formData.diagnosis,
+              treatmentPlan: formData.treatmentPlan,
+            },
+          }
+        : {
+            patientId: generatedUserId,
+            personalInfo: {
+              firstName: formData.firstName,
+              middleName: formData.middleName,
+              lastName: formData.lastName,
+              dateOfBirth: formData.dob,
+              age: parseInt(formData.age) || 0,
+              gender: formData.gender,
+              maritalStatus: formData.maritalStatus,
+              preferredLanguage: formData.preferredLanguage === 'Other' ? formData.otherLanguage : formData.preferredLanguage,
+            },
+            medicalInfo: {
+              chiefComplaint: formData.chiefComplaint,
+              hpi: hpiSelections,
+              pastMedicalHistory: pastMedicalHistory,
+              personalHabits: personalHabits,
+              currentMedications: formData.currentMedications.split(',').map(item => item.trim()).filter(item => item && item !== 'None'),
+              knownAllergies: formData.knownAllergies.split(',').map(item => item.trim()).filter(item => item && item !== 'None'),
+              chronicConditions: formData.chronicConditions.split(',').map(item => item.trim()).filter(item => item && item !== 'None'),
+              pastSurgeries: formData.pastSurgeries.split(',').map(item => item.trim()).filter(item => item && item !== 'None'),
+              pregnancyStatus: shouldIncludePregnancyStatus ? formData.pregnancyStatus : 'N/A',
+              dentalConcerns: formData.primaryDentalConcerns.split(',').map(item => item.trim()).filter(item => item && item !== 'None'),
+              lastDentalVisit: formData.lastDentalVisit || null,
+            },
+            vitals: {
+              bloodGroup: formData.bloodGroup,
+              drugAllergies: formData.drugAllergies.split(',').map(item => item.trim()).filter(item => item),
+              dietAllergies: formData.dietAllergies.split(',').map(item => item.trim()).filter(item => item),
+            },
+          };
 
       // Send data to backend
     const response = await fetch(buildApiUrl('/api/doctor-patient'), {
@@ -1869,13 +1872,22 @@ const UGDashboard = () => {
       const name = result.patientName;
       localStorage.setItem('CurrentpatientName', name);
       localStorage.setItem('CurrentpatientId', id);
+
+      // For PHD: also persist the case sheet immediately so the table reflects the new status
+      if (isPublicHealthDentistry) {
+        try {
+          await ensurePublicHealthCaseSheetGenerated({ patientId: id, patientName: name });
+        } catch (caseError) {
+          showMessage(`Patient saved, but case sheet generation failed: ${caseError.message}`, 'error');
+        }
+      }
+
       showMessage('Patient details saved successfully!', 'success');
-      console.log('Patient data from localStorage:', {
-      });
       // Allow navigation to case files / history only after successful save
       setCanNavigateCases(true);
       // Refresh case-sheet status panel for this patient
       fetchCaseStatuses(id);
+      fetchPgCaseSheetHistory();
     } else {
       const error = await response.json();
       showMessage(`Error saving patient: ${error.message}`, 'error');
@@ -2129,8 +2141,8 @@ const UGDashboard = () => {
                   </div>
                 )}
 
-                {/* General Case Sheet Preview */}
-                {showUserIdDisplay && (
+                {/* General Case Sheet Preview — not shown for PHD doctors */}
+                {showUserIdDisplay && !isPublicHealthDentistry && (
                   <div className="general-case-preview-section" style={{ margin: '16px 0', padding: '12px 16px', background: '#f8fafc', borderRadius: 8, border: '1px solid #e2e8f0' }}>
                     <div style={{ fontWeight: 600, marginBottom: 8 }}>General Case Sheet Preview</div>
                     {generalCasePreviewLoading ? (
@@ -2199,8 +2211,8 @@ const UGDashboard = () => {
                     </div>
 
                     <div className="input-group">
-                      <label htmlFor="last-name">Last Name <span style={{ color: 'red' }}>*</span></label>
-                      <input type="text" id="last-name" name="lastName" value={formData.lastName} onChange={handleInputChange} required />
+                      <label htmlFor="last-name">Last Name {!isPublicHealthDentistry && <span style={{ color: 'red' }}>*</span>}</label>
+                      <input type="text" id="last-name" name="lastName" value={formData.lastName} onChange={handleInputChange} required={!isPublicHealthDentistry} />
                       {fieldErrors.lastName && <div className="error-message">{fieldErrors.lastName}</div>}
                     </div>
 
@@ -2231,7 +2243,8 @@ const UGDashboard = () => {
                       {fieldErrors.gender && <div className="error-message">{fieldErrors.gender}</div>}
                     </div>
 
-                    {/* Marital Status */}
+                    {/* Marital Status — not required for PHD */}
+                    {!isPublicHealthDentistry && (
                     <div className="input-group">
                       <label>Marital Status <span style={{ color: 'red' }}>*</span></label>
                       <div className="radio-options">
@@ -2244,9 +2257,10 @@ const UGDashboard = () => {
                       </div>
                       {fieldErrors.maritalStatus && <div className="error-message">{fieldErrors.maritalStatus}</div>}
                     </div>
+                    )}
 
                     {/* Pregnancy Status */}
-                    {formData.gender === 'Female' && formData.maritalStatus === 'Married' && (
+                    {!isPublicHealthDentistry && formData.gender === 'Female' && formData.maritalStatus === 'Married' && (
                       <div className="input-group">
                         <label>Pregnancy Status <span style={{ color: 'red' }}>*</span></label>
                         <div className="radio-options">
@@ -2261,7 +2275,8 @@ const UGDashboard = () => {
                       </div>
                     )}
 
-                    {/* Preferred Language */}
+                    {/* Preferred Language — not required for PHD */}
+                    {!isPublicHealthDentistry && (
                     <div className="input-group">
                       <label htmlFor="preferred-language">Preferred Language <span style={{ color: 'red' }}>*</span></label>
                       <select id="preferred-language" name="preferredLanguage" value={formData.preferredLanguage} onChange={handleInputChange}>
@@ -2273,8 +2288,9 @@ const UGDashboard = () => {
                       </select>
                       {fieldErrors.preferredLanguage && <div className="error-message">{fieldErrors.preferredLanguage}</div>}
                     </div>
+                    )}
 
-                    {formData.preferredLanguage === 'Other' && (
+                    {!isPublicHealthDentistry && formData.preferredLanguage === 'Other' && (
                       <div className="input-group">
                         <label htmlFor="other-language">Specify Language <span style={{ color: 'red' }}>*</span></label>
                         <input type="text" id="other-language" name="otherLanguage" value={formData.otherLanguage} onChange={handleInputChange} placeholder="Enter preferred language" />
@@ -2282,6 +2298,40 @@ const UGDashboard = () => {
                       </div>
                     )}
 
+                    {/* ── PHD-specific: Diagnosis & Treatment Plan ── */}
+                    {isPublicHealthDentistry && (
+                      <>
+                        <h3>Public Health Dentistry: Diagnosis &amp; Treatment Plan</h3>
+                        <div className="input-group">
+                          <label htmlFor="diagnosis">Diagnosis <span style={{ color: 'red' }}>*</span></label>
+                          <textarea
+                            id="diagnosis"
+                            name="diagnosis"
+                            value={formData.diagnosis || ''}
+                            onChange={handleInputChange}
+                            rows="3"
+                            placeholder="Enter diagnosis"
+                          />
+                          {fieldErrors.diagnosis && <div className="error-message">{fieldErrors.diagnosis}</div>}
+                        </div>
+                        <div className="input-group">
+                          <label htmlFor="treatmentPlan">Treatment Plan <span style={{ color: 'red' }}>*</span></label>
+                          <textarea
+                            id="treatmentPlan"
+                            name="treatmentPlan"
+                            value={formData.treatmentPlan || ''}
+                            onChange={handleInputChange}
+                            rows="3"
+                            placeholder="Enter treatment plan"
+                          />
+                          {fieldErrors.treatmentPlan && <div className="error-message">{fieldErrors.treatmentPlan}</div>}
+                        </div>
+                      </>
+                    )}
+
+                    {/* ── Non-PHD: full clinical history ── */}
+                    {!isPublicHealthDentistry && (
+                    <>
                     <h3>Patient Case Entry - Chief Complaint &amp; History</h3>
 
                     {/* Chief Complaint */}
@@ -2387,6 +2437,8 @@ const UGDashboard = () => {
                         <input type="text" id="diet-allergies" name="dietAllergies" value={formData.dietAllergies} onChange={handleInputChange} placeholder="Specify diet allergies" />
                       </div>
                     </div>
+                    </>
+                    )}
 
                     {/* Navigation buttons */}
                     <div className="form-actions">
