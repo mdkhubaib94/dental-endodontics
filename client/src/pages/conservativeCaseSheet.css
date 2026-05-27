@@ -98,6 +98,29 @@
     display: block;
     border-radius: 50%;
 }
+
+/* Ensure selected calendar dates and time slots use the prescription blue inside the conservative case sheet */
+.conservative-case-sheet .login-box .calendar-date-btn.selected,
+.conservative-case-sheet .login-box .time-slot-btn.selected,
+.conservative-case-sheet .login-box .time-slot-btn:active {
+    background: #1e3a8a !important;
+    color: #ffffff !important;
+    border-color: transparent !important;
+}
+
+/* Change the grey calendar boxes to a light blue inside the conservative case sheet modal
+     Only color/visual change; layout and behavior remain unchanged. */
+.conservative-case-sheet .login-box .calendar-date-btn {
+    background-color: #e3f2fd !important; /* light blue */
+    color: #0b3a66 !important; /* darker blue text for contrast */
+    border-color: rgba(30,58,138,0.08) !important;
+}
+.conservative-case-sheet .login-box .calendar-date-btn.other-month,
+.conservative-case-sheet .login-box .calendar-date-btn.past,
+.conservative-case-sheet .login-box .calendar-date-btn.weekend {
+    background-color: #dbeafe !important; /* slightly lighter for non-current/past/weekend */
+    color: rgba(11,58,102,0.7) !important;
+}
 /* DentalPatientRecord.css */
 
 * {

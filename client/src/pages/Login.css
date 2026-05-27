@@ -17,7 +17,7 @@ body {
   margin: 0;
   font-family: Arial, sans-serif;
   background: linear-gradient(rgba(37, 40, 107, 0.5), rgba(37, 40, 107, 0.5)),
-    url('/images/campus.png') center/cover no-repeat;
+    url('/logo.png') center/cover no-repeat;
   background-size: cover;
   display: flex;
   justify-content: center;

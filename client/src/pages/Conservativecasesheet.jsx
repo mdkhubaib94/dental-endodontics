@@ -4,6 +4,7 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from './context/AuthContext';
 import './conservativeCaseSheet.css';
 import './Login.css'; // reuse exact login theme
+import SlotBookingModal from "../components/SlotBookingModal";
 import { API_BASE_URL } from '../config/api';
 
 const CASE_CONSENT_NAV_STATE_KEY = 'caseSheetConsentApproved';
@@ -83,6 +84,232 @@ const ConservativeCaseSheet = () => {
   };
   const [patientAllergyData, setPatientAllergyData] = useState({ drug: '', known: '', diet: '' });
   const [treatmentPictures, setTreatmentPictures] = useState([]);
+  // Next visit appointment state (copied from prescription page block)
+  const [nextVisitDate, setNextVisitDate] = useState('');
+  const [nextVisitTime, setNextVisitTime] = useState('');
+  // expose patientId and patientEmail for modal props
+  const patientId = localStorage.getItem('CurrentpatientId') || localStorage.getItem('patientId') || '';
+  const patientEmail = localStorage.getItem('patientEmail') || '';
+  // Slot modal state (copied from Prescription to reuse modal UI locally)
+  const [showSlotModal, setShowSlotModal] = useState(false);
+  const [selectedDateForSlot, setSelectedDateForSlot] = useState('');
+  const [availableTimeSlots, setAvailableTimeSlots] = useState([]);
+  const [bookedSlots, setBookedSlots] = useState({});
+  const [maxSlotsPerTime, setMaxSlotsPerTime] = useState(1);
+  const [currentCalendarMonth, setCurrentCalendarMonth] = useState(new Date().getMonth());
+  const [currentCalendarYear, setCurrentCalendarYear] = useState(new Date().getFullYear());
+  const [patientIdForSlots, setPatientIdForSlots] = useState('');
+
+  const formatMinutesToTime = (mins) => {
+    const hours = Math.floor(mins / 60);
+    const minutes = mins % 60;
+    const ampm = hours >= 12 ? 'PM' : 'AM';
+    const h = hours % 12 || 12;
+    const m = minutes < 10 ? '0' + minutes : minutes;
+    return `${h}:${m} ${ampm}`;
+  };
+
+  const convertTo24HourFormat = (timeStr) => {
+    if (!timeStr) return '';
+    if (timeStr.includes(':') && !timeStr.includes('AM') && !timeStr.includes('PM')) {
+      return timeStr;
+    }
+    const match = timeStr.match(/(\d{1,2}):(\d{2})\s*(AM|PM)/i);
+    if (!match) return timeStr;
+    let hours = parseInt(match[1]);
+    const minutes = match[2];
+    const period = match[3].toUpperCase();
+    if (period === 'PM' && hours !== 12) hours += 12;
+    if (period === 'AM' && hours === 12) hours = 0;
+    return `${String(hours).padStart(2, '0')}:${minutes}`;
+  };
+
+  const generateTimeSlots = () => {
+    const rawDept = String(
+      localStorage.getItem('doctorDepartment') ||
+      localStorage.getItem('pgDepartment') ||
+      localStorage.getItem('ugDepartment') ||
+      ''
+    ).trim().toLowerCase().replace(/[\s_]+/g, '');
+
+    const isOralDept = rawDept.includes('oral') || rawDept === 'oralmedicine' || rawDept === 'oralmedicineandradiology' || rawDept === 'oralmedicineradiology';
+
+    if (isOralDept) {
+      const slotStartsInMinutes = [];
+      const lunchStart = 13 * 60;
+      const lunchEnd = 14 * 60;
+      const breakSlot = 11 * 60;
+      for (let t = 9 * 60; t <= 14 * 60; t += 15) {
+        if (t >= lunchStart && t < lunchEnd) continue;
+        if (t === breakSlot) continue;
+        slotStartsInMinutes.push(t);
+      }
+      return slotStartsInMinutes.map((start) => ({ start, end: start + 15, time: formatMinutesToTime(start) }));
+    }
+
+    const slotStartsInMinutes = [9 * 60, 9 * 60 + 30, 10 * 60, 10 * 60 + 30, 11 * 60 + 30, 12 * 60, 12 * 60 + 30, 14 * 60];
+    return slotStartsInMinutes.map((start) => ({ start, end: start + 30, time: formatMinutesToTime(start) }));
+  };
+
+  const generateCalendarDates = (currentMonth, currentYear) => {
+    const firstDay = new Date(currentYear, currentMonth, 1);
+    const lastDay = new Date(currentYear, currentMonth + 1, 0);
+    const startDate = new Date(firstDay);
+    startDate.setDate(startDate.getDate() - firstDay.getDay());
+    const dates = [];
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    for (let i = 0; i < 42; i++) {
+      const date = new Date(startDate);
+      date.setDate(startDate.getDate() + i);
+      const isCurrentMonth = date.getMonth() === currentMonth;
+      const isWeekend = date.getDay() === 0 || date.getDay() === 6;
+      const isPast = date < today;
+      const isToday = date.getTime() === today.getTime();
+      dates.push({ date: new Date(date), day: date.getDate(), isCurrentMonth, isWeekend, isPast, isToday, isAvailable: isCurrentMonth && !isWeekend && !isPast, fullDate: `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}` });
+    }
+    return dates;
+  };
+
+  const fetchBookedSlotsForDate = async (date) => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/appointment/booked-slots/${date}`);
+      if (response.ok) {
+        const data = await response.json();
+        if (data.success) {
+          setBookedSlots(data.bookedSlots || {});
+          setMaxSlotsPerTime(Number.isFinite(data.maxSlotsPerTime) ? data.maxSlotsPerTime : 1);
+        } else {
+          setBookedSlots({});
+          setMaxSlotsPerTime(1);
+        }
+      } else {
+        setBookedSlots({});
+        setMaxSlotsPerTime(1);
+      }
+    } catch (error) {
+      console.error('Error fetching booked slots:', error);
+      setBookedSlots({});
+      setMaxSlotsPerTime(1);
+    }
+  };
+
+  const handleOpenSlotModal = () => {
+    const today = new Date();
+    setCurrentCalendarMonth(today.getMonth());
+    setCurrentCalendarYear(today.getFullYear());
+    const pid = localStorage.getItem('CurrentpatientId') || localStorage.getItem('patientId') || '';
+    setPatientIdForSlots(pid);
+    setShowSlotModal(true);
+  };
+
+  const navigateCalendar = (direction) => {
+    if (direction === 'prev') {
+      if (currentCalendarMonth === 0) { setCurrentCalendarMonth(11); setCurrentCalendarYear(currentCalendarYear - 1); }
+      else setCurrentCalendarMonth(currentCalendarMonth - 1);
+    } else {
+      if (currentCalendarMonth === 11) { setCurrentCalendarMonth(0); setCurrentCalendarYear(currentCalendarYear + 1); }
+      else setCurrentCalendarMonth(currentCalendarMonth + 1);
+    }
+  };
+
+  const handleDateSelection = (date) => {
+    setSelectedDateForSlot(date);
+    const slots = generateTimeSlots();
+    setAvailableTimeSlots(slots);
+    fetchBookedSlotsForDate(date);
+  };
+
+  const isSlotBooked = (time) => {
+    const bookedCount = bookedSlots[time] || 0;
+    return bookedCount >= (maxSlotsPerTime || 1);
+  };
+
+  const handleSlotSelection = async (date, time) => {
+    if (!patientIdForSlots || patientIdForSlots.trim() === '') {
+      alert('Patient ID is missing. Please select a patient first.');
+      return;
+    }
+    try {
+      const emailToUse = localStorage.getItem('patientEmail') || `${patientIdForSlots}@temp.com`;
+      const appointmentData = { patientId: patientIdForSlots, patientEmail: emailToUse, chiefComplaint: 'Follow ups', appointmentDate: date, appointmentTime: time };
+      const response = await fetch(`${API_BASE_URL}/api/appointment/appointments`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(appointmentData) });
+      if (response.ok) {
+        const result = await response.json();
+        const timeIn24HourFormat = convertTo24HourFormat(time);
+        setNextVisitDate(date);
+        setNextVisitTime(timeIn24HourFormat);
+        setShowSlotModal(false);
+        setSelectedDateForSlot('');
+        setAvailableTimeSlots([]);
+        setBookedSlots({});
+      } else {
+        const error = await response.json().catch(() => ({}));
+        const detailedMessage = (error && error.error && (error.error.message || error.error)) || (error && error.message) || 'Booking failed. Please try again.';
+        alert('Failed to book appointment: ' + detailedMessage);
+      }
+    } catch (err) {
+      console.error('Error booking appointment:', err);
+      alert('Error booking appointment. Please try again.');
+    }
+  };
+
+  // Load latest appointment for the current patient and populate nextVisit fields
+  const fetchLatestAppointmentForPatient = async () => {
+    try {
+      const patientId = localStorage.getItem('CurrentpatientId') || localStorage.getItem('patientId') || '';
+      if (!patientId) return;
+
+      const res = await fetch(`${API_BASE_URL}/api/appointment/appointments/patient/${encodeURIComponent(patientId)}`);
+      if (!res.ok) return;
+      const payload = await res.json().catch(() => null);
+      const appts = payload?.appointments || payload?.data || [];
+      if (!Array.isArray(appts) || appts.length === 0) return;
+
+      // Use the most recent appointment (first item if server returns newest first)
+      const latest = appts[0];
+      if (!latest) return;
+      const date = latest.appointmentDate || latest.appointmentDateString || latest.date || '';
+      const time = latest.appointmentTime || latest.appointmentTimeString || '';
+      if (date && time) {
+        // Convert time like '9:00 AM' to 24-hour '09:00'
+        const to24 = (t) => {
+          if (!t) return '';
+          const m = String(t).trim().match(/(\d{1,2}):(\d{2})\s*(AM|PM)/i);
+          if (!m) {
+            // If already 'HH:MM' return as-is (normalize)
+            const s = String(t).trim();
+            return s.length === 4 ? `0${s}` : s;
+          }
+          let hh = Number(m[1]);
+          const mm = m[2];
+          const ap = m[3].toUpperCase();
+          if (ap === 'PM' && hh !== 12) hh += 12;
+          if (ap === 'AM' && hh === 12) hh = 0;
+          return `${String(hh).padStart(2, '0')}:${mm}`;
+        };
+
+        // Only populate if not already set (so manual edits are preserved)
+        if (!nextVisitDate) setNextVisitDate(date);
+        if (!nextVisitTime) setNextVisitTime(to24(time));
+      }
+    } catch (e) {
+      // ignore errors - non-critical
+    }
+  };
+
+  useEffect(() => {
+    // When returning to the tab after booking in the slot page, auto-refresh appointment
+    const onFocus = () => {
+      if (!nextVisitDate || !nextVisitTime) {
+        void fetchLatestAppointmentForPatient();
+      }
+    };
+    window.addEventListener('focus', onFocus);
+    // Try once on mount
+    if (!nextVisitDate || !nextVisitTime) void fetchLatestAppointmentForPatient();
+    return () => window.removeEventListener('focus', onFocus);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
   const navigateToPrescriptions = () => {
     window.location.href = '/prescriptions';
   };
@@ -882,6 +1109,75 @@ const ConservativeCaseSheet = () => {
             <label>Follow Up Plan</label>
             <textarea value={form.followUpPlan} onChange={(e) => setForm(p => ({ ...p, followUpPlan: e.target.value }))} />
           </div>
+          {/* Next Visit Appointment - copied from prescription page (minimal fields) */}
+          <div className="input-group">
+  <label>Next Visit Appointment:</label>
+
+  <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+    <div style={{ position: 'relative', flex: 1 }}>
+      <input
+        type="date"
+        value={nextVisitDate || ''}
+        readOnly
+        className="form-input"
+        style={{
+          cursor: 'pointer',
+          backgroundColor: nextVisitDate ? '#e8f5e9' : '#f5f5f5'
+        }}
+        placeholder="Select date from calendar"
+      />
+    </div>
+
+    <input
+      type="time"
+      value={nextVisitTime || ''}
+      readOnly
+      className="form-input"
+      style={{
+        width: '150px',
+        cursor: 'pointer',
+        backgroundColor: nextVisitTime ? '#e8f5e9' : '#f5f5f5'
+      }}
+      placeholder="Select time"
+    />
+
+    <button
+      type="button"
+      onClick={() => {
+        const patientId =
+          localStorage.getItem('CurrentpatientId') ||
+          localStorage.getItem('patientId') ||
+          '';
+
+        if (!patientId || patientId.trim() === '') {
+          alert('Please enter a Patient ID before selecting appointment slots.');
+          return;
+        }
+
+        console.log('BUTTON CLICKED');
+        setShowSlotModal(true);
+      }}
+      className="add-medicine-btn"
+      style={{ padding: '10px 20px', whiteSpace: 'nowrap' }}
+    >
+      Select Slots
+    </button>
+
+    {(nextVisitDate || nextVisitTime) && (
+      <button
+        type="button"
+        onClick={() => {
+          setNextVisitDate('');
+          setNextVisitTime('');
+        }}
+        className="modal-cancel-btn"
+        style={{ padding: '8px 15px' }}
+      >
+        Clear
+      </button>
+    )}
+  </div>
+</div>
           <div className="doctor-auth-section" style={{ marginTop: '30px', paddingTop: '20px', borderTop: '1px solid rgba(255,255,255,0.2)' }}>
             <h2>Doctor's Authentication</h2>
             <div className="form-group">
@@ -919,6 +1215,18 @@ const ConservativeCaseSheet = () => {
           <div style={{ display: 'flex', gap: 12, justifyContent: 'flex-end', marginTop: 14 }}>
             <button className="button" onClick={handleSave}>Submit Case Sheet</button>
           </div>
+
+          <SlotBookingModal
+            isOpen={showSlotModal}
+            onClose={() => setShowSlotModal(false)}
+            onSlotBooked={(date, time24) => {
+              setNextVisitDate(date);
+              setNextVisitTime(time24);
+              setShowSlotModal(false);
+            }}
+            patientId={patientId}
+            patientEmail={patientEmail}
+          />
 
 
 

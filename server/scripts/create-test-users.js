@@ -17,8 +17,8 @@ const createTestUsers = async () => {
     await mongoose.connect(process.env.MONGO_URI || process.env.MONGODB_URI);
     console.log('✅ MongoDB connected');
 
-    // Import User model
-    const { default: User } = await import('../models/User.js');
+  // Import User model (named export)
+  const { User } = await import('../models/User.js');
 
     // Hash password
     const password = 'Test@1234';
