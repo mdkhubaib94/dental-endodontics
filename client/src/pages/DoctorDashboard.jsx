@@ -58,6 +58,8 @@ const DoctorDashboard = () => {
     preferredLanguage: '',
     otherLanguage: '',
     chiefComplaint: '',
+    diagnosis: '',
+    treatmentPlan: '',
     currentMedications: 'None',
     knownAllergies: 'None',
     chronicConditions: 'None',
@@ -421,6 +423,10 @@ const DoctorDashboard = () => {
     localStorage.getItem('doctorDepartment') || user?.department || ''
   );
   const doctorDepartmentLabel = String(user?.department || localStorage.getItem('doctorDepartment') || '').trim();
+  const isPublicHealthDentistry =
+    doctorDepartmentKey.includes('publichealthdentistry') ||
+    doctorDepartmentKey.includes('publichealth') ||
+    doctorDepartmentKey.includes('communitydentistry');
   const currentRoleKey = String(user?.role || localStorage.getItem('role') || '').trim().toLowerCase();
   const isSpecialistDoctor = Boolean(
     doctorDepartmentKey && doctorDepartmentKey !== 'general' && doctorDepartmentKey !== 'generaldentistry'
@@ -443,6 +449,7 @@ const DoctorDashboard = () => {
   const getCaseRouteForDepartment = (departmentValue) => {
     const departmentKey = normalizeDepartment(departmentValue);
 
+    if (departmentKey.includes('publichealthdentistry') || departmentKey.includes('publichealth') || departmentKey.includes('communitydentistry')) return '/general-case-sheet';
     if (departmentKey === 'pedodontics') return '/pedodontics';
     if (departmentKey === 'periodontics') return '/casePortal?dept=periodontics';
     if (departmentKey.includes('oral') || departmentKey.includes('maxillofacial')) return '/casePortal?dept=oral';
@@ -628,34 +635,56 @@ const DoctorDashboard = () => {
   }, []);
 
   const populateFormWithPatientData = (patientData) => {
-    const preferredLanguage = patientData.personalInfo?.preferredLanguage || '';
+    const preferredLanguage =
+      patientData.personalInfo?.preferredLanguage ||
+      patientData.preferredLanguage ||
+      '';
     const isOtherLanguage = !['English', 'Hindi', 'Tamil'].includes(preferredLanguage);
-    
-    const dob = patientData.personalInfo?.dateOfBirth ? new Date(patientData.personalInfo.dateOfBirth).toISOString().split('T')[0] : '';
-    const age = dob ? calculateAge(dob) : (patientData.personalInfo?.age || '');
-    
-    setFormData({
-      ...formData,
-      firstName: patientData.personalInfo?.firstName || '',
-      middleName: patientData.personalInfo?.middleName || '',
-      lastName: patientData.personalInfo?.lastName || '',
-      dob: dob,
-      age: age,
-      gender: patientData.personalInfo?.gender || '',
-      maritalStatus: patientData.personalInfo?.maritalStatus || '',
-      preferredLanguage: isOtherLanguage ? 'Other' : preferredLanguage,
-      otherLanguage: isOtherLanguage ? preferredLanguage : '',
-      chiefComplaint: patientData.medicalInfo?.chiefComplaint || '',
-      currentMedications: patientData.medicalInfo?.currentMedications?.join(', ') || 'None',
-      knownAllergies: patientData.medicalInfo?.knownAllergies?.join(', ') || 'None',
-      chronicConditions: patientData.medicalInfo?.chronicConditions?.join(', ') || 'None',
-      pastSurgeries: patientData.medicalInfo?.pastSurgeries?.join(', ') || 'None',
-      pregnancyStatus: patientData.medicalInfo?.pregnancyStatus || '',
-      primaryDentalConcerns: patientData.medicalInfo?.dentalConcerns?.join(', ') || 'None',
-      lastDentalVisit: patientData.medicalInfo?.lastDentalVisit ? new Date(patientData.medicalInfo.lastDentalVisit).toISOString().split('T')[0] : '',
-      bloodGroup: patientData.vitals?.bloodGroup || '',
-      drugAllergies: patientData.vitals?.drugAllergies?.join(', ') || '',
-      dietAllergies: patientData.vitals?.dietAllergies?.join(', ') || ''
+
+    const rawDob =
+      patientData.personalInfo?.dateOfBirth ||
+      patientData.personalInfo?.dob ||
+      patientData.dateOfBirth ||
+      patientData.dob ||
+      '';
+    const parsedDob = rawDob ? new Date(rawDob) : null;
+    const dob = parsedDob && !Number.isNaN(parsedDob.getTime())
+      ? parsedDob.toISOString().split('T')[0]
+      : '';
+
+    setFormData((prev) => {
+      const resolvedDob = dob || prev.dob || '';
+      const resolvedAge = resolvedDob
+        ? calculateAge(resolvedDob)
+        : (patientData.personalInfo?.age || patientData.age || prev.age || '');
+
+      return {
+        ...prev,
+        firstName: patientData.personalInfo?.firstName || patientData.firstName || prev.firstName || '',
+        middleName: patientData.personalInfo?.middleName || patientData.middleName || prev.middleName || '',
+        lastName: patientData.personalInfo?.lastName || patientData.lastName || prev.lastName || '',
+        dob: resolvedDob,
+        age: resolvedAge,
+        gender: patientData.personalInfo?.gender || patientData.gender || prev.gender || '',
+        maritalStatus: patientData.personalInfo?.maritalStatus || patientData.maritalStatus || prev.maritalStatus || '',
+        preferredLanguage: preferredLanguage ? (isOtherLanguage ? 'Other' : preferredLanguage) : prev.preferredLanguage,
+        otherLanguage: preferredLanguage ? (isOtherLanguage ? preferredLanguage : '') : prev.otherLanguage,
+        chiefComplaint: patientData.medicalInfo?.chiefComplaint || patientData.chiefComplaint || prev.chiefComplaint || '',
+        diagnosis: patientData.medicalInfo?.diagnosis || patientData.diagnosis || prev.diagnosis || '',
+        treatmentPlan: patientData.medicalInfo?.treatmentPlan || patientData.treatmentPlan || prev.treatmentPlan || '',
+        currentMedications: patientData.medicalInfo?.currentMedications?.join(', ') || patientData.currentMedications || prev.currentMedications || 'None',
+        knownAllergies: patientData.medicalInfo?.knownAllergies?.join(', ') || patientData.knownAllergies || prev.knownAllergies || 'None',
+        chronicConditions: patientData.medicalInfo?.chronicConditions?.join(', ') || patientData.chronicConditions || prev.chronicConditions || 'None',
+        pastSurgeries: patientData.medicalInfo?.pastSurgeries?.join(', ') || patientData.pastSurgeries || prev.pastSurgeries || 'None',
+        pregnancyStatus: patientData.medicalInfo?.pregnancyStatus || patientData.pregnancyStatus || prev.pregnancyStatus || '',
+        primaryDentalConcerns: patientData.medicalInfo?.dentalConcerns?.join(', ') || patientData.primaryDentalConcerns || prev.primaryDentalConcerns || 'None',
+        lastDentalVisit: patientData.medicalInfo?.lastDentalVisit
+          ? new Date(patientData.medicalInfo.lastDentalVisit).toISOString().split('T')[0]
+          : (patientData.lastDentalVisit || prev.lastDentalVisit || ''),
+        bloodGroup: patientData.vitals?.bloodGroup || patientData.bloodGroup || prev.bloodGroup || '',
+        drugAllergies: patientData.vitals?.drugAllergies?.join(', ') || patientData.drugAllergies || prev.drugAllergies || '',
+        dietAllergies: patientData.vitals?.dietAllergies?.join(', ') || patientData.dietAllergies || prev.dietAllergies || '',
+      };
     });
 
     setHpiSelections(patientData.medicalInfo?.hpi || []);
@@ -665,16 +694,27 @@ const DoctorDashboard = () => {
   //validate
   const validateForm = () => {
     const errors = {};
-    const requiredFields = {
-      firstName: 'First Name',
-      lastName: 'Last Name',
-      dob: 'Date of Birth',
-      gender: 'Gender',
-      maritalStatus: 'Marital Status',
-      preferredLanguage: 'Preferred Language',
-      chiefComplaint: 'Chief Complaint',
-      bloodGroup: 'Blood Group'
-    };
+    const requiredFields = isPublicHealthDentistry
+      ? {
+          firstName: 'First Name',
+          lastName: 'Last Name',
+          dob: 'Date of Birth',
+          gender: 'Gender',
+          maritalStatus: 'Marital Status',
+          preferredLanguage: 'Preferred Language',
+          diagnosis: 'Diagnosis',
+          treatmentPlan: 'Treatment Plan',
+        }
+      : {
+          firstName: 'First Name',
+          lastName: 'Last Name',
+          dob: 'Date of Birth',
+          gender: 'Gender',
+          maritalStatus: 'Marital Status',
+          preferredLanguage: 'Preferred Language',
+          chiefComplaint: 'Chief Complaint',
+          bloodGroup: 'Blood Group'
+        };
 
     // Check required fields
     for (const [field, label] of Object.entries(requiredFields)) {
@@ -686,6 +726,15 @@ const DoctorDashboard = () => {
     // Check if preferred language is "Other" and otherLanguage is empty
     if (formData.preferredLanguage === 'Other' && (!formData.otherLanguage || formData.otherLanguage.trim() === '')) {
       errors.otherLanguage = 'This field must be filled';
+    }
+
+    if (isPublicHealthDentistry) {
+      if (!formData.diagnosis || formData.diagnosis.trim() === '') {
+        errors.diagnosis = 'This field must be filled';
+      }
+      if (!formData.treatmentPlan || formData.treatmentPlan.trim() === '') {
+        errors.treatmentPlan = 'This field must be filled';
+      }
     }
 
     // Check pregnancy status if conditions are met
@@ -780,7 +829,10 @@ const DoctorDashboard = () => {
 
       // Optional: also merge any existing doctor-patient details for this ID
       try {
-        const existingRes = await fetch(buildApiUrl(`/api/doctor-patient/${encodeURIComponent(enteredId)}`));
+        const token = localStorage.getItem('token');
+        const existingRes = await fetch(buildApiUrl(`/api/doctor-patient/${encodeURIComponent(enteredId)}`), {
+          headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+        });
         if (existingRes.ok) {
           const existingResult = await existingRes.json();
           const existingPatientData = existingResult.data || existingResult;
@@ -909,37 +961,55 @@ const DoctorDashboard = () => {
       // Prepare the data in the format your backend expects
       const shouldIncludePregnancyStatus = formData.gender === 'Female' && formData.maritalStatus === 'Married';
 
-      const patientData = {
-        patientId: generatedUserId,
-        personalInfo: {
-          firstName: formData.firstName,
-          middleName: formData.middleName,
-          lastName: formData.lastName,
-          dateOfBirth: formData.dob,
-          age: parseInt(formData.age) || 0,
-          gender: formData.gender,
-          maritalStatus: formData.maritalStatus,
-          preferredLanguage: formData.preferredLanguage === 'Other' ? formData.otherLanguage : formData.preferredLanguage
-        },
-        medicalInfo: {
-          chiefComplaint: formData.chiefComplaint,
-          hpi: hpiSelections,
-          pastMedicalHistory: pastMedicalHistory,
-          personalHabits: personalHabits,
-          currentMedications: formData.currentMedications.split(',').map(item => item.trim()).filter(item => item && item !== 'None'),
-          knownAllergies: formData.knownAllergies.split(',').map(item => item.trim()).filter(item => item && item !== 'None'),
-          chronicConditions: formData.chronicConditions.split(',').map(item => item.trim()).filter(item => item && item !== 'None'),
-          pastSurgeries: formData.pastSurgeries.split(',').map(item => item.trim()).filter(item => item && item !== 'None'),
-          pregnancyStatus: shouldIncludePregnancyStatus ? formData.pregnancyStatus : 'N/A',
-          dentalConcerns: formData.primaryDentalConcerns.split(',').map(item => item.trim()).filter(item => item && item !== 'None'),
-          lastDentalVisit: formData.lastDentalVisit || null
-        },
-        vitals: {
-          bloodGroup: formData.bloodGroup,
-          drugAllergies: formData.drugAllergies.split(',').map(item => item.trim()).filter(item => item),
-          dietAllergies: formData.dietAllergies.split(',').map(item => item.trim()).filter(item => item)
-        }
-      };
+      const patientData = isPublicHealthDentistry
+        ? {
+            patientId: generatedUserId,
+            personalInfo: {
+              firstName: formData.firstName,
+              middleName: formData.middleName,
+              lastName: formData.lastName,
+              dateOfBirth: formData.dob,
+              age: parseInt(formData.age) || 0,
+              gender: formData.gender,
+              maritalStatus: formData.maritalStatus,
+              preferredLanguage: formData.preferredLanguage === 'Other' ? formData.otherLanguage : formData.preferredLanguage
+            },
+            medicalInfo: {
+              diagnosis: formData.diagnosis,
+              treatmentPlan: formData.treatmentPlan,
+            }
+          }
+        : {
+            patientId: generatedUserId,
+            personalInfo: {
+              firstName: formData.firstName,
+              middleName: formData.middleName,
+              lastName: formData.lastName,
+              dateOfBirth: formData.dob,
+              age: parseInt(formData.age) || 0,
+              gender: formData.gender,
+              maritalStatus: formData.maritalStatus,
+              preferredLanguage: formData.preferredLanguage === 'Other' ? formData.otherLanguage : formData.preferredLanguage
+            },
+            medicalInfo: {
+              chiefComplaint: formData.chiefComplaint,
+              hpi: hpiSelections,
+              pastMedicalHistory: pastMedicalHistory,
+              personalHabits: personalHabits,
+              currentMedications: formData.currentMedications.split(',').map(item => item.trim()).filter(item => item && item !== 'None'),
+              knownAllergies: formData.knownAllergies.split(',').map(item => item.trim()).filter(item => item && item !== 'None'),
+              chronicConditions: formData.chronicConditions.split(',').map(item => item.trim()).filter(item => item && item !== 'None'),
+              pastSurgeries: formData.pastSurgeries.split(',').map(item => item.trim()).filter(item => item && item !== 'None'),
+              pregnancyStatus: shouldIncludePregnancyStatus ? formData.pregnancyStatus : 'N/A',
+              dentalConcerns: formData.primaryDentalConcerns.split(',').map(item => item.trim()).filter(item => item && item !== 'None'),
+              lastDentalVisit: formData.lastDentalVisit || null
+            },
+            vitals: {
+              bloodGroup: formData.bloodGroup,
+              drugAllergies: formData.drugAllergies.split(',').map(item => item.trim()).filter(item => item),
+              dietAllergies: formData.dietAllergies.split(',').map(item => item.trim()).filter(item => item)
+            }
+          };
 
       // Send data to backend
      const response = await fetch(buildApiUrl('/api/doctor-patient'), {
@@ -3296,6 +3366,45 @@ const DoctorDashboard = () => {
                   placeholder="Enter preferred language"
                 />
                 {fieldErrors.otherLanguage && <div className="error-message">{fieldErrors.otherLanguage}</div>}
+              </div>
+            )}
+
+            {isPublicHealthDentistry && (
+              <div className="input-group" style={{ marginBottom: '1.5rem' }}>
+                <h3>Public Health Dentistry: Diagnosis & Treatment Plan</h3>
+                <p style={{ marginTop: 0, opacity: 0.85 }}>
+                  For this department, only personal information plus diagnosis and treatment plan are stored.
+                </p>
+
+                <div className="input-group">
+                  <label htmlFor="diagnosis">
+                    Diagnosis <span style={{ color: 'red' }}>*</span>
+                  </label>
+                  <textarea
+                    id="diagnosis"
+                    name="diagnosis"
+                    value={formData.diagnosis}
+                    onChange={handleInputChange}
+                    rows="3"
+                    placeholder="Enter diagnosis"
+                  />
+                  {fieldErrors.diagnosis && <div className="error-message">{fieldErrors.diagnosis}</div>}
+                </div>
+
+                <div className="input-group">
+                  <label htmlFor="treatment-plan">
+                    Treatment Plan <span style={{ color: 'red' }}>*</span>
+                  </label>
+                  <textarea
+                    id="treatment-plan"
+                    name="treatmentPlan"
+                    value={formData.treatmentPlan}
+                    onChange={handleInputChange}
+                    rows="4"
+                    placeholder="Enter treatment plan"
+                  />
+                  {fieldErrors.treatmentPlan && <div className="error-message">{fieldErrors.treatmentPlan}</div>}
+                </div>
               </div>
             )}
 

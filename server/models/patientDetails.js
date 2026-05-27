@@ -103,6 +103,16 @@ const patientDetailsSchema = new Schema({
       trim: true,
       default: ''
     },
+    diagnosis: {
+      type: String,
+      trim: true,
+      default: ''
+    },
+    treatmentPlan: {
+      type: String,
+      trim: true,
+      default: ''
+    },
     hpi: [{
       type: String,
       trim: true

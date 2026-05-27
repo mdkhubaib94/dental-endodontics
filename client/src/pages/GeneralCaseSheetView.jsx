@@ -24,6 +24,8 @@ const pickLatestByTimestamp = (rows) => {
   })[0];
 };
 
+const normalizeDepartment = (value) => String(value || '').trim().toLowerCase().replace(/[\s_]+/g, '');
+
 const GeneralCaseSheetView = () => {
   const location = useLocation();
   const navigate = useNavigate();
@@ -33,10 +35,17 @@ const GeneralCaseSheetView = () => {
   const patientName = String(params.get('patientName') || '').trim();
   const caseId = String(params.get('caseId') || '').trim();
   const department = String(params.get('department') || '').trim();
+  const contextDepartment = String(
+    localStorage.getItem('ugDepartment') ||
+    localStorage.getItem('pgDepartment') ||
+    localStorage.getItem('doctorDepartment') ||
+    ''
+  ).trim();
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [generalCase, setGeneralCase] = useState(null);
+  const [patientDetails, setPatientDetails] = useState(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -45,45 +54,58 @@ const GeneralCaseSheetView = () => {
       if (!patientId) {
         setError('Patient ID missing.');
         setGeneralCase(null);
+        setPatientDetails(null);
         return;
       }
 
       setLoading(true);
       setError('');
       setGeneralCase(null);
+      setPatientDetails(null);
 
       try {
         const token = localStorage.getItem('token');
-        const res = await fetch(buildApiUrl(`/api/general/patient/${encodeURIComponent(patientId)}`), {
-          headers: token ? { Authorization: `Bearer ${token}` } : {},
-        });
+        const headers = token ? { Authorization: `Bearer ${token}` } : {};
+        const [generalRes, patientRes] = await Promise.all([
+          fetch(buildApiUrl(`/api/general/patient/${encodeURIComponent(patientId)}`), { headers }),
+          fetch(buildApiUrl(`/api/patient-details/by-patient-id/${encodeURIComponent(patientId)}`), { headers }),
+        ]);
 
-        if (res.status === 401) {
+        if (generalRes.status === 401 || patientRes.status === 401) {
           localStorage.clear();
           navigate('/login', { replace: true });
           return;
         }
 
-        const json = await res.json().catch(() => null);
+        const json = await generalRes.json().catch(() => null);
+        const patientJson = await patientRes.json().catch(() => null);
         const success = json?.success !== false;
         const rows = Array.isArray(json?.data) ? json.data : [];
+        const patientSuccess = patientJson?.success !== false;
 
-        if (!res.ok || !success) {
-          throw new Error(json?.message || `Failed to load General Case Sheet (${res.status})`);
+        if (!generalRes.ok || !success) {
+          throw new Error(json?.message || `Failed to load General Case Sheet (${generalRes.status})`);
         }
 
-        const latest = pickLatestByTimestamp(rows);
+        const requestedCase = caseId
+          ? rows.find((row) => String(row?._id || '').trim() === caseId)
+          : null;
+        const latest = requestedCase || pickLatestByTimestamp(rows);
         if (!latest) {
           throw new Error('No General Case Sheet found for this patient.');
         }
 
         if (!cancelled) {
           setGeneralCase(latest);
+          if (patientRes.ok && patientSuccess) {
+            setPatientDetails(patientJson?.data || patientJson?.patient || null);
+          }
         }
       } catch (e) {
         if (!cancelled) {
           setError(e?.message || 'Failed to load General Case Sheet.');
           setGeneralCase(null);
+          setPatientDetails(null);
         }
       } finally {
         if (!cancelled) setLoading(false);
@@ -102,7 +124,54 @@ const GeneralCaseSheetView = () => {
     ? generalCase.selectedDepartments
     : [];
 
+  const referredDepartment = String(
+    generalCase?.referredDepartment ||
+    selectedDepartments[0] ||
+    department ||
+    contextDepartment ||
+    ''
+  ).trim();
+  const departmentKey = normalizeDepartment(referredDepartment);
+  const isPublicHealthDentistry =
+    departmentKey.includes('publichealthdentistry') ||
+    departmentKey.includes('publichealth') ||
+    departmentKey.includes('communitydentistry');
+
   const hasTreatmentPlan = Boolean(String(generalCase?.treatmentPlan || '').trim());
+
+  const patientAge = String(
+    patientDetails?.personalInfo?.age ||
+    generalCase?.patientAge ||
+    generalCase?.personalInfo?.age ||
+    generalCase?.age ||
+    ''
+  ).trim();
+  const patientGender = String(
+    patientDetails?.personalInfo?.gender ||
+    generalCase?.personalInfo?.gender ||
+    generalCase?.gender ||
+    ''
+  ).trim();
+  const venueName = String(
+    patientDetails?.institutionInfo?.institutionName ||
+    generalCase?.institutionInfo?.institutionName ||
+    generalCase?.venueName ||
+    ''
+  ).trim();
+  const doctorDisplayName = String(
+    generalCase?.generalDoctorName ||
+    generalCase?.doctorName ||
+    patientDetails?.doctorName ||
+    ''
+  ).trim();
+  const diagnosisText = String(
+    generalCase?.finalDiagnosis ||
+    generalCase?.provisionalDiagnosis ||
+    generalCase?.chiefComplaint ||
+    generalCase?.description ||
+    ''
+  ).trim();
+  const treatmentPlanText = String(generalCase?.treatmentPlan || '').trim();
 
   const allDepartments = [
     'Prosthodontics',
@@ -141,6 +210,68 @@ const GeneralCaseSheetView = () => {
     }
     window.open(`/case-sheet-view/${caseId}`, '_blank');
   };
+
+  if (isPublicHealthDentistry) {
+    return (
+      <div className="general-case-sheet phd-print-page">
+        <div className="phd-sheet-shell">
+          <div className="phd-sheet-header">
+            <div className="phd-sheet-sn">Sl.No.: C {patientId ? patientId.replace(/\D+/g, '') || patientId : '—'}</div>
+            <div className="phd-sheet-title-block">
+              <h1>DENTAL CAMP</h1>
+              <h2>DEPARTMENT OF PUBLIC HEALTH DENTISTRY</h2>
+            </div>
+          </div>
+
+          <div className="phd-sheet-grid">
+            <div className="phd-field phd-field-wide">
+              <span className="phd-label">Name of the Venue</span>
+              <span className="phd-value">{venueName || '—'}</span>
+            </div>
+            <div className="phd-field">
+              <span className="phd-label">Date</span>
+              <span className="phd-value">{generalCase?.createdAt ? new Date(generalCase.createdAt).toLocaleDateString('en-GB') : '—'}</span>
+            </div>
+
+            <div className="phd-field phd-field-wide">
+              <span className="phd-label">Name of the Patient</span>
+              <span className="phd-value">{titlePatientName}</span>
+            </div>
+            <div className="phd-field">
+              <span className="phd-label">Age</span>
+              <span className="phd-value">{patientAge || '—'}</span>
+            </div>
+            <div className="phd-field">
+              <span className="phd-label">Sex</span>
+              <span className="phd-value">{patientGender || '—'}</span>
+            </div>
+
+            <div className="phd-field phd-field-wide phd-field-stack">
+              <span className="phd-label">Diagnosis</span>
+              <div className="phd-box">{diagnosisText || '—'}</div>
+            </div>
+
+            <div className="phd-field phd-field-wide phd-field-stack">
+              <span className="phd-label">Treatment Plan</span>
+              <div className="phd-box phd-treatment-box">{treatmentPlanText || '—'}</div>
+            </div>
+
+            <div className="phd-signature-row">
+              <div className="phd-signature-name">{doctorDisplayName || '—'}</div>
+              <div className="phd-signature-line" />
+              <div className="phd-signature-label">Doctors Name</div>
+            </div>
+          </div>
+        </div>
+
+        <div className="general-case-flex general-case-justify-center general-case-mt-4" style={{ gap: 12, flexWrap: 'wrap', marginBottom: 24 }}>
+          <button type="button" className="general-case-button" onClick={handleBack}>
+            Back
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="general-case-sheet">

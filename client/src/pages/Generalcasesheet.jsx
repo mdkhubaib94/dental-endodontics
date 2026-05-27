@@ -1,5 +1,5 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useMemo, useState, useEffect, useRef } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
 import './generalCaseSheet.css';
 import { API_BASE_URL } from '../config/api';
 import { getCurrentPatientId, getSharedXrayImage, saveSharedXrayImage } from '../utils/sharedXray';
@@ -8,8 +8,15 @@ import { setStoredPatientId } from '../utils/patientIdentity';
 
 const GeneralCaseSheet = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const DRAFT_ROUTE_KEY = '/general-case-sheet';
   const buildApiUrl = (path) => `${API_BASE_URL}${path.startsWith('/') ? path : `/${path}`}`;
+
+  const queryParams = useMemo(() => new URLSearchParams(location.search), [location.search]);
+  const queryPatientId = String(queryParams.get('patientId') || '').trim();
+  const queryPatientName = String(queryParams.get('patientName') || '').trim();
+
+  const [patientRecord, setPatientRecord] = useState(null);
 
   // State for modal
   const [modal, setModal] = useState({ isOpen: false, message: '' });
@@ -59,8 +66,16 @@ const GeneralCaseSheet = () => {
   const [isDraftHydrated, setIsDraftHydrated] = useState(false);
 
   useEffect(() => {
+    if (queryPatientId) {
+      setStoredPatientId(queryPatientId);
+      if (queryPatientName) {
+        localStorage.setItem('CurrentpatientName', queryPatientName);
+      }
+    }
+
     // Read patientId fresh from localStorage inside effect to catch dynamic changes
     const patientId = String(
+      queryPatientId ||
       localStorage.getItem('CurrentpatientId') ||
       localStorage.getItem('currentPatientId') ||
       localStorage.getItem('patientId') ||
@@ -126,6 +141,50 @@ const GeneralCaseSheet = () => {
       cancelled = true;
     };
   }, []);
+
+  useEffect(() => {
+    const patientId = String(
+      queryPatientId ||
+      localStorage.getItem('CurrentpatientId') ||
+      localStorage.getItem('currentPatientId') ||
+      localStorage.getItem('patientId') ||
+      ''
+    ).trim();
+
+    if (!patientId) {
+      setPatientRecord(null);
+      return;
+    }
+
+    let cancelled = false;
+
+    const loadPatientRecord = async () => {
+      try {
+        const token = localStorage.getItem('token');
+        const headers = token ? { Authorization: `Bearer ${token}` } : {};
+        const res = await fetch(buildApiUrl(`/api/patient-details/by-patient-id/${encodeURIComponent(patientId)}`), { headers });
+        const json = await res.json().catch(() => null);
+        if (!res.ok || json?.success === false) {
+          throw new Error(json?.message || 'Failed to load patient record');
+        }
+
+        if (!cancelled) {
+          setPatientRecord(json?.data || json?.patient || null);
+        }
+      } catch (error) {
+        console.error('[GeneralCaseSheet] Failed to load patient record:', error);
+        if (!cancelled) {
+          setPatientRecord(null);
+        }
+      }
+    };
+
+    void loadPatientRecord();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [queryPatientId]);
 
   useEffect(() => {
     const patientId = String(
@@ -654,10 +713,14 @@ const GeneralCaseSheet = () => {
 
       {/* GENERAL INFORMATION SECTION - Logo moved inside this container */}
       <div className="general-case-container" style={{ position: 'relative' }}>
-        {localStorage.getItem('CurrentpatientName') && (
+        {(localStorage.getItem('CurrentpatientName') || queryPatientName || patientRecord?.personalInfo?.fullName) && (
           <div style={{ position: 'absolute', left: '20px', top: '20px', padding: '8px 15px', backgroundColor: 'rgba(38, 40, 107, 0.95)', borderRadius: '4px', fontSize: '0.8em', color: 'white', border: '1px solid rgba(255,255,255,0.3)', textAlign: 'left', whiteSpace: 'nowrap' }}>
-            <div><strong>{localStorage.getItem('CurrentpatientName')}</strong></div>
-            {localStorage.getItem('CurrentpatientId') && <div><strong>ID:</strong> {localStorage.getItem('CurrentpatientId')}</div>}
+            <div><strong>{patientRecord?.personalInfo?.fullName || queryPatientName || localStorage.getItem('CurrentpatientName')}</strong></div>
+            {(queryPatientId || localStorage.getItem('CurrentpatientId')) && <div><strong>ID:</strong> {queryPatientId || localStorage.getItem('CurrentpatientId')}</div>}
+            {patientRecord?.personalInfo?.age !== undefined && patientRecord?.personalInfo?.age !== null && <div><strong>Age:</strong> {patientRecord.personalInfo.age}</div>}
+            {patientRecord?.personalInfo?.gender && <div><strong>Sex:</strong> {patientRecord.personalInfo.gender}</div>}
+            {patientRecord?.institutionInfo?.institutionName && <div><strong>Venue:</strong> {patientRecord.institutionInfo.institutionName}</div>}
+            {patientRecord?.medicalInfo?.chiefComplaint && <div style={{ maxWidth: '320px', whiteSpace: 'normal' }}><strong>Chief Complaint:</strong> {patientRecord.medicalInfo.chiefComplaint}</div>}
           </div>
         )}
         {/* Logo Container inside the blue box */}

@@ -15,6 +15,11 @@ const DEFAULT_PATIENT_PASSWORD = '123456';
 const escapeRegex = (value = '') => String(value).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 const STAFF_ROLE_REGEX = /^(admin|doctor|chief-doctor|pg)$/i;
 const PATIENT_ROLE_REGEX = /^patient$/i;
+const normalizeDateOrNull = (value) => {
+  if (!value) return null;
+  const parsedDate = new Date(value);
+  return Number.isNaN(parsedDate.getTime()) ? null : parsedDate;
+};
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const LEGACY_PATIENTS_FILE = path.resolve(__dirname, '../all-patients.json');
@@ -328,14 +333,18 @@ router.post('/', async (req, res) => {
         ...personalInfo,
         email: normalizedEmail || '',
         phone: normalizedPhone || '',
+        dateOfBirth: normalizeDateOrNull(personalInfo?.dateOfBirth),
         address: institutionInfo?.institutionAddress || personalInfo?.address || '', // Use institution address as patient address
       },
-      institutionInfo: institutionInfo || {
-        institutionName: '',
-        institutionAddress: '',
-        campDate: null
+      institutionInfo: {
+        institutionName: String(institutionInfo?.institutionName || '').trim(),
+        institutionAddress: String(institutionInfo?.institutionAddress || '').trim(),
+        campDate: normalizeDateOrNull(institutionInfo?.campDate),
       },
-      medicalInfo: {},
+      medicalInfo: {
+        chiefComplaint: String(req.body?.medicalInfo?.chiefComplaint || '').trim(),
+        pregnancyStatus: req.body?.medicalInfo?.pregnancyStatus || 'N/A',
+      },
       vitals: {},
       status,
       createdAt: new Date(),

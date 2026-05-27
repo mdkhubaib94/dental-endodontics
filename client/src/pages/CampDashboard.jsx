@@ -18,6 +18,12 @@ const normalizeListResponse = (payload) => {
   return [];
 };
 
+const normalizeDateValue = (value) => {
+  if (!value) return null;
+  const parsedDate = new Date(value);
+  return Number.isNaN(parsedDate.getTime()) ? null : parsedDate.toISOString();
+};
+
 const buildApiUrl = (path) => `${API_BASE_URL}${path}`;
 
 const CampDashboard = () => {
@@ -528,7 +534,7 @@ const CampDashboard = () => {
           lastName: newPatient.lastName?.trim() || '', // lastName is optional for students
           email: newPatient.email?.trim() || '', 
           phone: newPatient.phone.trim(),
-          dateOfBirth: newPatient.dob || null, 
+          dateOfBirth: normalizeDateValue(newPatient.dob), 
           age: calculatedAge || null,
           gender: newPatient.gender || 'Male',
           maritalStatus: newPatient.maritalStatus || 'Single', 
@@ -537,7 +543,7 @@ const CampDashboard = () => {
         institutionInfo: {
           institutionName: institutionInfo.institutionName?.trim() || '',
           institutionAddress: institutionInfo.institutionAddress?.trim() || '',
-          campDate: institutionInfo.campDate || null
+          campDate: normalizeDateValue(institutionInfo.campDate)
         },
         medicalInfo: { 
           chiefComplaint: newPatient.chiefComplaint?.trim() || '', 
@@ -554,7 +560,14 @@ const CampDashboard = () => {
         body: JSON.stringify(patientToAdd),
       });
       
-      if (!response.ok) throw new Error(`Failed to create patient: ${response.status}`);
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(
+          errorText
+            ? `Failed to create patient: ${response.status} - ${errorText}`
+            : `Failed to create patient: ${response.status}`
+        );
+      }
       
       const result = await response.json();
       const createdPatient = result.patient || result.data || patientToAdd;

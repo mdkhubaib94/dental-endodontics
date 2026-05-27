@@ -10,8 +10,9 @@ import {
   storeGeneralCaseXray,
 } from '../utils/generalCaseXray';
 import { getPatientResumeTarget } from '../utils/caseDraft';
+import { setStoredPatientId } from '../utils/patientIdentity';
 
-const PGDashboard = () => {
+const PGDashboard = ({ brandTitleOverride }) => {
   // State for form data
   const navigate = useNavigate();
   const { user, logout } = useAuth();
@@ -48,6 +49,12 @@ const PGDashboard = () => {
   };
 
   const pgDepartmentLabel = String(user?.department || localStorage.getItem('pgDepartment') || '').trim();
+  const normalizePgDepartment = (value) => String(value || '').trim().toLowerCase().replace(/[\s_]+/g, '');
+  const pgDepartmentKey = normalizePgDepartment(pgDepartmentLabel);
+  const isPublicHealthDentistry =
+    pgDepartmentKey.includes('publichealthdentistry') ||
+    pgDepartmentKey.includes('publichealth') ||
+    pgDepartmentKey.includes('communitydentistry');
 
   const [isSideNavOpen, setIsSideNavOpen] = useState(true);
   const [activeView, setActiveView] = useState('patient'); // 'patient' | 'assigned-cases'(Case Files) | 'my-appointments' | 'analytics'
@@ -72,6 +79,8 @@ const PGDashboard = () => {
     preferredLanguage: '',
     otherLanguage: '',
     chiefComplaint: '',
+    diagnosis: '',
+    treatmentPlan: '',
     currentMedications: 'None',
     knownAllergies: 'None',
     chronicConditions: 'None',
@@ -838,6 +847,7 @@ const PGDashboard = () => {
   const getCaseRouteForDepartment = (departmentValue) => {
     const departmentKey = normalizeDepartment(departmentValue);
 
+    if (departmentKey.includes('publichealthdentistry') || departmentKey.includes('publichealth') || departmentKey.includes('communitydentistry')) return '/general-case-sheet';
     if (departmentKey === 'pedodontics') return '/pedodontics';
     if (departmentKey === 'periodontics') return '/casePortal?dept=periodontics';
     if (departmentKey.includes('oral') || departmentKey.includes('maxillofacial')) return '/casePortal?dept=oral';
@@ -1024,6 +1034,116 @@ const PGDashboard = () => {
       setPgCaseSheetHistoryError('');
 
       const token = localStorage.getItem('token');
+
+      if (isPublicHealthDentistry) {
+        const patientRes = await fetch(buildApiUrl('/api/patient-details'), {
+          headers: token
+            ? {
+                Authorization: `Bearer ${token}`,
+                'Content-Type': 'application/json',
+              }
+            : { 'Content-Type': 'application/json' },
+        });
+
+        if (patientRes.status === 401) {
+          await ensureActiveSession(patientRes, 'Token expired');
+          return [];
+        }
+
+        const patientJson = await safeReadJson(patientRes);
+        if (!patientRes.ok) {
+          throw new Error(patientJson?.message || 'Failed to load registered patients');
+        }
+
+        const patientRows = Array.isArray(patientJson?.patients)
+          ? patientJson.patients
+          : Array.isArray(patientJson?.data)
+            ? patientJson.data
+            : Array.isArray(patientJson)
+              ? patientJson
+              : [];
+
+        const mergedRows = await Promise.all(
+          patientRows.map(async (patientItem) => {
+            const patientId = String(patientItem?.patientId || '').trim();
+            const firstName = String(patientItem?.personalInfo?.firstName || '').trim();
+            const middleName = String(patientItem?.personalInfo?.middleName || '').trim();
+            const lastName = String(patientItem?.personalInfo?.lastName || '').trim();
+            const patientName =
+              [firstName, middleName, lastName].filter(Boolean).join(' ').trim() ||
+              String(patientItem?.patientName || '').trim() ||
+              '—';
+
+            if (!patientId) {
+              return null;
+            }
+
+            try {
+              const generalRes = await fetch(buildApiUrl(`/api/general/patient/${encodeURIComponent(patientId)}`), {
+                headers: token ? { Authorization: `Bearer ${token}` } : {},
+              });
+
+              if (generalRes.status === 401) {
+                await ensureActiveSession(generalRes, 'Token expired');
+                return null;
+              }
+
+              const generalJson = await safeReadJson(generalRes);
+              const generalRows = Array.isArray(generalJson?.data) ? generalJson.data : [];
+              const latestCase = [...generalRows].sort((a, b) => {
+                const aTime = new Date(a?.updatedAt || a?.createdAt || 0).getTime();
+                const bTime = new Date(b?.updatedAt || b?.createdAt || 0).getTime();
+                return bTime - aTime;
+              })[0] || null;
+
+              const diagnosisText = String(
+                latestCase?.finalDiagnosis ||
+                latestCase?.provisionalDiagnosis ||
+                latestCase?.chiefComplaint ||
+                ''
+              ).trim();
+              const treatmentText = String(latestCase?.treatmentPlan || '').trim();
+              const isDone = Boolean(diagnosisText && treatmentText);
+
+              return {
+                caseId: String(latestCase?._id || ''),
+                department: 'Public Health Dentistry',
+                departmentKey: 'general',
+                patientId,
+                patientName,
+                doctorId: String(latestCase?.doctorId || '').trim(),
+                doctorName: String(latestCase?.doctorName || '').trim(),
+                chiefApproval: isDone ? 'done' : 'pending',
+                createdAt: latestCase?.createdAt || patientItem?.createdAt || null,
+                caseCompletionStatus: isDone ? 'done' : 'pending',
+                canViewCaseSheet: isDone && Boolean(latestCase?._id),
+              };
+            } catch (err) {
+              return {
+                caseId: '',
+                department: 'Public Health Dentistry',
+                departmentKey: 'general',
+                patientId,
+                patientName,
+                doctorId: '',
+                doctorName: '',
+                chiefApproval: 'pending',
+                createdAt: patientItem?.createdAt || null,
+                caseCompletionStatus: 'pending',
+                canViewCaseSheet: false,
+              };
+            }
+          })
+        );
+
+        const rows = mergedRows
+          .filter(Boolean)
+          .sort((a, b) => new Date(b?.createdAt || 0).getTime() - new Date(a?.createdAt || 0).getTime());
+
+        setPgCaseSheetHistory(rows);
+        return rows;
+      }
+
       const res = await fetch(buildApiUrl('/api/casesheets/pg/history'), {
         headers: {
           Authorization: `Bearer ${token}`,
@@ -1037,12 +1157,40 @@ const PGDashboard = () => {
       }
 
       const json = await res.json();
+      console.debug('[PGDashboard] /api/casesheets/pg/history response:', { status: res.status, ok: res.ok, json });
       if (!res.ok || !json?.success) {
         throw new Error(json?.message || 'Failed to load case sheet history');
       }
 
       const rows = Array.isArray(json.data) ? json.data : [];
       setPgCaseSheetHistory(rows);
+      // Fallback: if no rows but a patient is selected, try loading general cases for that patient
+      if ((!Array.isArray(rows) || rows.length === 0)) {
+        const currentPatientId = localStorage.getItem('CurrentpatientId') || '';
+        if (currentPatientId) {
+          try {
+            const genRes = await fetch(buildApiUrl(`/api/general/patient/${encodeURIComponent(currentPatientId)}`), { headers: { Authorization: token ? `Bearer ${token}` : '' } });
+            if (genRes.ok) {
+              const genJson = await genRes.json().catch(() => null);
+              const genRows = Array.isArray(genJson?.data) ? genJson.data : [];
+              const mapped = genRows.map(item => ({
+                caseId: String(item._id || ''),
+                department: 'General Case',
+                departmentKey: 'general',
+                patientId: String(item.patientId || '').trim(),
+                patientName: String(item.patientName || '').trim(),
+                doctorId: String(item.doctorId || '').trim(),
+                doctorName: String(item.doctorName || '').trim(),
+                chiefApproval: String(item.chiefApproval || ''),
+                createdAt: item.createdAt || null,
+              }));
+              if (mapped.length) setPgCaseSheetHistory(mapped);
+            }
+          } catch (err) {
+            console.error('[PGDashboard] fallback general/patient fetch failed', err);
+          }
+        }
+      }
       return rows;
     } catch (error) {
       console.error('Failed to fetch PG case sheet history', error);
@@ -1227,19 +1375,173 @@ const PGDashboard = () => {
       return;
     }
 
-    localStorage.setItem('CurrentpatientId', currentPatientId);
+    setStoredPatientId(currentPatientId);
+
+    const currentPatientName = String(
+      localStorage.getItem('CurrentpatientName') ||
+      [formData.firstName, formData.middleName, formData.lastName].filter(Boolean).join(' ') ||
+      ''
+    ).trim();
+    if (currentPatientName) {
+      localStorage.setItem('CurrentpatientName', currentPatientName);
+    }
 
     await cacheGeneralCaseXrayForPatient(currentPatientId);
 
-    const caseRoute = getCaseRouteForDepartment(user?.department || '');
+    const resolvedDepartmentLabel = String(
+      pgDepartmentLabel ||
+      user?.department ||
+      localStorage.getItem('ugDepartment') ||
+      'Public Health Dentistry'
+    ).trim();
+    const normalizedDept = normalizeDepartment(resolvedDepartmentLabel);
+    const isPublicHealthDept =
+      normalizedDept.includes('publichealthdentistry') ||
+      normalizedDept.includes('publichealth') ||
+      normalizedDept.includes('communitydentistry');
 
-    const resumeTarget = await getPatientResumeTarget(currentPatientId);
-    if (resumeTarget?.routeKey) {
-      navigate(resumeTarget.routeKey);
-      return;
+    let ensuredCaseId = '';
+    if (isPublicHealthDept) {
+      try {
+        ensuredCaseId = await ensurePublicHealthCaseSheetGenerated({
+          patientId: currentPatientId,
+          patientName: currentPatientName || currentPatientId,
+        });
+      } catch (caseError) {
+        showMessage(caseError?.message || 'Failed to prepare public health case sheet.', 'error');
+      }
     }
 
-    navigate(caseRoute, { state: { requestConsentAfterEntry: true } });
+    const departmentRoute = isPublicHealthDept
+      ? (ensuredCaseId ? '/general-case-view' : '/general-case-sheet')
+      : getCaseRouteForDepartment(resolvedDepartmentLabel);
+    const separator = departmentRoute.includes('?') ? '&' : '?';
+    const caseIdParam = ensuredCaseId ? `&caseId=${encodeURIComponent(ensuredCaseId)}` : '';
+    const patientRouteUrl = `${departmentRoute}${separator}patientId=${encodeURIComponent(currentPatientId)}&patientName=${encodeURIComponent(currentPatientName || currentPatientId)}&department=${encodeURIComponent(resolvedDepartmentLabel)}${caseIdParam}`;
+    window.open(patientRouteUrl, '_blank');
+  };
+
+  const getResolvedPractitionerId = () => {
+    const byRole = String(localStorage.getItem('pgId') || '').trim();
+    const fallbackDoctor = String(localStorage.getItem('doctorId') || '').trim();
+    const fallbackUser = String(user?.Identity || '').trim();
+    return byRole || fallbackDoctor || fallbackUser;
+  };
+
+  const getResolvedPractitionerName = () => {
+    const byRole = String(localStorage.getItem('pgName') || '').trim();
+    const fallbackDoctor = String(localStorage.getItem('doctorName') || '').trim();
+    const fallbackUser = String(user?.name || '').trim();
+    return byRole || fallbackDoctor || fallbackUser || 'PG';
+  };
+
+  const ensurePublicHealthCaseSheetGenerated = async ({ patientId, patientName }) => {
+    const normalizedPatientId = String(patientId || '').trim();
+    if (!normalizedPatientId) {
+      throw new Error('Patient ID missing for case sheet generation.');
+    }
+
+    const token = localStorage.getItem('token');
+    if (!token) {
+      throw new Error('Authentication token missing. Please log in again.');
+    }
+
+    const listRes = await fetch(buildApiUrl(`/api/general/patient/${encodeURIComponent(normalizedPatientId)}`), {
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+    });
+
+    if (listRes.status === 401) {
+      await ensureActiveSession(listRes, 'Token expired');
+      throw new Error('Session expired. Please log in again.');
+    }
+
+    const listJson = await safeReadJson(listRes);
+    if (!listRes.ok || listJson?.success === false) {
+      throw new Error(listJson?.message || 'Failed to verify existing case sheet.');
+    }
+
+    const existingCases = Array.isArray(listJson?.data) ? listJson.data : [];
+    const existingPublicHealthCase = existingCases.find((row) => {
+      const department = String(row?.referredDepartment || row?.selectedDepartments?.[0] || '').trim().toLowerCase();
+      return department.includes('public health') || department.includes('community') || department.includes('publichealth');
+    });
+
+    const latestDiagnosisText = String(
+      existingPublicHealthCase?.finalDiagnosis ||
+      existingPublicHealthCase?.provisionalDiagnosis ||
+      existingPublicHealthCase?.chiefComplaint ||
+      ''
+    ).trim();
+    const latestTreatmentText = String(existingPublicHealthCase?.treatmentPlan || '').trim();
+    const existingCaseIsComplete = Boolean(latestDiagnosisText && latestTreatmentText);
+
+    const currentDiagnosis = String(formData.diagnosis || '').trim();
+    const currentTreatment = String(formData.treatmentPlan || '').trim();
+    const hasCurrentFormData = Boolean(currentDiagnosis || currentTreatment);
+
+    if (existingPublicHealthCase?._id && (existingCaseIsComplete || !hasCurrentFormData)) {
+      return String(existingPublicHealthCase._id);
+    }
+
+    const doctorId = getResolvedPractitionerId();
+    const doctorName = getResolvedPractitionerName();
+    if (!doctorId || !doctorName) {
+      throw new Error('Doctor/PG identity missing for case sheet generation.');
+    }
+
+    const resolvedPatientName = String(patientName || localStorage.getItem('CurrentpatientName') || normalizedPatientId).trim();
+    const resolvedDepartmentLabel = String(
+      pgDepartmentLabel ||
+      user?.department ||
+      localStorage.getItem('ugDepartment') ||
+      'Public Health Dentistry'
+    ).trim();
+
+    const payload = {
+      patientId: normalizedPatientId,
+      patientName: resolvedPatientName,
+      doctorId,
+      doctorName,
+      chiefComplaint: currentDiagnosis,
+      presentIllness: '',
+      pastMedical: '',
+      pastDental: '',
+      personalHistory: '',
+      familyHistory: '',
+      clinicalFindings: '',
+      provisionalDiagnosis: currentDiagnosis,
+      investigations: '',
+      finalDiagnosis: currentDiagnosis,
+      description: '',
+      generalDescription: '',
+      selectedDepartments: [resolvedDepartmentLabel],
+      treatmentPlan: currentTreatment,
+      xrayImage: '',
+    };
+
+    const createRes = await fetch(buildApiUrl('/api/general/save'), {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(payload),
+    });
+
+    if (createRes.status === 401) {
+      await ensureActiveSession(createRes, 'Token expired');
+      throw new Error('Session expired. Please log in again.');
+    }
+
+    const createJson = await safeReadJson(createRes);
+    if (!createRes.ok || createJson?.success === false) {
+      throw new Error(createJson?.message || 'Failed to auto-generate Public Health case sheet.');
+    }
+
+    return String(createJson?.caseId || createJson?.data?._id || '');
   };
 
   // Close dropdown on outside click
@@ -1254,34 +1556,56 @@ const PGDashboard = () => {
   }, []);
 
   const populateFormWithPatientData = (patientData) => {
-    const preferredLanguage = patientData.personalInfo?.preferredLanguage || '';
+    const preferredLanguage =
+      patientData.personalInfo?.preferredLanguage ||
+      patientData.preferredLanguage ||
+      '';
     const isOtherLanguage = !['English', 'Hindi', 'Tamil'].includes(preferredLanguage);
-    
-    const dob = patientData.personalInfo?.dateOfBirth ? new Date(patientData.personalInfo.dateOfBirth).toISOString().split('T')[0] : '';
-    const age = dob ? calculateAge(dob) : (patientData.personalInfo?.age || '');
-    
-    setFormData({
-      ...formData,
-      firstName: patientData.personalInfo?.firstName || '',
-      middleName: patientData.personalInfo?.middleName || '',
-      lastName: patientData.personalInfo?.lastName || '',
-      dob: dob,
-      age: age,
-      gender: patientData.personalInfo?.gender || '',
-      maritalStatus: patientData.personalInfo?.maritalStatus || '',
-      preferredLanguage: isOtherLanguage ? 'Other' : preferredLanguage,
-      otherLanguage: isOtherLanguage ? preferredLanguage : '',
-      chiefComplaint: patientData.medicalInfo?.chiefComplaint || '',
-      currentMedications: patientData.medicalInfo?.currentMedications?.join(', ') || 'None',
-      knownAllergies: patientData.medicalInfo?.knownAllergies?.join(', ') || 'None',
-      chronicConditions: patientData.medicalInfo?.chronicConditions?.join(', ') || 'None',
-      pastSurgeries: patientData.medicalInfo?.pastSurgeries?.join(', ') || 'None',
-      pregnancyStatus: patientData.medicalInfo?.pregnancyStatus || '',
-      primaryDentalConcerns: patientData.medicalInfo?.dentalConcerns?.join(', ') || 'None',
-      lastDentalVisit: patientData.medicalInfo?.lastDentalVisit ? new Date(patientData.medicalInfo.lastDentalVisit).toISOString().split('T')[0] : '',
-      bloodGroup: patientData.vitals?.bloodGroup || '',
-      drugAllergies: patientData.vitals?.drugAllergies?.join(', ') || '',
-      dietAllergies: patientData.vitals?.dietAllergies?.join(', ') || ''
+
+    const rawDob =
+      patientData.personalInfo?.dateOfBirth ||
+      patientData.personalInfo?.dob ||
+      patientData.dateOfBirth ||
+      patientData.dob ||
+      '';
+    const parsedDob = rawDob ? new Date(rawDob) : null;
+    const dob = parsedDob && !Number.isNaN(parsedDob.getTime())
+      ? parsedDob.toISOString().split('T')[0]
+      : '';
+
+    setFormData((prev) => {
+      const resolvedDob = dob || prev.dob || '';
+      const resolvedAge = resolvedDob
+        ? calculateAge(resolvedDob)
+        : (patientData.personalInfo?.age || patientData.age || prev.age || '');
+
+      return {
+        ...prev,
+        firstName: patientData.personalInfo?.firstName || patientData.firstName || prev.firstName || '',
+        middleName: patientData.personalInfo?.middleName || patientData.middleName || prev.middleName || '',
+        lastName: patientData.personalInfo?.lastName || patientData.lastName || prev.lastName || '',
+        dob: resolvedDob,
+        age: resolvedAge,
+        gender: patientData.personalInfo?.gender || patientData.gender || prev.gender || '',
+        maritalStatus: patientData.personalInfo?.maritalStatus || patientData.maritalStatus || prev.maritalStatus || '',
+        preferredLanguage: preferredLanguage ? (isOtherLanguage ? 'Other' : preferredLanguage) : prev.preferredLanguage,
+        otherLanguage: preferredLanguage ? (isOtherLanguage ? preferredLanguage : '') : prev.otherLanguage,
+        chiefComplaint: patientData.medicalInfo?.chiefComplaint || patientData.chiefComplaint || prev.chiefComplaint || '',
+        diagnosis: patientData.medicalInfo?.diagnosis || patientData.diagnosis || prev.diagnosis || '',
+        treatmentPlan: patientData.medicalInfo?.treatmentPlan || patientData.treatmentPlan || prev.treatmentPlan || '',
+        currentMedications: patientData.medicalInfo?.currentMedications?.join(', ') || patientData.currentMedications || prev.currentMedications || 'None',
+        knownAllergies: patientData.medicalInfo?.knownAllergies?.join(', ') || patientData.knownAllergies || prev.knownAllergies || 'None',
+        chronicConditions: patientData.medicalInfo?.chronicConditions?.join(', ') || patientData.chronicConditions || prev.chronicConditions || 'None',
+        pastSurgeries: patientData.medicalInfo?.pastSurgeries?.join(', ') || patientData.pastSurgeries || prev.pastSurgeries || 'None',
+        pregnancyStatus: patientData.medicalInfo?.pregnancyStatus || patientData.pregnancyStatus || prev.pregnancyStatus || '',
+        primaryDentalConcerns: patientData.medicalInfo?.dentalConcerns?.join(', ') || patientData.primaryDentalConcerns || prev.primaryDentalConcerns || 'None',
+        lastDentalVisit: patientData.medicalInfo?.lastDentalVisit
+          ? new Date(patientData.medicalInfo.lastDentalVisit).toISOString().split('T')[0]
+          : (patientData.lastDentalVisit || prev.lastDentalVisit || ''),
+        bloodGroup: patientData.vitals?.bloodGroup || patientData.bloodGroup || prev.bloodGroup || '',
+        drugAllergies: patientData.vitals?.drugAllergies?.join(', ') || patientData.drugAllergies || prev.drugAllergies || '',
+        dietAllergies: patientData.vitals?.dietAllergies?.join(', ') || patientData.dietAllergies || prev.dietAllergies || '',
+      };
     });
 
     setHpiSelections(patientData.medicalInfo?.hpi || []);
@@ -1291,16 +1615,24 @@ const PGDashboard = () => {
   //validate
   const validateForm = () => {
     const errors = {};
-    const requiredFields = {
-      firstName: 'First Name',
-      lastName: 'Last Name',
-      dob: 'Date of Birth',
-      gender: 'Gender',
-      maritalStatus: 'Marital Status',
-      preferredLanguage: 'Preferred Language',
-      chiefComplaint: 'Chief Complaint',
-      bloodGroup: 'Blood Group'
-    };
+    const requiredFields = isPublicHealthDentistry
+      ? {
+          firstName: 'First Name',
+          dob: 'Date of Birth',
+          gender: 'Gender',
+          diagnosis: 'Diagnosis',
+          treatmentPlan: 'Treatment Plan',
+        }
+      : {
+          firstName: 'First Name',
+          lastName: 'Last Name',
+          dob: 'Date of Birth',
+          gender: 'Gender',
+          maritalStatus: 'Marital Status',
+          preferredLanguage: 'Preferred Language',
+          chiefComplaint: 'Chief Complaint',
+          bloodGroup: 'Blood Group'
+        };
 
     // Check required fields
     for (const [field, label] of Object.entries(requiredFields)) {
@@ -1310,13 +1642,22 @@ const PGDashboard = () => {
     }
 
     // Check if preferred language is "Other" and otherLanguage is empty
-    if (formData.preferredLanguage === 'Other' && (!formData.otherLanguage || formData.otherLanguage.trim() === '')) {
+    if (!isPublicHealthDentistry && formData.preferredLanguage === 'Other' && (!formData.otherLanguage || formData.otherLanguage.trim() === '')) {
       errors.otherLanguage = 'This field must be filled';
+    }
+
+    if (isPublicHealthDentistry) {
+      if (!formData.diagnosis || formData.diagnosis.trim() === '') {
+        errors.diagnosis = 'This field must be filled';
+      }
+      if (!formData.treatmentPlan || formData.treatmentPlan.trim() === '') {
+        errors.treatmentPlan = 'This field must be filled';
+      }
     }
 
     // Check pregnancy status if conditions are met
     const showPregnancyStatus = formData.gender === 'Female' && formData.maritalStatus === 'Married';
-    if (showPregnancyStatus && (!formData.pregnancyStatus || formData.pregnancyStatus.trim() === '')) {
+    if (!isPublicHealthDentistry && showPregnancyStatus && (!formData.pregnancyStatus || formData.pregnancyStatus.trim() === '')) {
       errors.pregnancyStatus = 'This field must be filled';
     }
 
@@ -1391,7 +1732,10 @@ const PGDashboard = () => {
 
       // Optional: also merge any existing doctor-patient details for this ID
       try {
-        const existingRes = await fetch(buildApiUrl(`/api/doctor-patient/${encodeURIComponent(enteredId)}`));
+        const token = localStorage.getItem('token');
+        const existingRes = await fetch(buildApiUrl(`/api/doctor-patient/${encodeURIComponent(enteredId)}`), {
+          headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+        });
         if (existingRes.ok) {
           const existingResult = await existingRes.json();
           const existingPatientData = existingResult.data || existingResult;
@@ -1520,37 +1864,55 @@ const PGDashboard = () => {
       // Prepare the data in the format your backend expects
       const shouldIncludePregnancyStatus = formData.gender === 'Female' && formData.maritalStatus === 'Married';
 
-      const patientData = {
-        patientId: generatedUserId,
-        personalInfo: {
-          firstName: formData.firstName,
-          middleName: formData.middleName,
-          lastName: formData.lastName,
-          dateOfBirth: formData.dob,
-          age: parseInt(formData.age) || 0,
-          gender: formData.gender,
-          maritalStatus: formData.maritalStatus,
-          preferredLanguage: formData.preferredLanguage === 'Other' ? formData.otherLanguage : formData.preferredLanguage
-        },
-        medicalInfo: {
-          chiefComplaint: formData.chiefComplaint,
-          hpi: hpiSelections,
-          pastMedicalHistory: pastMedicalHistory,
-          personalHabits: personalHabits,
-          currentMedications: formData.currentMedications.split(',').map(item => item.trim()).filter(item => item && item !== 'None'),
-          knownAllergies: formData.knownAllergies.split(',').map(item => item.trim()).filter(item => item && item !== 'None'),
-          chronicConditions: formData.chronicConditions.split(',').map(item => item.trim()).filter(item => item && item !== 'None'),
-          pastSurgeries: formData.pastSurgeries.split(',').map(item => item.trim()).filter(item => item && item !== 'None'),
-          pregnancyStatus: shouldIncludePregnancyStatus ? formData.pregnancyStatus : 'N/A',
-          dentalConcerns: formData.primaryDentalConcerns.split(',').map(item => item.trim()).filter(item => item && item !== 'None'),
-          lastDentalVisit: formData.lastDentalVisit || null
-        },
-        vitals: {
-          bloodGroup: formData.bloodGroup,
-          drugAllergies: formData.drugAllergies.split(',').map(item => item.trim()).filter(item => item),
-          dietAllergies: formData.dietAllergies.split(',').map(item => item.trim()).filter(item => item)
-        }
-      };
+      const patientData = isPublicHealthDentistry
+        ? {
+            patientId: generatedUserId,
+            personalInfo: {
+              firstName: formData.firstName,
+              middleName: formData.middleName,
+              lastName: formData.lastName,
+              dateOfBirth: formData.dob,
+              age: parseInt(formData.age) || 0,
+              gender: formData.gender,
+              maritalStatus: formData.maritalStatus,
+              preferredLanguage: formData.preferredLanguage === 'Other' ? formData.otherLanguage : formData.preferredLanguage
+            },
+            medicalInfo: {
+              diagnosis: formData.diagnosis,
+              treatmentPlan: formData.treatmentPlan,
+            }
+          }
+        : {
+            patientId: generatedUserId,
+            personalInfo: {
+              firstName: formData.firstName,
+              middleName: formData.middleName,
+              lastName: formData.lastName,
+              dateOfBirth: formData.dob,
+              age: parseInt(formData.age) || 0,
+              gender: formData.gender,
+              maritalStatus: formData.maritalStatus,
+              preferredLanguage: formData.preferredLanguage === 'Other' ? formData.otherLanguage : formData.preferredLanguage
+            },
+            medicalInfo: {
+              chiefComplaint: formData.chiefComplaint,
+              hpi: hpiSelections,
+              pastMedicalHistory: pastMedicalHistory,
+              personalHabits: personalHabits,
+              currentMedications: formData.currentMedications.split(',').map(item => item.trim()).filter(item => item && item !== 'None'),
+              knownAllergies: formData.knownAllergies.split(',').map(item => item.trim()).filter(item => item && item !== 'None'),
+              chronicConditions: formData.chronicConditions.split(',').map(item => item.trim()).filter(item => item && item !== 'None'),
+              pastSurgeries: formData.pastSurgeries.split(',').map(item => item.trim()).filter(item => item && item !== 'None'),
+              pregnancyStatus: shouldIncludePregnancyStatus ? formData.pregnancyStatus : 'N/A',
+              dentalConcerns: formData.primaryDentalConcerns.split(',').map(item => item.trim()).filter(item => item && item !== 'None'),
+              lastDentalVisit: formData.lastDentalVisit || null
+            },
+            vitals: {
+              bloodGroup: formData.bloodGroup,
+              drugAllergies: formData.drugAllergies.split(',').map(item => item.trim()).filter(item => item),
+              dietAllergies: formData.dietAllergies.split(',').map(item => item.trim()).filter(item => item)
+            }
+          };
 
       // Send data to backend
     const response = await fetch(buildApiUrl('/api/doctor-patient'), {
@@ -1572,6 +1934,15 @@ const PGDashboard = () => {
       const name = result.patientName;
       localStorage.setItem('CurrentpatientName', name);
       localStorage.setItem('CurrentpatientId', id);
+
+      if (isPublicHealthDentistry) {
+        try {
+          await ensurePublicHealthCaseSheetGenerated({ patientId: id, patientName: name });
+        } catch (caseError) {
+          showMessage(`Patient saved, but case sheet generation failed: ${caseError.message}`, 'error');
+        }
+      }
+
       showMessage('Patient details saved successfully!', 'success');
       console.log('Patient data from localStorage:', {
       });
@@ -1579,6 +1950,7 @@ const PGDashboard = () => {
       setCanNavigateCases(true);
       // Refresh case-sheet status panel for this patient
       fetchCaseStatuses(id);
+      fetchPgCaseSheetHistory();
     } else {
       const error = await response.json();
       showMessage(`Error saving patient: ${error.message}`, 'error');
@@ -1638,7 +2010,7 @@ const PGDashboard = () => {
               }}
             />
             <div className="chief-brand-title">
-              PG Dashboard
+              {brandTitleOverride || 'PG Dashboard'}
               {pgDepartmentLabel ? (
                 <span className="chief-brand-title-dept">— {formatDepartmentLabel(pgDepartmentLabel)}</span>
               ) : null}
@@ -1833,7 +2205,7 @@ const PGDashboard = () => {
                 )}
 
                 {/* General Case Sheet Preview */}
-                {showUserIdDisplay && (
+                {showUserIdDisplay && !isPublicHealthDentistry && (
                   <div className="general-case-preview-section" style={{ margin: '16px 0', padding: '12px 16px', background: '#f8fafc', borderRadius: 8, border: '1px solid #e2e8f0' }}>
                     <div style={{ fontWeight: 600, marginBottom: 8 }}>General Case Sheet Preview</div>
                     {generalCasePreviewLoading ? (
@@ -1872,7 +2244,19 @@ const PGDashboard = () => {
                           const pid = String(generatedUserId || '').trim();
                           const pname = String(localStorage.getItem('CurrentpatientName') || '').trim();
                           if (pid) {
-                            window.open(`/general-case-view?patientId=${encodeURIComponent(pid)}&patientName=${encodeURIComponent(pname)}`, '_blank');
+                            const normalizedDept = normalizeDepartment(pgDepartmentLabel || user?.department || '');
+                            const isPublicHealthDept =
+                              normalizedDept.includes('publichealthdentistry') ||
+                              normalizedDept.includes('publichealth') ||
+                              normalizedDept.includes('communitydentistry');
+                            const departmentRoute = isPublicHealthDept
+                              ? '/general-case-view'
+                              : getCaseRouteForDepartment(pgDepartmentLabel || user?.department || '');
+                            const separator = departmentRoute.includes('?') ? '&' : '?';
+                            window.open(
+                              `${departmentRoute}${separator}patientId=${encodeURIComponent(pid)}&patientName=${encodeURIComponent(pname || pid)}&department=${encodeURIComponent(pgDepartmentLabel || user?.department || '')}`,
+                              '_blank'
+                            );
                           }
                         }}
                         disabled={!generatedUserId}
@@ -1902,8 +2286,8 @@ const PGDashboard = () => {
                     </div>
 
                     <div className="input-group">
-                      <label htmlFor="last-name">Last Name <span style={{ color: 'red' }}>*</span></label>
-                      <input type="text" id="last-name" name="lastName" value={formData.lastName} onChange={handleInputChange} required />
+                      <label htmlFor="last-name">Last Name</label>
+                      <input type="text" id="last-name" name="lastName" value={formData.lastName} onChange={handleInputChange} required={!isPublicHealthDentistry} />
                       {fieldErrors.lastName && <div className="error-message">{fieldErrors.lastName}</div>}
                     </div>
 
@@ -1934,162 +2318,203 @@ const PGDashboard = () => {
                       {fieldErrors.gender && <div className="error-message">{fieldErrors.gender}</div>}
                     </div>
 
-                    {/* Marital Status */}
-                    <div className="input-group">
-                      <label>Marital Status <span style={{ color: 'red' }}>*</span></label>
-                      <div className="radio-options">
-                        {['Single', 'Married', 'Other'].map((status) => (
-                          <label key={status} className="radio-option">
-                            <input type="radio" name="maritalStatus" value={status} checked={formData.maritalStatus === status} onChange={handleInputChange} />
-                            <span>{status}</span>
-                          </label>
-                        ))}
-                      </div>
-                      {fieldErrors.maritalStatus && <div className="error-message">{fieldErrors.maritalStatus}</div>}
-                    </div>
-
-                    {/* Pregnancy Status */}
-                    {formData.gender === 'Female' && formData.maritalStatus === 'Married' && (
-                      <div className="input-group">
-                        <label>Pregnancy Status <span style={{ color: 'red' }}>*</span></label>
-                        <div className="radio-options">
-                          {['No', 'Yes', 'N/A'].map((status) => (
-                            <label key={status} className="radio-option">
-                              <input type="radio" name="pregnancyStatus" value={status} checked={formData.pregnancyStatus === status} onChange={handleInputChange} />
-                              <span>{status}</span>
-                            </label>
-                          ))}
+                    {!isPublicHealthDentistry && (
+                      <>
+                        {/* Marital Status */}
+                        <div className="input-group">
+                          <label>Marital Status <span style={{ color: 'red' }}>*</span></label>
+                          <div className="radio-options">
+                            {['Single', 'Married', 'Other'].map((status) => (
+                              <label key={status} className="radio-option">
+                                <input type="radio" name="maritalStatus" value={status} checked={formData.maritalStatus === status} onChange={handleInputChange} />
+                                <span>{status}</span>
+                              </label>
+                            ))}
+                          </div>
+                          {fieldErrors.maritalStatus && <div className="error-message">{fieldErrors.maritalStatus}</div>}
                         </div>
-                        {fieldErrors.pregnancyStatus && <div className="error-message">{fieldErrors.pregnancyStatus}</div>}
-                      </div>
+
+                        {/* Pregnancy Status */}
+                        {formData.gender === 'Female' && formData.maritalStatus === 'Married' && (
+                          <div className="input-group">
+                            <label>Pregnancy Status <span style={{ color: 'red' }}>*</span></label>
+                            <div className="radio-options">
+                              {['No', 'Yes', 'N/A'].map((status) => (
+                                <label key={status} className="radio-option">
+                                  <input type="radio" name="pregnancyStatus" value={status} checked={formData.pregnancyStatus === status} onChange={handleInputChange} />
+                                  <span>{status}</span>
+                                </label>
+                              ))}
+                            </div>
+                            {fieldErrors.pregnancyStatus && <div className="error-message">{fieldErrors.pregnancyStatus}</div>}
+                          </div>
+                        )}
+
+                        {/* Preferred Language */}
+                        <div className="input-group">
+                          <label htmlFor="preferred-language">Preferred Language <span style={{ color: 'red' }}>*</span></label>
+                          <select id="preferred-language" name="preferredLanguage" value={formData.preferredLanguage} onChange={handleInputChange}>
+                            <option value="">Select</option>
+                            <option value="English">English</option>
+                            <option value="Hindi">Hindi</option>
+                            <option value="Tamil">Tamil</option>
+                            <option value="Other">Other</option>
+                          </select>
+                          {fieldErrors.preferredLanguage && <div className="error-message">{fieldErrors.preferredLanguage}</div>}
+                        </div>
+
+                        {formData.preferredLanguage === 'Other' && (
+                          <div className="input-group">
+                            <label htmlFor="other-language">Specify Language <span style={{ color: 'red' }}>*</span></label>
+                            <input type="text" id="other-language" name="otherLanguage" value={formData.otherLanguage} onChange={handleInputChange} placeholder="Enter preferred language" />
+                            {fieldErrors.otherLanguage && <div className="error-message">{fieldErrors.otherLanguage}</div>}
+                          </div>
+                        )}
+                      </>
                     )}
 
-                    {/* Preferred Language */}
-                    <div className="input-group">
-                      <label htmlFor="preferred-language">Preferred Language <span style={{ color: 'red' }}>*</span></label>
-                      <select id="preferred-language" name="preferredLanguage" value={formData.preferredLanguage} onChange={handleInputChange}>
-                        <option value="">Select</option>
-                        <option value="English">English</option>
-                        <option value="Hindi">Hindi</option>
-                        <option value="Tamil">Tamil</option>
-                        <option value="Other">Other</option>
-                      </select>
-                      {fieldErrors.preferredLanguage && <div className="error-message">{fieldErrors.preferredLanguage}</div>}
-                    </div>
+                    {isPublicHealthDentistry ? (
+                      <>
+                        <h3>Public Health Dentistry: Diagnosis &amp; Treatment Plan</h3>
+                        <div className="input-group">
+                          <label htmlFor="diagnosis">
+                            Diagnosis <span style={{ color: 'red' }}>*</span>
+                          </label>
+                          <textarea
+                            id="diagnosis"
+                            name="diagnosis"
+                            value={formData.diagnosis}
+                            onChange={handleInputChange}
+                            rows="3"
+                            placeholder="Enter diagnosis"
+                          />
+                          {fieldErrors.diagnosis && <div className="error-message">{fieldErrors.diagnosis}</div>}
+                        </div>
 
-                    {formData.preferredLanguage === 'Other' && (
-                      <div className="input-group">
-                        <label htmlFor="other-language">Specify Language <span style={{ color: 'red' }}>*</span></label>
-                        <input type="text" id="other-language" name="otherLanguage" value={formData.otherLanguage} onChange={handleInputChange} placeholder="Enter preferred language" />
-                        {fieldErrors.otherLanguage && <div className="error-message">{fieldErrors.otherLanguage}</div>}
-                      </div>
+                        <div className="input-group">
+                          <label htmlFor="treatment-plan">
+                            Treatment Plan <span style={{ color: 'red' }}>*</span>
+                          </label>
+                          <textarea
+                            id="treatment-plan"
+                            name="treatmentPlan"
+                            value={formData.treatmentPlan}
+                            onChange={handleInputChange}
+                            rows="4"
+                            placeholder="Enter treatment plan"
+                          />
+                          {fieldErrors.treatmentPlan && <div className="error-message">{fieldErrors.treatmentPlan}</div>}
+                        </div>
+                      </>
+                    ) : (
+                      <>
+                        <h3>Patient Case Entry - Chief Complaint &amp; History</h3>
+
+                        {/* Chief Complaint */}
+                        <div className="input-group">
+                          <label htmlFor="chief-complaint">Chief Complaint <span style={{ color: 'red' }}>*</span></label>
+                          <select id="chief-complaint" name="chiefComplaint" value={formData.chiefComplaint} onChange={handleInputChange}>
+                            <option value="">Select a primary issue</option>
+                            {chiefComplaints.map((complaint) => (
+                              <option key={complaint} value={complaint}>{complaint}</option>
+                            ))}
+                          </select>
+                          {fieldErrors.chiefComplaint && <div className="error-message">{fieldErrors.chiefComplaint}</div>}
+                        </div>
+
+                        {/* HPI */}
+                        <div className="input-group">
+                          <label>History of Present Illness (HPI) - Select all that apply</label>
+                          <div className="checkbox-options">
+                            {hpiOptions.map((option) => (
+                              <label key={option} className="checkbox-option">
+                                <input type="checkbox" name="hpi" value={option} checked={hpiSelections.includes(option)} onChange={handleInputChange} disabled={hpiSelections.includes('None') && option !== 'None'} />
+                                <span>{option}</span>
+                              </label>
+                            ))}
+                          </div>
+                        </div>
+
+                        {/* Past Medical History */}
+                        <div className="input-group">
+                          <label>Past Medical History - Select all that apply</label>
+                          <div className="checkbox-options">
+                            {pastMedicalHistoryOptions.map((option) => (
+                              <label key={option} className="checkbox-option">
+                                <input type="checkbox" name="past-medical-history" value={option} checked={pastMedicalHistory.includes(option)} onChange={handleInputChange} disabled={pastMedicalHistory.includes('None') && option !== 'None'} />
+                                <span>{option}</span>
+                              </label>
+                            ))}
+                          </div>
+                        </div>
+
+                        {/* Personal Habits */}
+                        <div className="input-group">
+                          <label>Personal Habits - Select all that apply</label>
+                          <div className="checkbox-options">
+                            {personalHabitsOptions.map((option) => (
+                              <label key={option} className="checkbox-option">
+                                <input type="checkbox" name="personal-habits" value={option} checked={personalHabits.includes(option)} onChange={handleInputChange} disabled={personalHabits.includes('None') && option !== 'None'} />
+                                <span>{option}</span>
+                              </label>
+                            ))}
+                          </div>
+                        </div>
+
+                        <div className="input-group">
+                          <h3>Medical history</h3>
+                          <label htmlFor="current-medications">Current Medications</label>
+                          <textarea id="current-medications" name="currentMedications" value={formData.currentMedications} onChange={handleInputChange} rows="2" />
+                        </div>
+
+                        <div className="input-group">
+                          <label htmlFor="known-allergies">Known Allergies (e.g., latex, medications, anesthetics)</label>
+                          <textarea id="known-allergies" name="knownAllergies" value={formData.knownAllergies} onChange={handleInputChange} rows="2" />
+                        </div>
+
+                        <div className="input-group">
+                          <label htmlFor="chronic-conditions">Chronic Conditions (e.g., diabetes, heart disease)</label>
+                          <textarea id="chronic-conditions" name="chronicConditions" value={formData.chronicConditions} onChange={handleInputChange} rows="2" />
+                        </div>
+
+                        <div className="input-group">
+                          <label htmlFor="past-surgeries">Past Surgeries</label>
+                          <textarea id="past-surgeries" name="pastSurgeries" value={formData.pastSurgeries} onChange={handleInputChange} rows="2" />
+                        </div>
+
+                        <div className="input-group">
+                          <label htmlFor="primary-dental-concerns">Primary Dental Concerns (e.g., pain, sensitivity, bleeding gums)</label>
+                          <textarea id="primary-dental-concerns" name="primaryDentalConcerns" value={formData.primaryDentalConcerns} onChange={handleInputChange} rows="2" />
+                        </div>
+
+                        <div className="input-group">
+                          <label htmlFor="last-dental-visit">Date of Last Dental Visit</label>
+                          <input type="date" id="last-dental-visit" name="lastDentalVisit" value={formData.lastDentalVisit} onChange={handleInputChange} />
+                        </div>
+
+                        <h3>Other Information</h3>
+                        <div className="form-grid">
+                          <div className="input-group">
+                            <label htmlFor="blood-group">Blood Group <span style={{ color: 'red' }}>*</span></label>
+                            <select id="blood-group" name="bloodGroup" value={formData.bloodGroup} onChange={handleInputChange}>
+                              <option value="">Select Blood Group</option>
+                              {['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'].map((bg) => (
+                                <option key={bg} value={bg}>{bg}</option>
+                              ))}
+                            </select>
+                            {fieldErrors.bloodGroup && <div className="error-message">{fieldErrors.bloodGroup}</div>}
+                          </div>
+                          <div className="input-group">
+                            <label htmlFor="drug-allergies">Drug Allergies</label>
+                            <input type="text" id="drug-allergies" name="drugAllergies" value={formData.drugAllergies} onChange={handleInputChange} placeholder="Specify drug allergies" />
+                          </div>
+                          <div className="input-group">
+                            <label htmlFor="diet-allergies">Diet Allergies</label>
+                            <input type="text" id="diet-allergies" name="dietAllergies" value={formData.dietAllergies} onChange={handleInputChange} placeholder="Specify diet allergies" />
+                          </div>
+                        </div>
+                      </>
                     )}
-
-                    <h3>Patient Case Entry - Chief Complaint &amp; History</h3>
-
-                    {/* Chief Complaint */}
-                    <div className="input-group">
-                      <label htmlFor="chief-complaint">Chief Complaint <span style={{ color: 'red' }}>*</span></label>
-                      <select id="chief-complaint" name="chiefComplaint" value={formData.chiefComplaint} onChange={handleInputChange}>
-                        <option value="">Select a primary issue</option>
-                        {chiefComplaints.map((complaint) => (
-                          <option key={complaint} value={complaint}>{complaint}</option>
-                        ))}
-                      </select>
-                      {fieldErrors.chiefComplaint && <div className="error-message">{fieldErrors.chiefComplaint}</div>}
-                    </div>
-
-                    {/* HPI */}
-                    <div className="input-group">
-                      <label>History of Present Illness (HPI) - Select all that apply</label>
-                      <div className="checkbox-options">
-                        {hpiOptions.map((option) => (
-                          <label key={option} className="checkbox-option">
-                            <input type="checkbox" name="hpi" value={option} checked={hpiSelections.includes(option)} onChange={handleInputChange} disabled={hpiSelections.includes('None') && option !== 'None'} />
-                            <span>{option}</span>
-                          </label>
-                        ))}
-                      </div>
-                    </div>
-
-                    {/* Past Medical History */}
-                    <div className="input-group">
-                      <label>Past Medical History - Select all that apply</label>
-                      <div className="checkbox-options">
-                        {pastMedicalHistoryOptions.map((option) => (
-                          <label key={option} className="checkbox-option">
-                            <input type="checkbox" name="past-medical-history" value={option} checked={pastMedicalHistory.includes(option)} onChange={handleInputChange} disabled={pastMedicalHistory.includes('None') && option !== 'None'} />
-                            <span>{option}</span>
-                          </label>
-                        ))}
-                      </div>
-                    </div>
-
-                    {/* Personal Habits */}
-                    <div className="input-group">
-                      <label>Personal Habits - Select all that apply</label>
-                      <div className="checkbox-options">
-                        {personalHabitsOptions.map((option) => (
-                          <label key={option} className="checkbox-option">
-                            <input type="checkbox" name="personal-habits" value={option} checked={personalHabits.includes(option)} onChange={handleInputChange} disabled={personalHabits.includes('None') && option !== 'None'} />
-                            <span>{option}</span>
-                          </label>
-                        ))}
-                      </div>
-                    </div>
-
-                    <div className="input-group">
-                      <h3>Medical history</h3>
-                      <label htmlFor="current-medications">Current Medications</label>
-                      <textarea id="current-medications" name="currentMedications" value={formData.currentMedications} onChange={handleInputChange} rows="2" />
-                    </div>
-
-                    <div className="input-group">
-                      <label htmlFor="known-allergies">Known Allergies (e.g., latex, medications, anesthetics)</label>
-                      <textarea id="known-allergies" name="knownAllergies" value={formData.knownAllergies} onChange={handleInputChange} rows="2" />
-                    </div>
-
-                    <div className="input-group">
-                      <label htmlFor="chronic-conditions">Chronic Conditions (e.g., diabetes, heart disease)</label>
-                      <textarea id="chronic-conditions" name="chronicConditions" value={formData.chronicConditions} onChange={handleInputChange} rows="2" />
-                    </div>
-
-                    <div className="input-group">
-                      <label htmlFor="past-surgeries">Past Surgeries</label>
-                      <textarea id="past-surgeries" name="pastSurgeries" value={formData.pastSurgeries} onChange={handleInputChange} rows="2" />
-                    </div>
-
-                    <div className="input-group">
-                      <label htmlFor="primary-dental-concerns">Primary Dental Concerns (e.g., pain, sensitivity, bleeding gums)</label>
-                      <textarea id="primary-dental-concerns" name="primaryDentalConcerns" value={formData.primaryDentalConcerns} onChange={handleInputChange} rows="2" />
-                    </div>
-
-                    <div className="input-group">
-                      <label htmlFor="last-dental-visit">Date of Last Dental Visit</label>
-                      <input type="date" id="last-dental-visit" name="lastDentalVisit" value={formData.lastDentalVisit} onChange={handleInputChange} />
-                    </div>
-
-                    <h3>Other Information</h3>
-                    <div className="form-grid">
-                      <div className="input-group">
-                        <label htmlFor="blood-group">Blood Group <span style={{ color: 'red' }}>*</span></label>
-                        <select id="blood-group" name="bloodGroup" value={formData.bloodGroup} onChange={handleInputChange}>
-                          <option value="">Select Blood Group</option>
-                          {['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'].map((bg) => (
-                            <option key={bg} value={bg}>{bg}</option>
-                          ))}
-                        </select>
-                        {fieldErrors.bloodGroup && <div className="error-message">{fieldErrors.bloodGroup}</div>}
-                      </div>
-                      <div className="input-group">
-                        <label htmlFor="drug-allergies">Drug Allergies</label>
-                        <input type="text" id="drug-allergies" name="drugAllergies" value={formData.drugAllergies} onChange={handleInputChange} placeholder="Specify drug allergies" />
-                      </div>
-                      <div className="input-group">
-                        <label htmlFor="diet-allergies">Diet Allergies</label>
-                        <input type="text" id="diet-allergies" name="dietAllergies" value={formData.dietAllergies} onChange={handleInputChange} placeholder="Specify diet allergies" />
-                      </div>
-                    </div>
 
                     {/* Navigation buttons */}
                     <div className="form-actions">
@@ -2238,9 +2663,14 @@ const PGDashboard = () => {
                           const department = String(row?.department || '').trim();
                           const departmentKey = String(row?.departmentKey || '').trim();
                           const approvalText = String(row?.chiefApproval || '').trim();
-                          const status = normalizeChiefApprovalStatus(approvalText);
+                          const status = isPublicHealthDentistry
+                            ? (String(row?.caseCompletionStatus || '').trim().toLowerCase() === 'done' ? 'done' : 'pending')
+                            : normalizeChiefApprovalStatus(approvalText);
                           const redoReason = extractRedoReason(approvalText);
                           const caseId = String(row?.caseId || '').trim();
+                          const canViewCaseSheet = isPublicHealthDentistry
+                            ? Boolean(row?.canViewCaseSheet)
+                            : Boolean(caseId);
                           const createdAt = row?.createdAt ? new Date(row.createdAt) : null;
 
                           return (
@@ -2253,12 +2683,12 @@ const PGDashboard = () => {
                               <td>{patientId || '—'}</td>
                               <td>{department || '—'}</td>
                               <td>
-                                <span className={status === 'approved' ? 'status-badge approved' : status === 'redo' ? 'status-badge redo' : 'status-badge pending'}>
-                                  {status === 'approved' ? 'Approved' : status === 'redo' ? 'Redo' : 'Pending'}
+                                <span className={status === 'approved' || status === 'done' ? 'status-badge approved' : status === 'redo' ? 'status-badge redo' : 'status-badge pending'}>
+                                  {status === 'approved' ? 'Approved' : status === 'redo' ? 'Redo' : status === 'done' ? 'Done' : 'Pending'}
                                 </span>
                               </td>
                               <td style={{ whiteSpace: 'normal', wordBreak: 'break-word' }}>
-                                {status === 'redo' ? (redoReason || approvalText || 'Redo requested by doctor.') : '—'}
+                                {isPublicHealthDentistry ? '—' : (status === 'redo' ? (redoReason || approvalText || 'Redo requested by doctor.') : '—')}
                               </td>
                               <td>
                                 <div className="pg-assigned-action-buttons">
@@ -2266,16 +2696,24 @@ const PGDashboard = () => {
                                     type="button"
                                     className="view-button"
                                     onClick={() => {
-                                      if (caseId) {
-                                        window.open(`/case-sheet-view/${encodeURIComponent(caseId)}`, '_blank', 'noopener,noreferrer');
+                                      if (canViewCaseSheet && caseId) {
+                                        if (departmentKey === 'general') {
+                                          window.open(
+                                            `/general-case-view?patientId=${encodeURIComponent(patientId)}&patientName=${encodeURIComponent(patientName)}&caseId=${encodeURIComponent(caseId)}&department=${encodeURIComponent(pgDepartmentLabel || user?.department || departmentKey)}`,
+                                            '_blank',
+                                            'noopener,noreferrer'
+                                          );
+                                        } else {
+                                          window.open(`/case-sheet-view/${encodeURIComponent(caseId)}`, '_blank', 'noopener,noreferrer');
+                                        }
                                       }
                                     }}
-                                    disabled={!caseId}
+                                    disabled={!canViewCaseSheet || !caseId}
                                   >
                                     View
                                   </button>
 
-                                  {status === 'redo' && (
+                                  {!isPublicHealthDentistry && status === 'redo' && (
                                     <button
                                       type="button"
                                       className="view-button"

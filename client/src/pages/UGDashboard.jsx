@@ -10,6 +10,7 @@ import {
   storeGeneralCaseXray,
 } from '../utils/generalCaseXray';
 import { getPatientResumeTarget } from '../utils/caseDraft';
+import { setStoredPatientId } from '../utils/patientIdentity';
 
 const UGDashboard = () => {
   // State for form data
@@ -838,6 +839,7 @@ const UGDashboard = () => {
   const getCaseRouteForDepartment = (departmentValue) => {
     const departmentKey = normalizeDepartment(departmentValue);
 
+    if (departmentKey.includes('publichealthdentistry') || departmentKey.includes('publichealth') || departmentKey.includes('communitydentistry')) return '/general-case-sheet';
     if (departmentKey === 'pedodontics') return '/pedodontics';
     if (departmentKey === 'periodontics') return '/casePortal?dept=periodontics';
     if (departmentKey.includes('oral') || departmentKey.includes('maxillofacial')) return '/casePortal?dept=oral';
@@ -1024,6 +1026,116 @@ const UGDashboard = () => {
       setPgCaseSheetHistoryError('');
 
       const token = localStorage.getItem('token');
+
+      if (isPublicHealthDentistry) {
+        const patientRes = await fetch(buildApiUrl('/api/patient-details'), {
+          headers: token
+            ? {
+                Authorization: `Bearer ${token}`,
+                'Content-Type': 'application/json',
+              }
+            : { 'Content-Type': 'application/json' },
+        });
+
+        if (patientRes.status === 401) {
+          await ensureActiveSession(patientRes, 'Token expired');
+          return [];
+        }
+
+        const patientJson = await safeReadJson(patientRes);
+        if (!patientRes.ok) {
+          throw new Error(patientJson?.message || 'Failed to load registered patients');
+        }
+
+        const patientRows = Array.isArray(patientJson?.patients)
+          ? patientJson.patients
+          : Array.isArray(patientJson?.data)
+            ? patientJson.data
+            : Array.isArray(patientJson)
+              ? patientJson
+              : [];
+
+        const mergedRows = await Promise.all(
+          patientRows.map(async (patientItem) => {
+            const patientId = String(patientItem?.patientId || '').trim();
+            const firstName = String(patientItem?.personalInfo?.firstName || '').trim();
+            const middleName = String(patientItem?.personalInfo?.middleName || '').trim();
+            const lastName = String(patientItem?.personalInfo?.lastName || '').trim();
+            const patientName =
+              [firstName, middleName, lastName].filter(Boolean).join(' ').trim() ||
+              String(patientItem?.patientName || '').trim() ||
+              '—';
+
+            if (!patientId) {
+              return null;
+            }
+
+            try {
+              const generalRes = await fetch(buildApiUrl(`/api/general/patient/${encodeURIComponent(patientId)}`), {
+                headers: token ? { Authorization: `Bearer ${token}` } : {},
+              });
+
+              if (generalRes.status === 401) {
+                await ensureActiveSession(generalRes, 'Token expired');
+                return null;
+              }
+
+              const generalJson = await safeReadJson(generalRes);
+              const generalRows = Array.isArray(generalJson?.data) ? generalJson.data : [];
+              const latestCase = [...generalRows].sort((a, b) => {
+                const aTime = new Date(a?.updatedAt || a?.createdAt || 0).getTime();
+                const bTime = new Date(b?.updatedAt || b?.createdAt || 0).getTime();
+                return bTime - aTime;
+              })[0] || null;
+
+              const diagnosisText = String(
+                latestCase?.finalDiagnosis ||
+                latestCase?.provisionalDiagnosis ||
+                latestCase?.chiefComplaint ||
+                ''
+              ).trim();
+              const treatmentText = String(latestCase?.treatmentPlan || '').trim();
+              const isDone = Boolean(diagnosisText && treatmentText);
+
+              return {
+                caseId: String(latestCase?._id || ''),
+                department: 'Public Health Dentistry',
+                departmentKey: 'general',
+                patientId,
+                patientName,
+                doctorId: String(latestCase?.doctorId || '').trim(),
+                doctorName: String(latestCase?.doctorName || '').trim(),
+                chiefApproval: isDone ? 'done' : 'pending',
+                createdAt: latestCase?.createdAt || patientItem?.createdAt || null,
+                caseCompletionStatus: isDone ? 'done' : 'pending',
+                canViewCaseSheet: isDone && Boolean(latestCase?._id),
+              };
+            } catch (err) {
+              return {
+                caseId: '',
+                department: 'Public Health Dentistry',
+                departmentKey: 'general',
+                patientId,
+                patientName,
+                doctorId: '',
+                doctorName: '',
+                chiefApproval: 'pending',
+                createdAt: patientItem?.createdAt || null,
+                caseCompletionStatus: 'pending',
+                canViewCaseSheet: false,
+              };
+            }
+          })
+        );
+
+        const rows = mergedRows
+          .filter(Boolean)
+          .sort((a, b) => new Date(b?.createdAt || 0).getTime() - new Date(a?.createdAt || 0).getTime());
+
+        setPgCaseSheetHistory(rows);
+        return rows;
+      }
+
       const res = await fetch(buildApiUrl('/api/casesheets/pg/history'), {
         headers: {
           Authorization: `Bearer ${token}`,
@@ -1037,12 +1149,40 @@ const UGDashboard = () => {
       }
 
       const json = await res.json();
+      console.debug('[UGDashboard] /api/casesheets/pg/history response:', { status: res.status, ok: res.ok, json });
       if (!res.ok || !json?.success) {
         throw new Error(json?.message || 'Failed to load case sheet history');
       }
 
       const rows = Array.isArray(json.data) ? json.data : [];
       setPgCaseSheetHistory(rows);
+      // Fallback: if no rows but a patient is selected, try loading general cases for that patient
+      if ((!Array.isArray(rows) || rows.length === 0)) {
+        const currentPatientId = localStorage.getItem('CurrentpatientId') || '';
+        if (currentPatientId) {
+          try {
+            const genRes = await fetch(buildApiUrl(`/api/general/patient/${encodeURIComponent(currentPatientId)}`), { headers: { Authorization: token ? `Bearer ${token}` : '' } });
+            if (genRes.ok) {
+              const genJson = await genRes.json().catch(() => null);
+              const genRows = Array.isArray(genJson?.data) ? genJson.data : [];
+              const mapped = genRows.map(item => ({
+                caseId: String(item._id || ''),
+                department: 'General Case',
+                departmentKey: 'general',
+                patientId: String(item.patientId || '').trim(),
+                patientName: String(item.patientName || '').trim(),
+                doctorId: String(item.doctorId || '').trim(),
+                doctorName: String(item.doctorName || '').trim(),
+                chiefApproval: String(item.chiefApproval || ''),
+                createdAt: item.createdAt || null,
+              }));
+              if (mapped.length) setPgCaseSheetHistory(mapped);
+            }
+          } catch (err) {
+            console.error('[UGDashboard] fallback general/patient fetch failed', err);
+          }
+        }
+      }
       return rows;
     } catch (error) {
       console.error('Failed to fetch PG case sheet history', error);
@@ -1227,19 +1367,173 @@ const UGDashboard = () => {
       return;
     }
 
-    localStorage.setItem('CurrentpatientId', currentPatientId);
+    setStoredPatientId(currentPatientId);
+
+    const currentPatientName = String(
+      localStorage.getItem('CurrentpatientName') ||
+      [formData.firstName, formData.middleName, formData.lastName].filter(Boolean).join(' ') ||
+      ''
+    ).trim();
+    if (currentPatientName) {
+      localStorage.setItem('CurrentpatientName', currentPatientName);
+    }
 
     await cacheGeneralCaseXrayForPatient(currentPatientId);
 
-    const caseRoute = getCaseRouteForDepartment(user?.department || '');
+    const resolvedDepartmentLabel = String(
+      ugDepartmentLabel ||
+      user?.department ||
+      localStorage.getItem('ugDepartment') ||
+      'Public Health Dentistry'
+    ).trim();
+    const normalizedDept = normalizeDepartment(resolvedDepartmentLabel);
+    const isPublicHealthDept =
+      normalizedDept.includes('publichealthdentistry') ||
+      normalizedDept.includes('publichealth') ||
+      normalizedDept.includes('communitydentistry');
 
-    const resumeTarget = await getPatientResumeTarget(currentPatientId);
-    if (resumeTarget?.routeKey) {
-      navigate(resumeTarget.routeKey);
-      return;
+    let ensuredCaseId = '';
+    if (isPublicHealthDept) {
+      try {
+        ensuredCaseId = await ensurePublicHealthCaseSheetGenerated({
+          patientId: currentPatientId,
+          patientName: currentPatientName || currentPatientId,
+        });
+      } catch (caseError) {
+        showMessage(caseError?.message || 'Failed to prepare public health case sheet.', 'error');
+      }
     }
 
-    navigate(caseRoute, { state: { requestConsentAfterEntry: true } });
+    const departmentRoute = isPublicHealthDept
+      ? (ensuredCaseId ? '/general-case-view' : '/general-case-sheet')
+      : getCaseRouteForDepartment(resolvedDepartmentLabel);
+    const separator = departmentRoute.includes('?') ? '&' : '?';
+    const caseIdParam = ensuredCaseId ? `&caseId=${encodeURIComponent(ensuredCaseId)}` : '';
+    const patientRouteUrl = `${departmentRoute}${separator}patientId=${encodeURIComponent(currentPatientId)}&patientName=${encodeURIComponent(currentPatientName || currentPatientId)}&department=${encodeURIComponent(resolvedDepartmentLabel)}${caseIdParam}`;
+    window.open(patientRouteUrl, '_blank');
+  };
+
+  const getResolvedPractitionerId = () => {
+    const byRole = String(localStorage.getItem('ugId') || '').trim();
+    const fallbackDoctor = String(localStorage.getItem('doctorId') || '').trim();
+    const fallbackUser = String(user?.Identity || '').trim();
+    return byRole || fallbackDoctor || fallbackUser;
+  };
+
+  const getResolvedPractitionerName = () => {
+    const byRole = String(localStorage.getItem('ugName') || '').trim();
+    const fallbackDoctor = String(localStorage.getItem('doctorName') || '').trim();
+    const fallbackUser = String(user?.name || '').trim();
+    return byRole || fallbackDoctor || fallbackUser || 'UG';
+  };
+
+  const ensurePublicHealthCaseSheetGenerated = async ({ patientId, patientName }) => {
+    const normalizedPatientId = String(patientId || '').trim();
+    if (!normalizedPatientId) {
+      throw new Error('Patient ID missing for case sheet generation.');
+    }
+
+    const token = localStorage.getItem('token');
+    if (!token) {
+      throw new Error('Authentication token missing. Please log in again.');
+    }
+
+    const listRes = await fetch(buildApiUrl(`/api/general/patient/${encodeURIComponent(normalizedPatientId)}`), {
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+    });
+
+    if (listRes.status === 401) {
+      await ensureActiveSession(listRes, 'Token expired');
+      throw new Error('Session expired. Please log in again.');
+    }
+
+    const listJson = await safeReadJson(listRes);
+    if (!listRes.ok || listJson?.success === false) {
+      throw new Error(listJson?.message || 'Failed to verify existing case sheet.');
+    }
+
+    const existingCases = Array.isArray(listJson?.data) ? listJson.data : [];
+    const existingPublicHealthCase = existingCases.find((row) => {
+      const department = String(row?.referredDepartment || row?.selectedDepartments?.[0] || '').trim().toLowerCase();
+      return department.includes('public health') || department.includes('community') || department.includes('publichealth');
+    });
+
+    const latestDiagnosisText = String(
+      existingPublicHealthCase?.finalDiagnosis ||
+      existingPublicHealthCase?.provisionalDiagnosis ||
+      existingPublicHealthCase?.chiefComplaint ||
+      ''
+    ).trim();
+    const latestTreatmentText = String(existingPublicHealthCase?.treatmentPlan || '').trim();
+    const existingCaseIsComplete = Boolean(latestDiagnosisText && latestTreatmentText);
+
+    const currentDiagnosis = String(formData.diagnosis || '').trim();
+    const currentTreatment = String(formData.treatmentPlan || '').trim();
+    const hasCurrentFormData = Boolean(currentDiagnosis || currentTreatment);
+
+    if (existingPublicHealthCase?._id && (existingCaseIsComplete || !hasCurrentFormData)) {
+      return String(existingPublicHealthCase._id);
+    }
+
+    const doctorId = getResolvedPractitionerId();
+    const doctorName = getResolvedPractitionerName();
+    if (!doctorId || !doctorName) {
+      throw new Error('Doctor/UG identity missing for case sheet generation.');
+    }
+
+    const resolvedPatientName = String(patientName || localStorage.getItem('CurrentpatientName') || normalizedPatientId).trim();
+    const resolvedDepartmentLabel = String(
+      ugDepartmentLabel ||
+      user?.department ||
+      localStorage.getItem('ugDepartment') ||
+      'Public Health Dentistry'
+    ).trim();
+
+    const payload = {
+      patientId: normalizedPatientId,
+      patientName: resolvedPatientName,
+      doctorId,
+      doctorName,
+      chiefComplaint: currentDiagnosis,
+      presentIllness: '',
+      pastMedical: '',
+      pastDental: '',
+      personalHistory: '',
+      familyHistory: '',
+      clinicalFindings: '',
+      provisionalDiagnosis: currentDiagnosis,
+      investigations: '',
+      finalDiagnosis: currentDiagnosis,
+      description: '',
+      generalDescription: '',
+      selectedDepartments: [resolvedDepartmentLabel],
+      treatmentPlan: currentTreatment,
+      xrayImage: '',
+    };
+
+    const createRes = await fetch(buildApiUrl('/api/general/save'), {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(payload),
+    });
+
+    if (createRes.status === 401) {
+      await ensureActiveSession(createRes, 'Token expired');
+      throw new Error('Session expired. Please log in again.');
+    }
+
+    const createJson = await safeReadJson(createRes);
+    if (!createRes.ok || createJson?.success === false) {
+      throw new Error(createJson?.message || 'Failed to auto-generate Public Health case sheet.');
+    }
+
+    return String(createJson?.caseId || createJson?.data?._id || '');
   };
 
   // Close dropdown on outside click
@@ -1391,7 +1685,10 @@ const UGDashboard = () => {
 
       // Optional: also merge any existing doctor-patient details for this ID
       try {
-        const existingRes = await fetch(buildApiUrl(`/api/doctor-patient/${encodeURIComponent(enteredId)}`));
+        const token = localStorage.getItem('token');
+        const existingRes = await fetch(buildApiUrl(`/api/doctor-patient/${encodeURIComponent(enteredId)}`), {
+          headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+        });
         if (existingRes.ok) {
           const existingResult = await existingRes.json();
           const existingPatientData = existingResult.data || existingResult;
@@ -2238,9 +2535,14 @@ const UGDashboard = () => {
                           const department = String(row?.department || '').trim();
                           const departmentKey = String(row?.departmentKey || '').trim();
                           const approvalText = String(row?.chiefApproval || '').trim();
-                          const status = normalizeChiefApprovalStatus(approvalText);
+                          const status = isPublicHealthDentistry
+                            ? (String(row?.caseCompletionStatus || '').trim().toLowerCase() === 'done' ? 'done' : 'pending')
+                            : normalizeChiefApprovalStatus(approvalText);
                           const redoReason = extractRedoReason(approvalText);
                           const caseId = String(row?.caseId || '').trim();
+                          const canViewCaseSheet = isPublicHealthDentistry
+                            ? Boolean(row?.canViewCaseSheet)
+                            : Boolean(caseId);
                           const createdAt = row?.createdAt ? new Date(row.createdAt) : null;
 
                           return (
@@ -2253,12 +2555,12 @@ const UGDashboard = () => {
                               <td>{patientId || '—'}</td>
                               <td>{department || '—'}</td>
                               <td>
-                                <span className={status === 'approved' ? 'status-badge approved' : status === 'redo' ? 'status-badge redo' : 'status-badge pending'}>
-                                  {status === 'approved' ? 'Approved' : status === 'redo' ? 'Redo' : 'Pending'}
+                                <span className={status === 'approved' || status === 'done' ? 'status-badge approved' : status === 'redo' ? 'status-badge redo' : 'status-badge pending'}>
+                                  {status === 'approved' ? 'Approved' : status === 'redo' ? 'Redo' : status === 'done' ? 'Done' : 'Pending'}
                                 </span>
                               </td>
                               <td style={{ whiteSpace: 'normal', wordBreak: 'break-word' }}>
-                                {status === 'redo' ? (redoReason || approvalText || 'Redo requested by doctor.') : '—'}
+                                {isPublicHealthDentistry ? '—' : (status === 'redo' ? (redoReason || approvalText || 'Redo requested by doctor.') : '—')}
                               </td>
                               <td>
                                 <div className="pg-assigned-action-buttons">
@@ -2266,16 +2568,24 @@ const UGDashboard = () => {
                                     type="button"
                                     className="view-button"
                                     onClick={() => {
-                                      if (caseId) {
-                                        window.open(`/case-sheet-view/${encodeURIComponent(caseId)}`, '_blank', 'noopener,noreferrer');
+                                      if (canViewCaseSheet && caseId) {
+                                        if (departmentKey === 'general') {
+                                          window.open(
+                                            `/general-case-view?patientId=${encodeURIComponent(patientId)}&patientName=${encodeURIComponent(patientName)}&caseId=${encodeURIComponent(caseId)}&department=${encodeURIComponent(ugDepartmentLabel || user?.department || departmentKey)}`,
+                                            '_blank',
+                                            'noopener,noreferrer'
+                                          );
+                                        } else {
+                                          window.open(`/case-sheet-view/${encodeURIComponent(caseId)}`, '_blank', 'noopener,noreferrer');
+                                        }
                                       }
                                     }}
-                                    disabled={!caseId}
+                                    disabled={!canViewCaseSheet || !caseId}
                                   >
                                     View
                                   </button>
 
-                                  {status === 'redo' && (
+                                  {!isPublicHealthDentistry && status === 'redo' && (
                                     <button
                                       type="button"
                                       className="view-button"
