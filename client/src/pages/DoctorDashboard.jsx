@@ -1122,7 +1122,6 @@ const DoctorDashboard = () => {
         medicalInfo: {
           chiefComplaint: formData.chiefComplaint,
           historyOfPresentIllness: formData.historyOfPresentIllness || '',
-          pastMedicalHistory: formData.pastMedicalHistory || '',
           pastSurgicalHistory: formData.pastSurgicalHistory || '',
           pastDentalHistory: formData.pastDentalHistory || '',
           hpi: hpiSelections,
