@@ -3,6 +3,10 @@
 
 A full-stack web application designed for SRM Dental Hospital to streamline patient-doctor interactions, appointment scheduling, and admin control. The system enables login and functionalities across **three major roles** — `Patient`, `Doctor`, and `Admin`.
 
+## 🚀 Live Demo
+
+**Deployed on Vercel:** https://dental-2-vert.vercel.app/
+
 ## 🌐 Deploy to Render (Single Service)
 
 This repo is set up to deploy as **one Render Web Service** that serves both:
