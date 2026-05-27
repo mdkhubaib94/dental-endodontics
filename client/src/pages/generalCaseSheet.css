@@ -20,6 +20,160 @@
   -moz-osx-font-smoothing: grayscale;
 }
 
+.phd-print-page {
+  background: linear-gradient(rgba(0,0,0,0.7), rgba(82, 82, 82, 0)), url('/images/campus.png') no-repeat center center fixed;
+  background-size: cover;
+  color: #ffffff;
+  padding: 20px;
+}
+
+.phd-sheet-shell {
+  max-width: 900px;
+  margin: 0 auto;
+  min-height: 100vh;
+  background: rgba(38, 40, 107, 0.92);
+  border-radius: 12px;
+  box-shadow: 0 0 25px rgba(0, 0, 0, 0.7);
+  padding: 28px 30px 32px;
+}
+
+.phd-sheet-header {
+  position: relative;
+  text-align: center;
+  padding-top: 8px;
+  padding-bottom: 20px;
+  margin-bottom: 24px;
+  border-bottom: 2px solid rgba(255, 255, 255, 0.95);
+}
+
+.phd-sheet-sn {
+  position: absolute;
+  left: 0;
+  top: 0;
+  font-size: 15px;
+  font-weight: 700;
+  color: #ffffff;
+}
+
+.phd-sheet-title-block h1,
+.phd-sheet-title-block h2,
+.phd-sheet-room {
+  margin: 0;
+  line-height: 1.15;
+  color: #ffffff;
+}
+
+.phd-sheet-title-block h1 {
+  font-size: 2rem;
+  letter-spacing: 0.02em;
+  font-weight: 700;
+}
+
+.phd-sheet-title-block h2 {
+  margin-top: 4px;
+  font-size: 1.5rem;
+  font-weight: 700;
+}
+
+.phd-sheet-room {
+  margin-top: 6px;
+  font-size: 17px;
+  font-weight: 700;
+}
+
+.phd-sheet-grid {
+  display: grid;
+  grid-template-columns: 1.4fr 1fr 1fr;
+  gap: 18px 20px;
+  align-items: start;
+}
+
+.phd-field {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  min-height: 42px;
+}
+
+.phd-field-wide {
+  grid-column: span 2;
+}
+
+.phd-field-stack {
+  flex-direction: column;
+  align-items: stretch;
+  gap: 8px;
+}
+
+.phd-label {
+  white-space: nowrap;
+  font-weight: 700;
+  color: #f0f0f0;
+}
+
+.phd-label::after {
+  content: ':';
+  margin-left: 6px;
+}
+
+.phd-value {
+  min-height: 22px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.85);
+  padding: 0 4px 2px;
+  font-weight: 500;
+  flex: 1;
+  word-break: break-word;
+}
+
+.phd-box {
+  min-height: 78px;
+  border: none;
+  background: rgba(255, 255, 255, 0.92);
+  color: #26286b;
+  padding: 10px 12px;
+  font-weight: 500;
+  white-space: pre-wrap;
+  word-break: break-word;
+  border-radius: 6px;
+}
+
+.phd-treatment-box {
+  min-height: 120px;
+}
+
+.phd-signature-row {
+  grid-column: 3;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: end;
+  min-height: 130px;
+  gap: 10px;
+}
+
+.phd-signature-line {
+  width: 100%;
+  border-top: 1px solid rgba(255, 255, 255, 0.92);
+}
+
+.phd-signature-label {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  font-weight: 700;
+  color: #ffffff;
+  text-align: center;
+}
+
+.phd-signature-role {
+  font-size: 0.95rem;
+}
+
+.phd-signature-name {
+  font-size: 1rem;
+}
+
 /* Container Styles */
 .general-case-container {
   max-width: 900px;
@@ -478,6 +632,49 @@
   .general-case-container {
     padding: 20px;
     margin: 10px auto;
+  }
+
+  .phd-print-page {
+    padding: 12px 10px 20px;
+  }
+
+  .phd-sheet-shell {
+    padding: 16px 14px 20px;
+  }
+
+  .phd-sheet-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .phd-field-wide,
+  .phd-signature-row {
+    grid-column: auto;
+  }
+
+  .phd-sheet-title-block h1 {
+    font-size: 22px;
+  }
+
+  .phd-sheet-title-block h2 {
+    font-size: 15px;
+  }
+
+  .phd-sheet-room {
+    font-size: 14px;
+  }
+
+  .phd-field {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 6px;
+  }
+
+  .phd-value {
+    width: 100%;
+  }
+
+  .phd-signature-row {
+    min-height: 90px;
   }
 
   .general-case-container .general-case-logo-container {

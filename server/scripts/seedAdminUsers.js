@@ -1,6 +1,6 @@
 // server/scripts/seedAdminUsers.js
 // Run with: node server/scripts/seedAdminUsers.js
-// Creates test users for admin, phc1, phc2, and c roles
+// Creates test users for admin, phc1, phc2, c, pg, and ug roles
 
 import mongoose from 'mongoose';
 import { hash } from 'bcryptjs';
@@ -64,10 +64,40 @@ const users = [
     staffId: 'C001',
     password: 'Camp@123',
   },
+  {
+    name: 'PG Doctor',
+    email: 'pg@srmdental.com',
+    phone: '9000000005',
+    role: 'pg',
+    Identity: 'PG001',
+    staffId: 'PG001',
+    department: 'public health dentistry',
+    password: 'Pg@123',
+  },
+  {
+    name: 'UG Doctor',
+    email: 'ug@srmdental.com',
+    phone: '9000000006',
+    role: 'ug',
+    Identity: 'UG001',
+    staffId: 'UG001',
+    department: 'public health dentistry',
+    password: 'Ug@123',
+  },
+  {
+    name: 'UG Doctor 2',
+    email: 'ug2@srmdental.com',
+    phone: '9000000007',
+    role: 'ug',
+    Identity: 'UG002',
+    staffId: 'UG002',
+    department: 'public health dentistry',
+    password: 'Ug2@123',
+  },
 ];
 
 // Old lowercase IDs to clean up
-const oldIds = ['ad001', 'phc1001', 'phc2001', 'c001'];
+const oldIds = ['ad001', 'phc1001', 'phc2001', 'c001', 'pg001', 'ug001'];
 
 async function seed() {
   try {
@@ -82,12 +112,28 @@ async function seed() {
 
     for (const u of users) {
       const existing = await User.findOne({ Identity: u.Identity });
+
+      const hashedPassword = await hash(u.password, 10);
       if (existing) {
-        console.log(`⚠️  Skipped (already exists): ${u.Identity} [${u.role}]`);
+        await User.updateOne(
+          { _id: existing._id },
+          {
+            $set: {
+              name: u.name,
+              email: u.email,
+              phone: u.phone,
+              role: u.role,
+              staffId: u.staffId,
+              department: u.department,
+              specialization: u.specialization || null,
+              password: hashedPassword,
+            },
+          }
+        );
+        console.log(`✅ Updated: ${u.Identity} [${u.role}] — password: ${u.password}`);
         continue;
       }
 
-      const hashedPassword = await hash(u.password, 10);
       await User.create({ ...u, password: hashedPassword });
       console.log(`✅ Created: ${u.Identity} [${u.role}] — password: ${u.password}`);
     }

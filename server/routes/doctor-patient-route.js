@@ -1,20 +1,66 @@
 // server/routes/doctor-patient-route.js
 import { Router } from 'express';
 import { PatientDetails } from '../models/patientDetails.js';  
+import { User } from '../models/User.js';
 import mongoose from 'mongoose';
+import jwt from 'jsonwebtoken';
 const router = Router();
 
 router.get('/:patientId', async (req, res) => {
   try {
+    // Attempt to populate req.user if a Bearer token was supplied, but do not fail when absent.
+    const authHeader = req.header('Authorization') || req.header('authorization');
+    if (authHeader && String(authHeader || '').startsWith('Bearer ')) {
+      const token = String(authHeader).replace('Bearer ', '');
+      try {
+        const decoded = jwt.verify(token, process.env.JWT_SECRET || 'defaultsecret');
+        const caller = await User.findOne({ _id: decoded.userId }).select('-password').lean();
+        if (caller) req.user = caller;
+      } catch (err) {
+        // Ignore token errors — route remains usable without auth for basic lookups
+        console.log('[doctor-patient-route] Token parse failed (continuing unauthenticated):', err.message);
+      }
+    }
+
     const patient = await PatientDetails.findOne({ patientId: req.params.patientId });
-    
+
     if (!patient) {
+      // If not found in PatientDetails, allow an authenticated doctor from Public Health Dentistry
+      // to look up camp-registered patients that exist as User records (Identity starting with 'C').
+      const normalizedId = String(req.params.patientId || '').trim();
+      const looksLikeCampId = /^c/i.test(normalizedId);
+
+      if (looksLikeCampId && req.user && String(req.user.department || '').toLowerCase().includes('public health')) {
+        const linked = await User.findOne({ Identity: normalizedId }).lean();
+        if (linked) {
+          const fullName = String(linked?.name || '').trim();
+          const nameParts = fullName.split(/\s+/).filter(Boolean);
+          const fallbackPatient = {
+            patientId: String(linked.Identity || normalizedId).trim(),
+            personalInfo: {
+              firstName: nameParts[0] || fullName || '',
+              middleName: '',
+              lastName: nameParts.slice(1).join(' '),
+              phone: linked?.phone || '',
+              email: linked?.email || '',
+            },
+            medicalInfo: {},
+            vitals: {},
+            status: 'active',
+            createdAt: linked?.createdAt || new Date(),
+            source: 'user-fallback',
+          };
+
+          return res.json({ success: true, data: fallbackPatient, patient: fallbackPatient, source: 'user-fallback' });
+        }
+      }
+
       return res.status(404).json({ 
         success: false, 
         message: 'Patient not found' 
       });
     }
-    
+
     res.json({
       success: true,
       data: patient

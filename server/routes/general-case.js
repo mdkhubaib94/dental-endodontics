@@ -15,6 +15,7 @@ const XRAY_DATA_URL_PATTERN = /^data:image\/(png|jpeg|jpg);base64,/i;
 const MAX_XRAY_DATA_URL_LENGTH = 8 * 1024 * 1024;
 
 const GENERAL_DEPARTMENT_KEYS = new Set(['general', 'generaldentistry']);
+const PUBLIC_HEALTH_DEPARTMENT_KEYS = new Set(['publichealthdentistry', 'publichealth', 'communitydentistry']);
 
 const departmentAliasMap = {
   prosthodontics: ['prosthodontics', 'prothodontics', 'prosthondontics'],
@@ -74,6 +75,10 @@ const extractResendReason = (chiefApprovalText) => {
 
 const isGeneralDepartment = (departmentLabel) => {
   return GENERAL_DEPARTMENT_KEYS.has(normalizeDepartment(departmentLabel));
+};
+
+const isPublicHealthDepartment = (departmentLabel) => {
+  return PUBLIC_HEALTH_DEPARTMENT_KEYS.has(normalizeDepartment(departmentLabel));
 };
 
 const getDepartmentAliases = (departmentLabel) => {
@@ -301,7 +306,7 @@ const assignLegacySpecialistReferrals = async (departmentLabel) => {
 };
 
 // Create / Save a General Case Sheet
-router.post('/save', auth, requireRole(['doctor', 'chief', 'pg']), async (req, res) => {
+router.post('/save', auth, requireRole(['doctor', 'chief', 'pg', 'ug']), async (req, res) => {
   try {
     const {
       patientId,
@@ -390,8 +395,9 @@ router.post('/save', auth, requireRole(['doctor', 'chief', 'pg']), async (req, r
     }
 
     let specialistDoctor = null;
+    const publicHealthCase = isPublicHealthDepartment(referredDepartment);
 
-    if (referredDepartment) {
+    if (referredDepartment && !publicHealthCase) {
       specialistDoctor = await pickSpecialistDoctorForDepartment(referredDepartment);
 
       if (!specialistDoctor) {
@@ -401,6 +407,14 @@ router.post('/save', auth, requireRole(['doctor', 'chief', 'pg']), async (req, r
         });
       }
     }
+
+    const publicHealthAssignmentTime = new Date();
+    const resolvedAssignedPgId = publicHealthCase && (requesterRole === 'pg' || requesterRole === 'ug')
+      ? String(req.user?.Identity || '').trim()
+      : '';
+    const resolvedAssignedPgName = publicHealthCase && (requesterRole === 'pg' || requesterRole === 'ug')
+      ? String(req.user?.name || '').trim()
+      : '';
 
     const generalCase = new GeneralCase({
       patientId,
@@ -428,16 +442,21 @@ router.post('/save', auth, requireRole(['doctor', 'chief', 'pg']), async (req, r
       specialistDoctorId: specialistDoctor?.Identity || '',
       specialistDoctorName: specialistDoctor?.name || '',
       specialistAssignedAt: specialistDoctor ? new Date() : null,
-      specialistStatus: specialistDoctor ? 'pending' : 'not-required',
+      specialistStatus: publicHealthCase ? 'not-required' : (specialistDoctor ? 'pending' : 'not-required'),
+      assignedPgId: resolvedAssignedPgId,
+      assignedPgName: resolvedAssignedPgName,
+      pgAssignedAt: resolvedAssignedPgId ? publicHealthAssignmentTime : null,
       chiefApproval: ''
     });
 
-    const { assignedPg } = await assignReferralToPg(generalCase, specialistDoctor);
-    if (!assignedPg?._id) {
-      return res.status(409).json({
-        success: false,
-        message: `No PG is assigned under ${specialistDoctor?.name || referredDepartment}. Assign a PG before saving this referral.`,
-      });
+    if (!publicHealthCase) {
+      const { assignedPg } = await assignReferralToPg(generalCase, specialistDoctor);
+      if (!assignedPg?._id) {
+        return res.status(409).json({
+          success: false,
+          message: `No PG is assigned under ${specialistDoctor?.name || referredDepartment}. Assign a PG before saving this referral.`,
+        });
+      }
     }
 
     await generalCase.save();
@@ -458,7 +477,9 @@ router.post('/save', auth, requireRole(['doctor', 'chief', 'pg']), async (req, r
           }
         : {
             referredDepartment,
-            specialistStatus: 'not-required'
+            specialistStatus: 'not-required',
+            assignedPgId: generalCase.assignedPgId,
+            assignedPgName: generalCase.assignedPgName,
           }
     });
   } catch (error) {

@@ -17,7 +17,7 @@ import DoctorSchedule from './pages/DoctorSchedules';
 import CasePortal from './pages/casePortal';
 import Pedodontics from './pages/departments/Pedodontics';
 import ImplantPatient from './pages/departments/prosthodontics/ImplantPatient';
-import { AuthProvider } from './pages/context/AuthContext';
+import { AuthProvider, useAuth } from './pages/context/AuthContext';
 import ProtectedRoute from './pages/context/ProtectedRoute';
 import Prescription from './pages/prescription';
 import PrescriptionView from './pages/PrescriptionView';
@@ -151,6 +151,26 @@ const BackToDashboardButton = () => {
   );
 };
 
+const isPublicHealthDepartment = (department) => {
+  const normalized = String(department || '').trim().toLowerCase().replace(/[\s_]+/g, '');
+  return (
+    normalized.includes('publichealthdentistry') ||
+    normalized.includes('publichealth') ||
+    normalized.includes('communitydentistry')
+  );
+};
+
+const UgDashboardRoute = () => {
+  const { user } = useAuth();
+  const ugDepartment = user?.department || localStorage.getItem('ugDepartment') || localStorage.getItem('department') || '';
+
+  if (isPublicHealthDepartment(ugDepartment)) {
+    return <PGDashboard brandTitleOverride="UG Dashboard" />;
+  }
+
+  return <UGDashboard />;
+};
+
 const AppRoutes = () => {
   return (
     <>
@@ -186,7 +206,10 @@ const AppRoutes = () => {
         <Route
           path="/pg-dashboard"
           element={
-            <ProtectedRoute allowedRoles={['pg']}>
+            <ProtectedRoute
+              allowedRoles={['pg']}
+              allowedDepartments={['public health dentistry', 'publichealthdentistry', 'publichealth', 'communitydentistry']}
+            >
               <PGDashboard />
             </ProtectedRoute>
           }
@@ -195,8 +218,11 @@ const AppRoutes = () => {
         <Route
           path="/ug-dashboard"
           element={
-            <ProtectedRoute allowedRoles={['ug']}>
-              <UGDashboard />
+            <ProtectedRoute
+              allowedRoles={['ug']}
+              allowedDepartments={['public health dentistry', 'publichealthdentistry', 'publichealth', 'communitydentistry']}
+            >
+              <UgDashboardRoute />
             </ProtectedRoute>
           }
         />
@@ -267,7 +293,10 @@ const AppRoutes = () => {
         <Route
           path="/general-case-sheet"
           element={
-            <ProtectedRoute allowedRoles={['doctor', 'chief', 'chief-doctor', 'pg', 'ug']}>
+            <ProtectedRoute
+              allowedRoles={['doctor', 'chief', 'chief-doctor', 'pg', 'ug']}
+              allowedDepartments={['public health dentistry', 'publichealthdentistry', 'publichealth', 'communitydentistry']}
+            >
               <GeneralCaseSheet />
             </ProtectedRoute>
           }
@@ -276,7 +305,10 @@ const AppRoutes = () => {
         <Route
           path="/general-case-view"
           element={
-            <ProtectedRoute allowedRoles={['doctor', 'chief', 'chief-doctor', 'pg', 'ug']}>
+            <ProtectedRoute
+              allowedRoles={['doctor', 'chief', 'chief-doctor', 'pg', 'ug']}
+              allowedDepartments={['public health dentistry', 'publichealthdentistry', 'publichealth', 'communitydentistry']}
+            >
               <GeneralCaseSheetView />
             </ProtectedRoute>
           }

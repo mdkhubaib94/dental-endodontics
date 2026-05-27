@@ -10,6 +10,7 @@ import Fpd from '../models/Fpd-model.js';
 import Implant from '../models/Implant-model.js';
 import ImplantPatientCase from '../models/ImplantPatient-model.js';
 import PartialDentureCase from '../models/partial-model.js';
+import GeneralCase from '../models/GeneralCase.js';
 
 const router = express.Router();
 
@@ -98,13 +99,19 @@ router.get('/pg/history', auth, requireRole(['pg', 'ug']), async (req, res) => {
       { model: Implant, department: 'Implant', departmentKey: 'implant' },
       { model: ImplantPatientCase, department: 'Implant Patient Surgery', departmentKey: 'implant_patient' },
       { model: PartialDentureCase, department: 'Partial Denture', departmentKey: 'partial_denture' },
+      {
+        model: GeneralCase,
+        department: 'General Case',
+        departmentKey: 'general',
+        query: { $or: [{ doctorId: pgIdentity }, { assignedPgId: pgIdentity }] },
+      },
     ];
 
     const results = await Promise.all(
-      sources.map(async ({ model, department, departmentKey }) => {
+      sources.map(async ({ model, department, departmentKey, query }) => {
         try {
           const rows = await model
-            .find({ doctorId: pgIdentity }, projections)
+            .find(query || { doctorId: pgIdentity }, projections)
             .sort({ createdAt: -1 })
             .lean();
 
@@ -201,6 +208,12 @@ router.get('/:caseId', auth, async (req, res) => {
         return res.status(403).json({ success: false, message: 'Access denied for this department' });
       }
       return res.json({ success: true, data: doc, department: 'partial_denture' });
+    }
+
+    // Try general case
+    doc = await GeneralCase.findById(caseId);
+    if (doc) {
+      return res.json({ success: true, data: doc, department: 'general' });
     }
 
     return res.status(404).json({ success: false, message: 'Case not found' });
