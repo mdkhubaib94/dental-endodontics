@@ -175,7 +175,7 @@ router.post('/', async (req, res) => {
     if (!personalInfo || !personalInfo.firstName) {
       return res.status(400).json({
         success: false,
-        message: 'Student name is required'
+        message: 'Patient name is required'
       });
     }
 
@@ -220,10 +220,10 @@ router.post('/', async (req, res) => {
     }
 
     if (!linkedUser && createAccount) {
-      // For student registration, email is optional
+      // For patient registration, email is optional
       // If no email provided, we'll create account without email verification
       if (!normalizedEmail) {
-        console.log('Creating student account without email');
+        console.log('Creating patient account without email');
       }
 
       // Walk-in registrations no longer require OTP verification for admin registration.

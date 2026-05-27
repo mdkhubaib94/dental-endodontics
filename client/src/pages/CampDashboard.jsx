@@ -7,6 +7,8 @@ import { useNavigate } from 'react-router-dom';
 import BillX from './casesheetBilling';
 import { API_BASE_URL } from '../config/api';
 import jsPDF from 'jspdf';
+import * as XLSX from 'xlsx';
+import ExcelJS from 'exceljs';
 
 const normalizeListResponse = (payload) => {
   if (Array.isArray(payload)) return payload;
@@ -203,126 +205,168 @@ const CampDashboard = () => {
     setIsWalkInId(false);
   };
 
-  const downloadCampPdf = () => {
-    const doc = new jsPDF('p', 'mm', 'a4');
-    const pageWidth = doc.internal.pageSize.getWidth();
-    const pageHeight = doc.internal.pageSize.getHeight();
-    const margin = 12;
-    const contentWidth = pageWidth - margin * 2;
-
-    const title = 'Department of Public Health Dentistry';
+  const downloadCampExcel = async () => {
     const campDateText = institutionInfo.campDate ? new Date(institutionInfo.campDate).toLocaleDateString('en-GB') : '-';
     const institutionNameText = institutionInfo.institutionName || '-';
     const institutionAddressText = institutionInfo.institutionAddress || '-';
 
-    let y = 16;
+    // Create workbook and worksheet
+    const workbook = new ExcelJS.Workbook();
+    const worksheet = workbook.addWorksheet('Camp Report');
 
-    doc.setFont('helvetica', 'bold');
-    doc.setFontSize(16);
-    doc.text(title, pageWidth / 2, y, { align: 'center' });
-
-    y += 9;
-    doc.setFontSize(12);
-    doc.text('Camp Report', pageWidth / 2, y, { align: 'center' });
-
-    y += 10;
-    doc.setFont('helvetica', 'bold');
-    doc.setFontSize(11);
-    doc.text('Date of Camp:', margin, y);
-    doc.setFont('helvetica', 'normal');
-    doc.text(campDateText, margin + 32, y);
-
-    y += 7;
-    doc.setFont('helvetica', 'bold');
-    doc.text('Institution Name:', margin, y);
-    doc.setFont('helvetica', 'normal');
-    doc.text(institutionNameText, margin + 36, y, { maxWidth: contentWidth - 36 });
-
-    y += 7;
-    doc.setFont('helvetica', 'bold');
-    doc.text('Institution Address:', margin, y);
-    doc.setFont('helvetica', 'normal');
-    const addressLines = doc.splitTextToSize(institutionAddressText, contentWidth - 42);
-    doc.text(addressLines, margin + 42, y);
-    y += Math.max(addressLines.length * 6, 7);
-
-    y += 4;
-    doc.setFont('helvetica', 'bold');
-    doc.setFontSize(12);
-    doc.text('Student Attendance', margin, y);
-    y += 6;
-
-    const columns = [
-      { header: 'Patient ID', width: 28 },
-      { header: 'Student Name', width: 52 },
-      { header: 'Date of Birth', width: 28 },
-      { header: 'Gender', width: 24 },
-      { header: 'Phone', width: 38 },
+    // Set column widths
+    worksheet.columns = [
+      { width: 15 }, // Patient ID
+      { width: 25 }, // Patient Name
+      { width: 12 }, // Age
+      { width: 10 }, // Gender
+      { width: 15 }  // Phone
     ];
-    const tableWidth = columns.reduce((sum, column) => sum + column.width, 0);
-    const startX = margin;
-    const rowHeight = 8;
 
-    const drawTableHeader = (currentY) => {
-      let x = startX;
-      doc.setDrawColor(120, 120, 120);
-      doc.setFont('helvetica', 'bold');
-      doc.setFontSize(10);
-      doc.setTextColor(0, 0, 0);
-      columns.forEach((column) => {
-       
-          doc.setFillColor(232, 232, 232);
-          doc.rect(x, currentY, column.width, rowHeight, 'FD');
-        doc.text(column.header, x + 2, currentY + 5.5);
-        x += column.width;
-      });
-      return currentY + rowHeight;
-    };
-
-    const drawRow = (student, currentY) => {
-      const values = [
-        student.patientId || '-',
-        `${student.personalInfo?.firstName || ''}${student.personalInfo?.lastName ? ` ${student.personalInfo.lastName}` : ''}`.trim() || '-',
-        student.personalInfo?.dateOfBirth ? new Date(student.personalInfo.dateOfBirth).toLocaleDateString('en-GB') : '-',
-        student.personalInfo?.gender || '-',
-        student.personalInfo?.phone || '-',
-      ];
-
-      const wrapped = values.map((value, index) => doc.splitTextToSize(String(value), columns[index].width - 4));
-      const cellHeight = Math.max(...wrapped.map((lines) => lines.length)) * 5 + 3;
-
-      if (currentY + cellHeight > pageHeight - 16) {
-        doc.addPage();
-        currentY = 16;
-        currentY = drawTableHeader(currentY);
-      }
-
-      let x = startX;
-      doc.setFont('helvetica', 'normal');
-      doc.setFontSize(9);
-      columns.forEach((column, index) => {
-        doc.rect(x, currentY, column.width, cellHeight);
-        doc.text(wrapped[index], x + 2, currentY + 5);
-        x += column.width;
+    try {
+      // Load and add logo image
+      const logoResponse = await fetch('/images/logo.png');
+      const logoBlob = await logoResponse.blob();
+      const logoArrayBuffer = await logoBlob.arrayBuffer();
+      
+      const logoId = workbook.addImage({
+        buffer: logoArrayBuffer,
+        extension: 'png',
       });
 
-      return currentY + cellHeight;
+      // Add logo image (positioned in cell A1, spanning 2 rows and 2 columns)
+      worksheet.addImage(logoId, {
+        tl: { col: 0, row: 0 }, // top-left position
+        ext: { width: 80, height: 80 } // size in pixels
+      });
+    } catch (error) {
+      console.warn('Could not load logo image:', error);
+    }
+
+    // Add header text (starting from row 1, but offset to account for logo)
+    worksheet.mergeCells('C1:E1');
+    worksheet.getCell('C1').value = 'SRM DENTAL COLLEGE CHENNAI';
+    worksheet.getCell('C1').font = { bold: true, size: 16, color: { argb: '0066CC' } };
+    worksheet.getCell('C1').alignment = { horizontal: 'center', vertical: 'middle' };
+
+    worksheet.mergeCells('A2:E2');
+    worksheet.getCell('A2').value = 'Department of Public Health Dentistry';
+    worksheet.getCell('A2').font = { bold: true, size: 14 };
+    worksheet.getCell('A2').alignment = { horizontal: 'center', vertical: 'middle' };
+
+    worksheet.mergeCells('A3:E3');
+    worksheet.getCell('A3').value = 'Camp Report';
+    worksheet.getCell('A3').font = { bold: true, size: 12 };
+    worksheet.getCell('A3').alignment = { horizontal: 'center', vertical: 'middle' };
+
+    // Add camp information
+    let currentRow = 5;
+    worksheet.getCell(`A${currentRow}`).value = 'Date of Camp:';
+    worksheet.getCell(`A${currentRow}`).font = { bold: true };
+    worksheet.getCell(`B${currentRow}`).value = campDateText;
+
+    currentRow++;
+    worksheet.getCell(`A${currentRow}`).value = 'Institution Name:';
+    worksheet.getCell(`A${currentRow}`).font = { bold: true };
+    worksheet.getCell(`B${currentRow}`).value = institutionNameText;
+
+    currentRow++;
+    worksheet.getCell(`A${currentRow}`).value = 'Institution Address:';
+    worksheet.getCell(`A${currentRow}`).font = { bold: true };
+    worksheet.getCell(`B${currentRow}`).value = institutionAddressText;
+
+    // Add table headers
+    currentRow += 2;
+    const headerRow = worksheet.getRow(currentRow);
+    headerRow.values = ['Patient ID', 'Patient Name', 'Age', 'Gender', 'Phone'];
+    headerRow.font = { bold: true, color: { argb: 'FFFFFF' } };
+    headerRow.fill = {
+      type: 'pattern',
+      pattern: 'solid',
+      fgColor: { argb: '4472C4' }
+    };
+    headerRow.alignment = { horizontal: 'center', vertical: 'middle' };
+    headerRow.border = {
+      top: { style: 'thin' },
+      left: { style: 'thin' },
+      bottom: { style: 'thin' },
+      right: { style: 'thin' }
     };
 
-    y = drawTableHeader(y);
-
+    // Add table data
+    currentRow++;
     if (campStudents.length === 0) {
-      doc.rect(startX, y, tableWidth, rowHeight);
-      doc.text('No students added yet for this camp.', startX + 2, y + 5.5);
-      y += rowHeight;
+      const noDataRow = worksheet.getRow(currentRow);
+      worksheet.mergeCells(`A${currentRow}:E${currentRow}`);
+      noDataRow.getCell(1).value = 'No patients added yet for this camp.';
+      noDataRow.getCell(1).alignment = { horizontal: 'center', vertical: 'middle' };
+      noDataRow.getCell(1).fill = {
+        type: 'pattern',
+        pattern: 'solid',
+        fgColor: { argb: 'F2F2F2' }
+      };
+      noDataRow.border = {
+        top: { style: 'thin' },
+        left: { style: 'thin' },
+        bottom: { style: 'thin' },
+        right: { style: 'thin' }
+      };
     } else {
-      campStudents.forEach((student) => {
-        y = drawRow(student, y);
+      campStudents.forEach((student, index) => {
+        const dataRow = worksheet.getRow(currentRow);
+        dataRow.values = [
+          student.patientId || '-',
+          `${student.personalInfo?.firstName || ''}${student.personalInfo?.lastName ? ` ${student.personalInfo.lastName}` : ''}`.trim() || '-',
+          student.personalInfo?.dateOfBirth ? calculateAge(student.personalInfo.dateOfBirth) + ' years' : '-',
+          student.personalInfo?.gender || '-',
+          student.personalInfo?.phone || '-'
+        ];
+
+        // Alternating row colors
+        const isEvenRow = index % 2 === 0;
+        dataRow.fill = {
+          type: 'pattern',
+          pattern: 'solid',
+          fgColor: { argb: isEvenRow ? 'F2F2F2' : 'FFFFFF' }
+        };
+
+        // Alignment
+        dataRow.getCell(1).alignment = { horizontal: 'center', vertical: 'middle' }; // Patient ID
+        dataRow.getCell(2).alignment = { horizontal: 'left', vertical: 'middle' };   // Patient Name
+        dataRow.getCell(3).alignment = { horizontal: 'center', vertical: 'middle' }; // Age
+        dataRow.getCell(4).alignment = { horizontal: 'center', vertical: 'middle' }; // Gender
+        dataRow.getCell(5).alignment = { horizontal: 'center', vertical: 'middle' }; // Phone
+
+        // Borders
+        dataRow.border = {
+          top: { style: 'thin' },
+          left: { style: 'thin' },
+          bottom: { style: 'thin' },
+          right: { style: 'thin' }
+        };
+
+        currentRow++;
       });
     }
 
+    // Set row heights for better appearance
+    worksheet.getRow(1).height = 60; // Logo row
+    worksheet.getRow(2).height = 25; // Department title
+    worksheet.getRow(3).height = 20; // Camp report title
+
+    // Generate filename and download
     const safeDate = campDateText === '-' ? 'camp-report' : campDateText.replace(/[\/]/g, '-');
-    doc.save(`${safeDate}-camp-report.pdf`);
+    const filename = `${safeDate}-camp-report.xlsx`;
+
+    // Write to buffer and download
+    const buffer = await workbook.xlsx.writeBuffer();
+    const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+    const url = window.URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = filename;
+    link.click();
+    window.URL.revokeObjectURL(url);
   };
 
   const handleSelectPatient = async (patient) => {
@@ -416,6 +460,21 @@ const CampDashboard = () => {
     setInstitutionInfo(prev => ({ ...prev, [name]: value }));
   };
 
+  // Calculate age from date of birth
+  const calculateAge = (dateOfBirth) => {
+    if (!dateOfBirth) return null;
+    const today = new Date();
+    const birthDate = new Date(dateOfBirth);
+    let age = today.getFullYear() - birthDate.getFullYear();
+    const monthDiff = today.getMonth() - birthDate.getMonth();
+    
+    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
+      age--;
+    }
+    
+    return age;
+  };
+
   const fetchSignupDetailsById = async (patientId) => {
     try {
       setFetchingSignupDetails(true);
@@ -444,7 +503,7 @@ const CampDashboard = () => {
       
       // Validate required fields
       if (!newPatient.patientId || !newPatient.firstName || !newPatient.phone) {
-        alert('Please fill in all required fields: Patient ID, Student Name, and Phone Number');
+        alert('Please fill in all required fields: Patient ID, Patient Name, and Phone Number');
         return;
       }
       
@@ -510,16 +569,16 @@ const CampDashboard = () => {
       
       // Show success message
       const account = result.account || {};
-      const summaryLines = [`Student added successfully with Patient ID: ${createdPatient.patientId}`];
+      const summaryLines = [`Patient added successfully with Patient ID: ${createdPatient.patientId}`];
       if (account.created) {
-        summaryLines.push('', 'Patient login account created.', `Login ID: ${createdPatient.patientId}`, `Temporary Password: ${account.generatedPassword || '123456'}`, 'Student can log in with Patient ID and password.');
+        summaryLines.push('', 'Patient login account created.', `Login ID: ${createdPatient.patientId}`, `Temporary Password: ${account.generatedPassword || '123456'}`, 'Patient can log in with Patient ID and password.');
       } else if (account.linked) {
         summaryLines.push('', 'Existing patient login account linked to this registration.');
       }
       alert(summaryLines.join('\n'));
       
     } catch (err) {
-      alert(`Failed to add student: ${err.message}`);
+      alert(`Failed to add patient: ${err.message}`);
     } finally {
       setLoading(false);
     }
@@ -870,14 +929,14 @@ const CampDashboard = () => {
                             </div>
                           </div>
                           <div className="form-group" style={{ flex: '1' }}>
-                            <label style={{ marginBottom: '0.5rem', display: 'block' }}>Student Name</label>
+                            <label style={{ marginBottom: '0.5rem', display: 'block' }}>Patient Name</label>
                             <input 
                               type="text" 
                               name="firstName" 
                               value={newPatient.firstName} 
                               onChange={handleNewPatientChange} 
                               required 
-                              placeholder="Enter student name"
+                              placeholder="Enter patient name"
                               style={{ 
                                 width: '100%',
                                 padding: '0.8rem 1rem',
@@ -977,7 +1036,7 @@ const CampDashboard = () => {
                             marginTop: '20px'
                           }}
                         >
-                          {loading ? 'Adding...' : 'Add Student to List'}
+                          {loading ? 'Adding...' : 'Add Patient to List'}
                         </button>
                       </form>
                     </div>
@@ -995,11 +1054,11 @@ const CampDashboard = () => {
                           <button className="btn-secondary" type="button" onClick={() => { setCampStudents([]); }}>Clear List</button>
                           <button className="btn-primary" type="button" onClick={() => {
                             try {
-                              downloadCampPdf();
+                              downloadCampExcel();
                             } catch (err) {
-                              alert('Failed to generate PDF: ' + err.message);
+                              alert('Failed to generate Excel: ' + err.message);
                             }
-                          }}>Download PDF</button>
+                          }}>Download Excel</button>
                         </div>
                       </div>
 
@@ -1008,21 +1067,21 @@ const CampDashboard = () => {
                           <thead>
                             <tr style={{ textAlign: 'left', borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
                               <th style={{ padding: '8px' }}>Patient ID</th>
-                              <th style={{ padding: '8px' }}>Student Name</th>
-                              <th style={{ padding: '8px' }}>Date of Birth</th>
+                              <th style={{ padding: '8px' }}>Patient Name</th>
+                              <th style={{ padding: '8px' }}>Age</th>
                               <th style={{ padding: '8px' }}>Gender</th>
                               <th style={{ padding: '8px' }}>Phone</th>
                             </tr>
                           </thead>
                           <tbody>
                             {campStudents.length === 0 && (
-                              <tr><td colSpan={5} style={{ padding: '12px', color: 'rgba(255,255,255,0.6)' }}>No students added yet for this camp.</td></tr>
+                              <tr><td colSpan={5} style={{ padding: '12px', color: 'rgba(255,255,255,0.6)' }}>No patients added yet for this camp.</td></tr>
                             )}
                             {campStudents.map((s, idx) => (
                               <tr key={s.patientId || idx} style={{ borderBottom: '1px solid rgba(255,255,255,0.03)' }}>
                                 <td style={{ padding: '8px' }}>{s.patientId}</td>
                                 <td style={{ padding: '8px' }}>{(s.personalInfo?.firstName || '') + (s.personalInfo?.lastName ? ` ${s.personalInfo.lastName}` : '')}</td>
-                                <td style={{ padding: '8px' }}>{s.personalInfo?.dateOfBirth ? new Date(s.personalInfo.dateOfBirth).toLocaleDateString('en-GB') : '-'}</td>
+                                <td style={{ padding: '8px' }}>{s.personalInfo?.dateOfBirth ? calculateAge(s.personalInfo.dateOfBirth) + ' years' : '-'}</td>
                                 <td style={{ padding: '8px' }}>{s.personalInfo?.gender || '-'}</td>
                                 <td style={{ padding: '8px' }}>{s.personalInfo?.phone || '-'}</td>
                               </tr>
