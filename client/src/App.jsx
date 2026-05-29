@@ -16,6 +16,7 @@ import MyAppointment from './pages/MyAppointment';
 import DoctorSchedule from './pages/DoctorSchedules';
 import CasePortal from './pages/casePortal';
 import Pedodontics from './pages/departments/Pedodontics';
+import OralMedicine from './pages/departments/OralMedicine';
 import ImplantPatient from './pages/departments/prosthodontics/ImplantPatient';
 import { AuthProvider, useAuth } from './pages/context/AuthContext';
 import ProtectedRoute from './pages/context/ProtectedRoute';
@@ -45,6 +46,7 @@ import PGDashboard from './pages/PGDashboard';
 import UGDashboard from './pages/UGDashboard';
 import ConsentForm from './pages/consentform';
 import CampDashboard from './pages/CampDashboard';
+import ConservativeDentistry from './pages/departments/ConservativeDentistry';
 
 const getDashboardRouteByRole = (role) => {
   const normalizedRole = String(role || '').trim().toLowerCase();
@@ -325,7 +327,12 @@ const AppRoutes = () => {
                 'partialdenture',
                 'partial',
                 'periodontics',
+                'oral',
                 'oralandmaxillofacial',
+                'oralandmaxillofacialsurgery',
+                'oralmedicine',
+                'oralmedicineandradiology',
+                'oralmedicineradiology',
                 'conservativedentistryandendodontics'
               ]}
             >
@@ -341,6 +348,17 @@ const AppRoutes = () => {
               allowedDepartments={['pedodontics']}
             >
               <Pedodontics />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/oral-medicine"
+          element={
+            <ProtectedRoute
+              allowedRoles={['doctor', 'chief', 'chief-doctor', 'pg', 'ug']}
+              allowedDepartments={['oral', 'oralandmaxillofacial', 'oralandmaxillofacialsurgery', 'oralmedicine', 'oralmedicineandradiology', 'oralmedicineradiology']}
+            >
+              <OralMedicine />
             </ProtectedRoute>
           }
         />
@@ -407,6 +425,18 @@ const AppRoutes = () => {
               allowedDepartments={['prosthodontics', 'prothodontics', 'prosthondontics', 'partialdenture', 'partial']}
             >
               <Partial />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/conservative-dentistry"
+          element={
+            <ProtectedRoute
+              allowedRoles={['doctor', 'chief', 'chief-doctor', 'pg', 'ug']}
+              allowedDepartments={['conservative', 'conservativedentistry', 'endodontics', 'conservativedentistryandendodontics']}
+            >
+              <ConservativeDentistry />
             </ProtectedRoute>
           }
         />

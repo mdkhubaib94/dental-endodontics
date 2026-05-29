@@ -200,11 +200,12 @@ const MyAppointment = () => {
           <thead>
             <tr>
               <th>S.No</th>
-              <th>Appointment No.</th>
-              <th>Complaint</th>
+              <th>Booking ID</th>
+              <th>Patient Name</th>
+              <th>Patient ID</th>
+              <th>Email</th>
               <th>Date & Time</th>
-              <th>Status</th>
-              <th>Action</th>
+              <th>Complaint</th>
             </tr>
           </thead>
           <tbody>
@@ -212,29 +213,15 @@ const MyAppointment = () => {
               <tr key={a.bookingId}>
                 <td>{index + 1}</td>
                 <td>{a.bookingId}</td>
-                <td>{a.chiefComplaint}</td>
+                <td>{a.patientName || '-'}</td>
+                <td>{a.patientId}</td>
+                <td>{a.patientEmail}</td>
                 <td>
                   {a.appointmentDate}
                   <span className="date-time-separator">•</span>
                   {a.appointmentTime}
                 </td>
-                <td>{getStatusTag(a.status, a.appointmentDate, a.appointmentTime)}</td>
-                <td>
-                  {a.status !== "cancelled" &&
-                  a.status !== "rescheduled" &&
-                  isFutureAppointment(a.appointmentDate, a.appointmentTime) ? (
-                    <div className="action-buttons">
-                      <button className="btn-reschedule" onClick={() => handleReschedule(a)}>
-                        Reschedule
-                      </button>
-                      <button className="btn-cancel" onClick={() => handleCancelAppointment(a.bookingId)}>
-                        Cancel
-                      </button>
-                    </div>
-                  ) : (
-                    <span className="no-actions">No actions</span>
-                  )}
-                </td>
+                <td>{a.chiefComplaint}</td>
               </tr>
             ))}
           </tbody>

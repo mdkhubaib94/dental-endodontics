@@ -17,15 +17,17 @@ import FpdRoutes from './routes/fpd-route.js';
 import implantRoutes from './routes/Implant-route.js';  
 import implantPatientRoute from './routes/ImplantPatient-route.js';
 import partialRoute from './routes/partial-route.js';
+import oralRoutes from './routes/oral-route.js';
 import generalCaseRoutes from './routes/general-case.js';
 import consentFormRoutes from './routes/consent-form.js';
 import caseDraftRoutes from './routes/case-draft.js';
-
+import conservativeRoutes from './routes/conservative-route.js';
 
 import prescriptionRoutes from './routes/prescription.js';
 import patientDetailsRoutes from './routes/patient-details-route.js';
 import reportsRoutes from './routes/reports.js';
 import billingRoutes from './routes/bill-route.js';
+import debugQueryRoutes from './routes/debug-query.js';
 
 dotenv.config();
 
@@ -241,15 +243,17 @@ console.log('✓ ImplantPatient routes registered at /api/ImplantPatient');
 app.use('/api/partial', partialRoute);
 console.log('✓ Partial Denture routes registered at /api/partial');
 
+app.use('/api/oral', oralRoutes);
+console.log('✓ Oral routes registered at /api/oral');
+
 app.use('/api/general', generalCaseRoutes);
 console.log('✓ General Case Sheet routes registered at /api/general');
 
 app.use('/api/case-drafts', caseDraftRoutes);
 console.log('✓ Case draft routes registered at /api/case-drafts');
 
-
-
-
+app.use('/api/conservative', conservativeRoutes);
+console.log('✓ Conservative routes registered at /api/conservative');
 
 app.use('/api/prescriptions', prescriptionRoutes);
 console.log('✓ Prescription routes registered at /api/prescriptions');
@@ -266,6 +270,9 @@ console.log('✓ Billing routes registered at /api/billing');
 
 app.use('/api/consent-forms', consentFormRoutes);
 console.log('✓ Consent form routes registered at /api/consent-forms');
+
+app.use('/api/debug', debugQueryRoutes);
+console.log('✓ Debug routes registered at /api/debug');
 
 // React Router fallback (GET non-API routes)
 if (isProduction) {

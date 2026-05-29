@@ -167,7 +167,7 @@ router.post('/login/patientlogin', async (req, res) => {
     const token = sign(
       { userId: user._id, role: user.role },
       process.env.JWT_SECRET || 'defaultsecret',
-      { expiresIn: '2h' }
+      { expiresIn: '8h' }
     );
 
     res.json({
@@ -295,7 +295,7 @@ router.post('/login/doctorlogin', async (req, res) => {
     const token = sign(
       { userId: user._id, role: normalizedRole },
       process.env.JWT_SECRET || 'defaultsecret',
-      { expiresIn: '2h' }
+      { expiresIn: '8h' }
     );
 
     res.json({
@@ -465,7 +465,7 @@ router.post('/login/adminlogin', async (req, res) => {
     const token = sign(
       { userId: user._id, role: normalizedRole },
       process.env.JWT_SECRET || 'defaultsecret',
-      { expiresIn: '2h' }
+      { expiresIn: '8h' }
     );
 
     res.json({
@@ -1434,6 +1434,68 @@ router.get('/doctor/assigned-pgs/overview', auth, requireRole(['doctor']), async
       });
     });
 
+    // 🔥 FIX: Also fetch actual appointment bookings assigned to these PGs
+    const appointmentModule = await import('../models/AppoitmentBooked.js');
+    const Appointment = appointmentModule.Appointment;
+    
+    const actualAppointments = await Appointment.find({
+      $or: [
+        { doctorId: { $in: pgQueryKeys } },
+        { assigned_pg_ug_id: { $in: pgQueryKeys } },
+        { pgDoctorId: { $in: pgQueryKeys } },
+      ],
+      status: { $in: ['assigned', 'in_progress', 'rescheduled'] },
+    })
+      .sort({ appointmentDate: 1, appointmentTime: 1 })
+      .lean();
+
+    // Merge appointment bookings with case referrals
+    actualAppointments.forEach((appt) => {
+      const pgIdentity = appt.assigned_pg_ug_id || appt.pgDoctorId || appt.doctorId;
+      const pg = assignedPGs.find(p => String(p.Identity).trim() === String(pgIdentity).trim());
+      
+      if (pg) {
+        // Check if this appointment is already in enrichedAppointments (from referral)
+        const existingIndex = enrichedAppointments.findIndex(
+          ea => String(ea.patientId).trim() === String(appt.patientId).trim()
+        );
+        
+        if (existingIndex === -1) {
+          // Add new appointment entry
+          const patientInfo = patientMap.get(String(appt.patientId || ''));
+          enrichedAppointments.push({
+            referralId: appt._id,
+            patientId: appt.patientId,
+            patientName: appt.patientName || '-',
+            referredDepartment: '',
+            chiefComplaint: String(appt.chiefComplaint || patientInfo?.chiefComplaint || '').trim(),
+            status: 'pending',
+            statusTag: '',
+            resendReason: '',
+            hasCaseSheet: false,
+            hasPrescription: false,
+            caseId: '',
+            caseDepartment: '',
+            chiefApproval: '',
+            assignedAt: appt.createdAt,
+            pgName: pg.name,
+            pgIdentity: pg.Identity,
+            pgDepartment: pg.department,
+            bookingId: appt.bookingId,
+            appointmentDate: appt.appointmentDate,
+            appointmentTime: appt.appointmentTime,
+            appointmentStatus: appt.status,
+          });
+        } else {
+          // Update existing entry with appointment details
+          enrichedAppointments[existingIndex].bookingId = appt.bookingId;
+          enrichedAppointments[existingIndex].appointmentDate = appt.appointmentDate;
+          enrichedAppointments[existingIndex].appointmentTime = appt.appointmentTime;
+          enrichedAppointments[existingIndex].appointmentStatus = appt.status;
+        }
+      }
+    });
+
     res.json({
       success: true,
       pgs: assignedPGs,
@@ -1677,6 +1739,14 @@ router.patch('/doctor/assigned-pgs/cases/:caseId/approve', auth, requireRole(['d
   try {
     const { caseId } = req.params;
     const { department, chiefApproval, approvedBy } = req.body;
+    const normalizedDepartment = normalizeDepartmentName(req.user?.department);
+
+    if (normalizedDepartment === 'general' || normalizedDepartment === 'generaldentistry') {
+      return res.status(403).json({
+        success: false,
+        message: 'General doctors cannot use case-sheet approval controls.',
+      });
+    }
 
     if (!department) {
       return res.status(400).json({ success: false, message: 'Department is required' });

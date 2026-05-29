@@ -417,6 +417,11 @@ const ChiefDoctorDashboard = () => {
           department: "Partial Denture",
           url: `${API_BASE_URL}/api/partial/chief/all-cases`,
         },
+        {
+          departmentKey: "oral",
+          department: "Oral",
+          url: `${API_BASE_URL}/api/oral/chief/all-cases`,
+        },
       ];
 
       const allowedCaseDepartmentsByChiefDepartment = {
@@ -432,6 +437,9 @@ const ChiefDoctorDashboard = () => {
         implantpatient: ["implantPatient"],
         partialdenture: ["partial"],
         partial: ["partial"],
+        oral: ["oral"],
+        oralandmaxillofacial: ["oral"],
+        oralandmaxillofacialsurgery: ["oral"],
       };
 
       const allowedCaseDepartments = allowedCaseDepartmentsByChiefDepartment[normalizedChiefDepartment] || [];
@@ -628,6 +636,7 @@ const ChiefDoctorDashboard = () => {
         Implant: "implant",
         "Implant Patient Surgery": "ImplantPatient",
         "Partial Denture": "partial",
+        Oral: "oral",
       };
 
       const base = apiMap[caseItem.department];
@@ -704,6 +713,7 @@ const ChiefDoctorDashboard = () => {
         Implant: "implant",
         "Implant Patient Surgery": "ImplantPatient",
         "Partial Denture": "partial",
+        Oral: "oral",
       };
 
       const base = apiMap[selectedCase.department];

@@ -1,6 +1,7 @@
 import { useParams, useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 import CaseSheetView from "./Casesheets/CaseSheetView";
+import { API_BASE_URL } from "../config/api";
 
 const CaseSheetViewer = () => {
   const { caseId } = useParams();
@@ -30,7 +31,9 @@ const CaseSheetViewer = () => {
         `/api/fpd/${caseId}`,
         `/api/implant/${caseId}`,
         `/api/ImplantPatient/${caseId}`,
-        `/api/partial/${caseId}`
+        `/api/partial/${caseId}`,
+        `/api/oral/${caseId}`,
+        `/api/general/${caseId}`
       ];
 
       const mapping = {
@@ -39,7 +42,9 @@ const CaseSheetViewer = () => {
         "/api/fpd/": "fpd",
         "/api/implant/": "implant",
         "/api/ImplantPatient/": "implant_patient",
-        "/api/partial/": "partial_denture"
+        "/api/partial/": "partial_denture",
+        "/api/oral/": "oral",
+        "/api/general/": "general"
       };
 
       let data = null;
@@ -48,7 +53,7 @@ const CaseSheetViewer = () => {
       /* ---------- TRY UNIFIED ENDPOINT ---------- */
       try {
         const resUnified = await fetch(
-          `http://localhost:5000${unifiedEndpoint}`,
+          `${API_BASE_URL}${unifiedEndpoint}`,
           {
             headers: { Authorization: `Bearer ${token}` }
           }
@@ -97,7 +102,7 @@ const CaseSheetViewer = () => {
       if (!data) {
         for (const ep of fallbackEndpoints) {
           try {
-            const res = await fetch(`http://localhost:5000${ep}`, {
+            const res = await fetch(`${API_BASE_URL}${ep}`, {
               headers: { Authorization: `Bearer ${token}` }
             });
 
@@ -152,7 +157,7 @@ const CaseSheetViewer = () => {
               const patientIdToFetch = String(data.patientId).trim();
               console.log(`Fetching patient details for ID: ${patientIdToFetch}`);
               
-              const res = await fetch(`http://localhost:5000/api/patient-details/by-patient-id/${patientIdToFetch}`, {
+              const res = await fetch(`${API_BASE_URL}/api/patient-details/by-patient-id/${patientIdToFetch}`, {
                 headers: token ? { Authorization: `Bearer ${token}` } : {}
               });
 

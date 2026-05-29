@@ -14,16 +14,26 @@ node_modules/
 .dist/
 .history/
 
-# Local env/secrets
-# .env
-# server/.env
+# Environment / secrets — never commit real credentials
+.env
+.env.*
+!.env.example
 client/.env
+server/.env
 
 # Build output
 client/dist/
+dist/
 
-# Local temp backups
+# Local temp backups & generated files
 .tmp_render_changes/
+IMPLEMENTATION_COMPLETE.txt
+ORAL_MEDICINE_COMPLETE.md
+ORAL_MEDICINE_IMPLEMENTATION.md
+*.zip
+
+# Kiro IDE internal files
+.kiro/
 
 # Editor directories and files
 .vscode/*
@@ -35,3 +45,7 @@ client/dist/
 *.njsproj
 *.sln
 *.sw?
+
+# OS files
+Thumbs.db
+.vercel

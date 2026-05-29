@@ -72,6 +72,21 @@ const patientDetailsSchema = new Schema({
       trim: true,
       default: ''
     },
+    occupation: {
+      type: String,
+      trim: true,
+      default: ''
+    },
+    income: {
+      type: String,
+      trim: true,
+      default: ''
+    },
+    religion: {
+      type: String,
+      trim: true,
+      default: ''
+    },
     emergencyContact: {
       type: String,
       trim: true,
@@ -108,7 +123,22 @@ const patientDetailsSchema = new Schema({
       trim: true,
       default: ''
     },
+    historyOfPresentIllness: {
+      type: String,
+      trim: true,
+      default: ''
+    },
     treatmentPlan: {
+      type: String,
+      trim: true,
+      default: ''
+    },
+    pastSurgicalHistory: {
+      type: String,
+      trim: true,
+      default: ''
+    },
+    pastDentalHistory: {
       type: String,
       trim: true,
       default: ''
@@ -169,7 +199,22 @@ const patientDetailsSchema = new Schema({
     dietAllergies: [{
       type: String,
       trim: true
-    }]
+    }],
+    criticalCondition: {
+      type: String,
+      trim: true,
+      default: ''
+    }
+  },
+
+  // Clinical Examination
+  clinicalExam: {
+    vitals: { type: String, trim: true, default: '' },
+    constitutionalSigns: { type: String, trim: true, default: '' },
+    extraOralExamination: { type: String, trim: true, default: '' },
+    intraOralFindings: { type: String, trim: true, default: '' },
+    tmjExamination: { type: String, trim: true, default: '' },
+    lymphNodesExamination: { type: String, trim: true, default: '' },
   },
 
   // System Fields

@@ -9,6 +9,8 @@ const UserSchema = new mongoose.Schema({
   role: String,
   Identity: { type: String, unique: true },
   department: { type: String, default: null }, // For doctors
+  isGeneralDoctor: { type: Boolean, default: false },
+  isDeptDoctor: { type: Boolean, default: false },
   specialization: { type: String, default: null },
   staffId: { type: String, unique: true, sparse: true }, // For doctors created by chief doctors
   createdBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User', default: null }, // Chief doctor who created this doctor

@@ -471,6 +471,7 @@ const SlotBooking = () => {
     return parse(a) - parse(b);
   });
 
+  console.log('RENDER UI', {showDateSelection, errorMessage, fetchingSlots});
   return (
     <div className='slot-body'>
       <div className="slot-booking-container">

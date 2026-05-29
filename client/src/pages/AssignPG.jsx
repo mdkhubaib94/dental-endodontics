@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import axios from 'axios';
 import './AssignDoctor.css'; // Reuse same styles
 
@@ -20,7 +20,7 @@ const AssignPG = ({
   const [message, setMessage] = useState('');
   const [messageType, setMessageType] = useState(''); // 'success' or 'error'
   const [isLoading, setIsLoading] = useState(false);
-  const [createdPGData, setCreatedPGData] = useState(null);
+  const contentRef = useRef(null);
 
   const departments = allowedDepartment
     ? [allowedDepartment]
@@ -43,7 +43,6 @@ const AssignPG = ({
     if (!isOpen) return;
 
     clearMessage();
-    setCreatedPGData(null);
 
     if (isEditMode) {
       const seededDepartment = allowedDepartment || initialPG?.department || '';
@@ -63,6 +62,9 @@ const AssignPG = ({
   const showMessage = (msg, type = 'error') => {
     setMessage(msg);
     setMessageType(type);
+    if (contentRef.current) {
+      contentRef.current.scrollTo({ top: 0, behavior: 'smooth' });
+    }
   };
 
   const clearMessage = () => {
@@ -143,8 +145,10 @@ const AssignPG = ({
           return;
         }
 
-        showMessage('PG account created successfully!', 'success');
-        setCreatedPGData(response.data.pg);
+        // Callback to parent component
+        if (onPGCreated) {
+          onPGCreated(response.data.pg);
+        }
 
         // Reset form
         setStaffId('');
@@ -154,10 +158,7 @@ const AssignPG = ({
         setDepartment(allowedDepartment || '');
         setSpecialization('');
 
-        // Callback to parent component
-        if (onPGCreated) {
-          onPGCreated(response.data.pg);
-        }
+        onClose?.();
       }
     } catch (err) {
       console.error('❌ PG Creation Error:', err);
@@ -185,7 +186,6 @@ const AssignPG = ({
     setDepartment(allowedDepartment || '');
     setSpecialization('');
     clearMessage();
-    setCreatedPGData(null);
   };
 
   const copyToClipboard = (text) => {
@@ -197,7 +197,7 @@ const AssignPG = ({
 
   return (
     <div className="assign-doctor-overlay">
-      <div className="assign-doctor-modal">
+      <div className="assign-doctor-modal" ref={contentRef}>
         <div className="assign-doctor-header">
           <h2>{isEditMode ? 'Edit PG Student' : 'Assign a PG Student'}</h2>
           <button 
@@ -210,54 +210,8 @@ const AssignPG = ({
         </div>
 
         <div className="assign-doctor-content">
-          {createdPGData && !isEditMode ? (
-            // Success message with PG details
-            <div className="doctor-created-success">
-              <div className="success-icon">✓</div>
-              <h3>PG Account Created Successfully!</h3>
-              
-              <div className="created-doctor-info">
-                <p><strong>PG Name:</strong> {createdPGData.name}</p>
-                <p><strong>Staff ID:</strong> {createdPGData.staffId}</p>
-                <p><strong>Department:</strong> {createdPGData.department}</p>
-                <p><strong>Specialization:</strong> {createdPGData.specialization || '—'}</p>
-                <p><strong>Phone:</strong> {createdPGData.phone || '—'}</p>
-                <p><strong>Email:</strong> {createdPGData.email}</p>
-                
-                <div className="password-section">
-                  <p><strong>Generated Password:</strong></p>
-                  <div className="password-display">
-                    <span className="password-text">{createdPGData.generatedPassword}</span>
-                    <button 
-                      className="copy-btn"
-                      onClick={() => copyToClipboard(createdPGData.generatedPassword)}
-                    >
-                      Copy
-                    </button>
-                  </div>
-                  <p className="password-note">
-                    Share this password with the PG student. They should change it on first login.
-                  </p>
-                </div>
-              </div>
-
-              <button 
-                className="btn btn-primary"
-                onClick={handleReset}
-              >
-                Create Another PG
-              </button>
-              <button 
-                className="btn btn-secondary"
-                onClick={onClose}
-              >
-                Close
-              </button>
-            </div>
-          ) : (
-            // Form to create PG
-            <form onSubmit={handleSubmit}>
-              {message && (
+          <form onSubmit={handleSubmit}>
+            {message && (
                 <div className={`message-box ${messageType}`}>
                   {messageType === 'success' ? '✓' : '✕'} {message}
                 </div>
@@ -372,7 +326,6 @@ const AssignPG = ({
                 </button>
               </div>
             </form>
-          )}
         </div>
       </div>
     </div>

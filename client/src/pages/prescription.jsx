@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import './prescription.css';
 import { API_BASE_URL } from '../config/api';
+// SlotBookingModal not imported here anymore; Next Visit Appointment removed from this page
 
 // Medicine database with autocomplete
 const MEDICINE_LIST = [
@@ -153,7 +154,7 @@ const PrintPrescription = ({
       <div className="print-page">
         {/* Watermark (large faint logo) */}
         <div className="watermark">
-          <img src="/public/images/logo2.png" alt="img" />
+          <img src="/images/logo2.png" alt="img" />
         </div>
         {/* Header with Logo */}
         <div style={{ 
@@ -396,7 +397,7 @@ const Prescription = () => {
   const [nextVisitDate, setNextVisitDate] = useState('');
   const [nextVisitTime, setNextVisitTime] = useState('');
   const [medicines, setMedicines] = useState([]);
-  const [showSlotModal, setShowSlotModal] = useState(false);
+  // showSlotModal removed: Next Visit Appointment slot picker UI removed from Prescription page
   const [availableDates, setAvailableDates] = useState([]);
   const [selectedDateForSlot, setSelectedDateForSlot] = useState('');
   const [availableTimeSlots, setAvailableTimeSlots] = useState([]);
@@ -862,6 +863,42 @@ const Prescription = () => {
   };
 
   const generateTimeSlots = () => {
+    // Detect if the current user belongs to the Oral Medicine department
+    const rawDept = String(
+      localStorage.getItem('doctorDepartment') ||
+      localStorage.getItem('pgDepartment') ||
+      localStorage.getItem('ugDepartment') ||
+      ''
+    ).trim().toLowerCase().replace(/[\s_]+/g, '');
+
+    const isOralDept =
+      rawDept.includes('oral') ||
+      rawDept === 'oralmedicine' ||
+      rawDept === 'oralmedicineandradiology' ||
+      rawDept === 'oralmedicineradiology';
+
+    if (isOralDept) {
+      // Oral Medicine: 15-minute slots from 9:00 AM to 2:00 PM
+      // Skips lunch break (1:00–2:00 PM) and the 11:00 slot (short break)
+      const slotStartsInMinutes = [];
+      const lunchStart = 13 * 60; // 1:00 PM
+      const lunchEnd   = 14 * 60; // 2:00 PM
+      const breakSlot  = 11 * 60; // 11:00 AM (skip this one slot)
+
+      for (let t = 9 * 60; t <= 14 * 60; t += 15) {
+        if (t >= lunchStart && t < lunchEnd) continue; // skip lunch
+        if (t === breakSlot) continue;                  // skip 11:00 break
+        slotStartsInMinutes.push(t);
+      }
+
+      return slotStartsInMinutes.map((start) => ({
+        start,
+        end: start + 15,
+        time: formatMinutesToTime(start),
+      }));
+    }
+
+    // Default: 30-minute slots (all other departments)
     // Strict schedule: 30-minute slots from 9:00 AM to 2:00 PM (last start 2:00 PM, ends 2:30 PM)
     // Lunch break (1:00–2:00) removes 1:00 and 1:30.
     // Break (11:00–11:10) removes the 11:00–11:30 slot; next slot remains 11:30 (no 11:10 slot).
@@ -973,12 +1010,7 @@ const Prescription = () => {
     }
   };
 
-  const handleOpenSlotModal = () => {
-    const today = new Date();
-    setCurrentCalendarMonth(today.getMonth());
-    setCurrentCalendarYear(today.getFullYear());
-    setShowSlotModal(true);
-  };
+  // handleOpenSlotModal removed because modal trigger was removed from Prescription page
 
   const navigateCalendar = (direction) => {
     if (direction === 'prev') {
@@ -1057,8 +1089,9 @@ const Prescription = () => {
         
         console.log('Set appointment to:', { date, time: timeIn24HourFormat });
         
-        // Close the modal
-        setShowSlotModal(false);
+  // Modal is not used on this page any more; perform local cleanup instead
+  // (clear selection state used by calendar logic)
+  // Note: do not reference removed showSlotModal here to avoid console errors
         setSelectedDateForSlot('');
         setAvailableTimeSlots([]);
         setBookedSlots({});
@@ -1229,10 +1262,12 @@ const Prescription = () => {
 
       console.log('Sending prescription data:', prescriptionData);
 
+      const token = localStorage.getItem('token');
       const response = await fetch('http://localhost:5000/api/prescriptions', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          ...(token ? { 'Authorization': `Bearer ${token}` } : {})
         },
         body: JSON.stringify(prescriptionData)
       });
@@ -1445,6 +1480,7 @@ const Prescription = () => {
           ← Back to Dashboard
         </button>
 
+
         <div className="logo-container">
           <img
             src="/logo.png"
@@ -1611,54 +1647,7 @@ const Prescription = () => {
             />
           </div>
 
-          <div className="form-field">
-            <label className="form-label">Next Visit Appointment:</label>
-            <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
-              <div style={{ position: 'relative', flex: 1 }}>
-                <input
-                  type="date"
-                  value={nextVisitDate || ''}
-                  readOnly
-                  className="form-input"
-                  style={{ cursor: 'pointer', backgroundColor: nextVisitDate ? '#e8f5e9' : '#f5f5f5' }}
-                  placeholder="Select date from calendar"
-                />
-              </div>
-              <input
-                type="time"
-                value={nextVisitTime || ''}
-                readOnly
-                className="form-input"
-                style={{ width: '150px', cursor: 'pointer', backgroundColor: nextVisitTime ? '#e8f5e9' : '#f5f5f5' }}
-                placeholder="Select time"
-              />
-              <button
-                type="button"
-                onClick={() => {
-                  if (!patientId || patientId.trim() === '') {
-                    alert('Please enter a Patient ID before selecting appointment slots.');
-                    return;
-                  }
-                  setShowSlotModal(true);
-                }}
-                className="add-medicine-btn"
-                style={{ padding: '10px 20px', whiteSpace: 'nowrap', opacity: !patientId ? 0.6 : 1, cursor: !patientId ? 'not-allowed' : 'pointer' }}
-                disabled={!patientId || patientId.trim() === ''}
-              >
-                Select Slots
-              </button>
-              {(nextVisitDate || nextVisitTime) && (
-                <button
-                  type="button"
-                  onClick={handleClearNextVisit}
-                  className="modal-cancel-btn"
-                  style={{ padding: '8px 15px' }}
-                >
-                  Clear
-                </button>
-              )}
-            </div>
-          </div>
+          {/* Next Visit Appointment removed from Prescription page per request */}
 
           <div className="form-actions">
             <button
@@ -1715,257 +1704,7 @@ const Prescription = () => {
         </div>
       )}
 
-      {/* Slot Selection Modal */}
-      {showSlotModal && (
-        <div className="modal-overlay" style={{ zIndex: 1000 }}>
-          <div className="modal" style={{ maxWidth: '900px', maxHeight: '85vh', overflow: 'auto' }}>
-            <h3 style={{ marginBottom: '20px', color: 'white', textAlign: 'center', fontSize: '22px', fontWeight: '700' }}>Select Next Visit Date & Time</h3>
-            
-            {!selectedDateForSlot ? (
-              <>
-                {/* Calendar Header */}
-                <div style={{ 
-                  display: 'flex', 
-                  justifyContent: 'space-between', 
-                  alignItems: 'center', 
-                  marginBottom: '20px',
-                  padding: '0 10px'
-                }}>
-                  <button
-                    type="button"
-                    onClick={() => navigateCalendar('prev')}
-                    className="calendar-nav-btn"
-                    style={{
-                      background: '#1e3a8a',
-                      color: 'white',
-                      border: 'none',
-                      borderRadius: '50%',
-                      width: '40px',
-                      height: '40px',
-                      cursor: 'pointer',
-                      fontSize: '18px',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center'
-                    }}
-                  >
-                    ‹
-                  </button>
-                  
-                  <h4 style={{ 
-                    margin: 0, 
-                    fontSize: '18px', 
-                    fontWeight: 'bold',
-                    color: 'white'
-                  }}>
-                    {new Date(currentCalendarYear, currentCalendarMonth).toLocaleDateString('en-US', { 
-                      month: 'long', 
-                      year: 'numeric' 
-                    })}
-                  </h4>
-                  
-                  <button
-                    type="button"
-                    onClick={() => navigateCalendar('next')}
-                    className="calendar-nav-btn"
-                    style={{
-                      background: '#1e3a8a',
-                      color: 'white',
-                      border: 'none',
-                      borderRadius: '50%',
-                      width: '40px',
-                      height: '40px',
-                      cursor: 'pointer',
-                      fontSize: '18px',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center'
-                    }}
-                  >
-                    ›
-                  </button>
-                </div>
-
-                {/* Calendar Grid */}
-                <div style={{ marginBottom: '20px' }}>
-                  {/* Days of week header */}
-                  <div style={{ 
-                    display: 'grid', 
-                    gridTemplateColumns: 'repeat(7, 1fr)', 
-                    gap: '2px',
-                    marginBottom: '10px'
-                  }}>
-                    {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(day => (
-                      <div key={day} style={{
-                        padding: '10px',
-                        textAlign: 'center',
-                        fontWeight: 'bold',
-                        fontSize: '14px',
-                        color: '#fff',
-                        backgroundColor: 'rgba(60, 141, 255, 0.2)'
-                      }}>
-                        {day}
-                      </div>
-                    ))}
-                  </div>
-
-                  {/* Calendar dates */}
-                  <div style={{ 
-                    display: 'grid', 
-                    gridTemplateColumns: 'repeat(7, 1fr)', 
-                    gap: '2px'
-                  }}>
-                    {generateCalendarDates(currentCalendarMonth, currentCalendarYear).map((dateObj, index) => {
-                      const isSelectable = dateObj.isAvailable;
-                      return (
-                        <button
-                          key={index}
-                          type="button"
-                          onClick={() => isSelectable && handleDateSelection(dateObj.fullDate)}
-                          disabled={!isSelectable}
-                          style={{
-                            padding: '12px 8px',
-                            border: '2px solid rgba(255, 255, 255, 0.3)',
-                            backgroundColor: dateObj.isToday 
-                              ? 'rgba(60, 141, 255, 0.5)' 
-                              : dateObj.isCurrentMonth 
-                                ? (isSelectable ? 'rgba(60, 141, 255, 0.2)' : 'rgba(107, 114, 128, 0.2)')
-                                : 'rgba(0, 0, 0, 0.1)',
-                            color: dateObj.isToday
-                              ? '#fff'
-                              : dateObj.isCurrentMonth
-                                ? (isSelectable ? '#fff' : 'rgba(255, 255, 255, 0.5)')
-                                : 'rgba(255, 255, 255, 0.3)',
-                            cursor: isSelectable ? 'pointer' : 'not-allowed',
-                            fontSize: '14px',
-                            fontWeight: dateObj.isToday ? 'bold' : 'normal',
-                            borderRadius: '8px',
-                            transition: 'all 0.2s ease',
-                            minHeight: '45px',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center'
-                          }}
-                          onMouseEnter={(e) => {
-                            if (isSelectable) {
-                              e.target.style.backgroundColor = 'rgba(60, 141, 255, 0.6)';
-                              e.target.style.transform = 'scale(1.05)';
-                              e.target.style.borderColor = 'rgba(60, 141, 255, 0.8)';
-                            }
-                          }}
-                          onMouseLeave={(e) => {
-                            if (isSelectable) {
-                              e.target.style.backgroundColor = 'rgba(60, 141, 255, 0.2)';
-                              e.target.style.transform = 'scale(1)';
-                              e.target.style.borderColor = 'rgba(255, 255, 255, 0.3)';
-                            }
-                          }}
-                        >
-                          {dateObj.day}
-                          {dateObj.isWeekend && dateObj.isCurrentMonth && (
-                            <div style={{ fontSize: '10px', color: '#ff6b6b', marginTop: '2px' }}>
-                              Weekend
-                            </div>
-                          )}
-                        </button>
-                      );
-                    })}
-                  </div>
-                </div>
-
-                {/* Legend */}
-                <div style={{ 
-                  display: 'flex', 
-                  justifyContent: 'center', 
-                  gap: '20px', 
-                  marginBottom: '20px',
-                  fontSize: '12px',
-                  color: 'rgba(255, 255, 255, 0.8)'
-                }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
-                    <div style={{ width: '12px', height: '12px', backgroundColor: 'rgba(60, 141, 255, 0.5)', border: '2px solid rgba(60, 141, 255, 0.8)' }}></div>
-                    Today
-                  </div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
-                    <div style={{ width: '12px', height: '12px', backgroundColor: 'rgba(60, 141, 255, 0.2)', border: '2px solid rgba(255, 255, 255, 0.3)' }}></div>
-                    Available
-                  </div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
-                    <div style={{ width: '12px', height: '12px', backgroundColor: 'rgba(107, 114, 128, 0.2)', border: '2px solid rgba(255, 255, 255, 0.3)' }}></div>
-                    Unavailable
-                  </div>
-                </div>
-
-                <div style={{ textAlign: 'right' }}>
-                  <button
-                    type="button"
-                    onClick={() => setShowSlotModal(false)}
-                    className="modal-cancel-btn"
-                  >
-                    Cancel
-                  </button>
-                </div>
-              </>
-            ) : (
-              <>
-                <p style={{ marginBottom: '15px', fontSize: '14px', fontWeight: '600', color: 'white' }}>
-                  <strong style={{ color: 'rgba(255, 255, 255, 0.9)' }}>Date:</strong> <span style={{ color: 'rgba(60, 141, 255, 0.9)' }}>{new Date(selectedDateForSlot).toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })}</span>
-                </p>
-                <div className="time-slots-header">Available Slots for {new Date(selectedDateForSlot).toLocaleDateString('en-IN')}:</div>
-                {availableTimeSlots.length > 0 ? (
-                  <div className="time-slots-container">
-                    {availableTimeSlots.map((slot) => {
-                      const isBooked = isSlotBooked(slot.time);
-                      return (
-                        <button
-                          key={slot.time}
-                          type="button"
-                          onClick={() => !isBooked && handleSlotSelection(selectedDateForSlot, slot.time)}
-                          disabled={isBooked}
-                          className="time-slot-btn"
-                          title={isBooked ? 'This slot is already booked' : 'Click to select'}
-                        >
-                          {slot.time}
-                          {isBooked && <span style={{ fontSize: '10px', marginTop: '4px' }}>Booked</span>}
-                        </button>
-                      );
-                    })}
-                  </div>
-                ) : (
-                  <div className="no-slots-message">
-                    No time slots available for this date. Please select another date.
-                  </div>
-                )}
-                <div style={{ marginTop: '20px', display: 'flex', justifyContent: 'space-between' }}>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setSelectedDateForSlot('');
-                      setAvailableTimeSlots([]);
-                      setBookedSlots({});
-                    }}
-                    className="modal-cancel-btn"
-                  >
-                    Back to Calendar
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setShowSlotModal(false);
-                      setSelectedDateForSlot('');
-                      setAvailableTimeSlots([]);
-                      setBookedSlots({});
-                    }}
-                    className="modal-cancel-btn"
-                  >
-                    Cancel
-                  </button>
-                </div>
-              </>
-            )}
-          </div>
-        </div>
-      )}
+      {/* SlotBookingModal removed from this page to disable Next Visit Appointment here */}
     </div>
   );
 };

@@ -18,6 +18,13 @@ const doctorDepartmentCaseApiPrefixes = {
   implantpatient: ['/api/implantpatient'],
   partial: ['/api/partial'],
   partialdenture: ['/api/partial'],
+  // Oral department — all possible stored variants
+  oral: ['/api/oral'],
+  oralandmaxillofacial: ['/api/oral'],
+  oralandmaxillofacialsurgery: ['/api/oral'],
+  oralmedicine: ['/api/oral'],
+  oralmedicineandradiology: ['/api/oral'],
+  oralmedicineradiology: ['/api/oral'],
   general: [],
   generaldentistry: []
 };

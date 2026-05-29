@@ -92,7 +92,7 @@ const AppHome = () => {
                 </div>
                 <h3>Oral Medicine and Radiology (OMR)</h3>
                 <p>Deals with diagnosis and medical management of oral diseases, and includes dental radiology (X-rays, CBCT).</p>
-                <a href="#">Learn More</a>
+
               </div>
               <div className="service-card">
                 <div className="icon-or-image">
@@ -104,7 +104,7 @@ const AppHome = () => {
                 </div>
                 <h3>Oral and Maxillofacial Surgery (OMFS)</h3>
                 <p>Focuses on surgical treatments — like tooth extractions, trauma, jaw surgeries, cysts, tumors, and implants.</p>
-                <a href="#">Learn More</a>
+
               </div>
               <div className="service-card">
                 <div className="icon-or-image">
@@ -116,7 +116,7 @@ const AppHome = () => {
                 </div>
                 <h3>Prosthodontics</h3>
                 <p>Specializes in replacement of missing teeth through crowns, bridges, dentures, and implants.</p>
-                <a href="#">Learn More</a>
+
               </div>
               <div className="service-card">
                 <div className="icon-or-image">
@@ -124,7 +124,7 @@ const AppHome = () => {
                 </div>
                 <h3>Conservative Dentistry and Endodontics</h3>
                 <p>Concerned with tooth preservation through fillings, root canal treatments, and cosmetic restorations.</p>
-                <a href="#">Learn More</a>
+
               </div>
               <div className="service-card">
                 <div className="icon-or-image">
@@ -132,7 +132,7 @@ const AppHome = () => {
                 </div>
                 <h3>Periodontics</h3>
                 <p>Manages gum and supporting structures of teeth — including scaling, flap surgeries, and bone grafting.</p>
-                <a href="#">Learn More</a>
+
               </div>
               <div className="service-card">
                 <div className="icon-or-image">
@@ -140,7 +140,7 @@ const AppHome = () => {
                 </div>
                 <h3>Orthodontics</h3>
                 <p>Deals with alignment of teeth and jaws using braces, aligners, and other appliances.</p>
-                <a href="#">Learn More</a>
+
               </div>
               <div className="service-card">
                 <div className="icon-or-image">
@@ -148,7 +148,7 @@ const AppHome = () => {
                 </div>
                 <h3>Pedodontics (Pediatric Dentistry)</h3>
                 <p>Provides dental care to children, including preventive and interceptive treatments.</p>
-                <a href="#">Learn More</a>
+
               </div>
               <div className="service-card">
                 <div className="icon-or-image">
@@ -156,7 +156,7 @@ const AppHome = () => {
                 </div>
                 <h3>Oral Pathology and Microbiology</h3>
                 <p>Studies diseases affecting the oral cavity through microscopic and molecular diagnosis.</p>
-                <a href="#">Learn More</a>
+
               </div>
               <div className="service-card">
                 <div className="icon-or-image">
@@ -164,7 +164,7 @@ const AppHome = () => {
                 </div>
                 <h3>Public Health Dentistry (Community Dentistry)</h3>
                 <p>Focuses on promoting oral health at the community level through education, screening, and outreach programs.</p>
-                <a href="#">Learn More</a>
+
               </div>
             </div>
           </div>

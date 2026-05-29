@@ -277,23 +277,20 @@ const DoctorSchedule = () => {
           <thead>
             <tr>
               <th>S.No</th>
-              <th>Booking ID</th>
               <th>Patient Name</th>
               <th>Patient ID</th>
               <th>Email</th>
               <th>Date & Time</th>
               <th>Complaint</th>
-              <th>Status</th>
-              <th>Actions</th>
             </tr>
           </thead>
 
           <tbody>
             {appointments.length === 0 && (
               <tr>
-                <td colSpan="9" style={{ textAlign: "center", padding: "16px", color: "#6b7280" }}>
+                <td colSpan="6" style={{ textAlign: "center", padding: "16px", color: "#6b7280" }}>
                   {viewMode === "my"
-                    ? "No upcoming confirmed appointments assigned to you yet. Approve an appointment in 'All' to see it here."
+                    ? "No upcoming appointments found."
                     : "No appointments found."}
                 </td>
               </tr>
@@ -302,77 +299,21 @@ const DoctorSchedule = () => {
             {appointments.map((a, i) => (
               <tr key={a.bookingId}>
                 <td>{i + 1}</td>
-                <td>{a.bookingId}</td>
                 <td>{a.patientName}</td>
                 <td>{a.patientId}</td>
                 <td>{a.patientEmail || "-"}</td>
 
                 {/* ✅ DATE & TIME — CLEAN ALIGNMENT */}
-<td className="date-time-cell">
-  <div className="date-line">{a.appointmentDate || "-"}</div>
-  <div className="time-line">{a.appointmentTime || "-"}</div>
-</td>
+                <td className="date-time-cell">
+                  <div className="date-line">{a.appointmentDate || "-"}</div>
+                  <div className="time-line">{a.appointmentTime || "-"}</div>
+                </td>
 
                 <td>
                   {String(a.chiefComplaint || '').trim().toLowerCase() ===
                   'follow-up appointment from prescription'
                     ? 'Follow ups'
                     : a.chiefComplaint}
-                </td>
-
-                {/* ✅ STATUS BADGE */}
-                <td>
-                  {(() => {
-                    const isExpired = isExpiredPendingAppointment(a);
-
-                    if (isExpired) {
-                      return (
-                        <span className="status-badge status-expired">
-                          Expired
-                        </span>
-                      );
-                    }
-                    return (
-                      <span className={`status-badge status-${a.status}`}>
-                        {formatStatus(a.status)}
-                      </span>
-                    );
-                  })()}
-                </td>
-
-                {/* ✅ ACTIONS */}
-                <td className="actions-cell">
-                  {(() => {
-                    const appointmentDate = new Date(a.appointmentDate);
-                    const today = new Date();
-                    today.setHours(0, 0, 0, 0);
-                    appointmentDate.setHours(0, 0, 0, 0);
-                    const isExpired = appointmentDate < today;
-
-                    if (canManageAppointments && a.status === "pending" && !isExpired) {
-                      return (
-                        <div className="actions-wrapper">
-                          <button
-                            className="btn-approve"
-                            onClick={() => confirmAppointment(a.bookingId)}
-                          >
-                            Approve
-                          </button>
-                          <button
-                            className="btn-reschedule"
-                            onClick={() => openReschedule(a)}
-                          >
-                            Reschedule
-                          </button>
-                        </div>
-                      );
-                    }
-                    return (
-                      <span className="action-status">
-                        No Action Available
-                      </span>
-                    );
-                  })()}
                 </td>
               </tr>
             ))}

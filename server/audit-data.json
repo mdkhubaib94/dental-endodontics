@@ -1,0 +1,54 @@
+{
+  "baseUrl": "http://localhost:5000",
+  "testPassword": "Test@1234",
+  "tokens": {
+    "patient": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI2YTBlY2U1YTljNDlhY2I5ZTEzZWI3ZDMiLCJpYXQiOjE3NzkzNTUyMjYsImV4cCI6MTc3OTQ0MTYyNn0.3b899I2vc5HC_qzj0Qyy6VF3WPmQQ8tXVMAe8zSb_CA",
+    "generalDoctor": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI2YTBlY2U1YTljNDlhY2I5ZTEzZWI3ZDQiLCJpYXQiOjE3NzkzNTUyMjYsImV4cCI6MTc3OTQ0MTYyNn0.2Oe2KE_LemBKTMGtaUUXApRKlG2SBpY-D_MDCr951JQ",
+    "deptDoctor": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI2YTBlY2U1YTljNDlhY2I5ZTEzZWI3ZDUiLCJpYXQiOjE3NzkzNTUyMjYsImV4cCI6MTc3OTQ0MTYyNn0._-XVnJy1Hkt-w_WwTjS60Hd_kmhj8X5QIHjUc2T8CME",
+    "pg": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI2YTBlY2U1YTljNDlhY2I5ZTEzZWI3ZDYiLCJpYXQiOjE3NzkzNTUyMjYsImV4cCI6MTc3OTQ0MTYyNn0.RZsy1M89nsvLpLK-i6nP_fw9ktjqtY4mLvFW1JEMPfE",
+    "ug": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI2YTBlY2U1YTljNDlhY2I5ZTEzZWI3ZDciLCJpYXQiOjE3NzkzNTUyMjYsImV4cCI6MTc3OTQ0MTYyNn0.nLNmEchWdVXbCgN-zH2pz2QvClSG8aqxzrqreObXfqk"
+  },
+  "userIds": {
+    "patient": "6a0ece5a9c49acb9e13eb7d3",
+    "generalDoctor": "6a0ece5a9c49acb9e13eb7d4",
+    "deptDoctor": "6a0ece5a9c49acb9e13eb7d5",
+    "pg": "6a0ece5a9c49acb9e13eb7d6",
+    "ug": "6a0ece5a9c49acb9e13eb7d7"
+  },
+  "users": [
+    {
+      "id": "6a0ece5a9c49acb9e13eb7d3",
+      "email": "test_patient@clinic.com",
+      "role": "patient",
+      "identity": "TEST_PATIENT_001"
+    },
+    {
+      "id": "6a0ece5a9c49acb9e13eb7d4",
+      "email": "test_generaldoc@clinic.com",
+      "role": "doctor",
+      "identity": "TEST_GENDOC_001",
+      "department": "general"
+    },
+    {
+      "id": "6a0ece5a9c49acb9e13eb7d5",
+      "email": "test_deptdoc@clinic.com",
+      "role": "doctor",
+      "identity": "TEST_DEPTDOC_001",
+      "department": "prosthodontics"
+    },
+    {
+      "id": "6a0ece5a9c49acb9e13eb7d6",
+      "email": "test_pg@clinic.com",
+      "role": "pg",
+      "identity": "TEST_PG_001",
+      "department": "prosthodontics"
+    },
+    {
+      "id": "6a0ece5a9c49acb9e13eb7d7",
+      "email": "test_ug@clinic.com",
+      "role": "ug",
+      "identity": "TEST_UG_001",
+      "department": "prosthodontics"
+    }
+  ]
+}

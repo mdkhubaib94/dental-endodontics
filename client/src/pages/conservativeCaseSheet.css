@@ -1,0 +1,505 @@
+/* conservativeCaseSheet.css
+     Scoped container rules to match Implant page appearance.
+     We intentionally avoid changing global login styles. These styles
+     only modify the login-box when displayed as the Conservative case sheet.
+*/
+
+/* Make the outer glass card wider and match implant visual */
+.login-page.conservative-case-sheet {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    min-height: 100vh !important;
+    padding: 40px 20px !important;
+    box-sizing: border-box !important;
+}
+
+.conservative-case-sheet .login-box {
+    width: 80% !important;
+    max-width: 1200px !important;
+    margin: auto !important;
+    padding: 3rem !important; /* slightly more spacious */
+    border-radius: 25px !important; /* match requirement */
+
+    /* translucent deep royal blue glass */
+    background: rgba(20, 32, 100, 0.72) !important; /* deep royal-blue translucent */
+    backdrop-filter: blur(18px) saturate(120%) !important; /* smooth blur */
+
+    /* subtle border and soft shadow */
+    border: 1px solid rgba(255,255,255,0.08) !important;
+        box-shadow: 0 30px 60px rgba(0,0,0,0.55), inset 0 1px 0 rgba(255,255,255,0.02) !important;
+
+    /* ensure no background image shows inside the card */
+        background-image: none !important;
+        background-repeat: no-repeat !important;
+        background-size: auto !important;
+
+        /* Ensure the card fits inside the viewport and is scrollable when content is tall */
+        max-height: calc(100vh - 80px) !important;
+        overflow-y: auto !important;
+}
+
+/* Remove any image or logo background that might be applied inside header or card */
+.conservative-case-sheet .login-box .logo,
+.conservative-case-sheet .login-box .logo-container,
+.conservative-case-sheet .login-box .logo-img-user {
+    background-image: none !important;
+    background: transparent !important;
+}
+
+/* Keep white typography and spacing similar to Implant */
+.conservative-case-sheet .login-box h2,
+.conservative-case-sheet .login-box h3,
+.conservative-case-sheet .login-box .college-name {
+    color: #ffffff !important;
+}
+
+/* Inputs inherit the login styles; enforce slight adjustments for contrast */
+.conservative-case-sheet .login-box input,
+.conservative-case-sheet .login-box textarea,
+.conservative-case-sheet .login-box select {
+    background: rgba(255,255,255,0.96) !important;
+    color: #222 !important;
+    border-radius: 12px !important;
+    padding: 1rem 1.2rem !important;
+    box-shadow: 0 8px 18px rgba(0,0,0,0.18) !important;
+}
+
+/* Make header spacing a bit larger inside the wider card */
+.conservative-case-sheet .login-box .college-name { margin-bottom: 6px; font-weight: 700; }
+.conservative-case-sheet .login-box h2 { margin-bottom: 6px; }
+
+/* Responsive adjustments keep the card full-width on small screens */
+@media (max-width: 900px) {
+    .conservative-case-sheet .login-box { width: 95% !important; max-width: 760px !important; padding: 2rem !important; }
+}
+
+@media print {
+    .conservative-case-sheet .login-box { background: white !important; color: black !important; box-shadow: none !important; border: none !important; }
+}
+
+/* Center the logo in the card and size it consistently */
+.conservative-case-sheet .login-box .logo { display:flex; justify-content:center; align-items:center; margin: 0 auto 0.9rem; }
+
+/* Circular badge container for the logo */
+.conservative-case-sheet .login-box .logo {
+    width: 110px;
+    height: 110px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(255,255,255,0.08);
+    box-shadow: 0 8px 20px rgba(0,0,0,0.25);
+}
+
+.conservative-case-sheet .login-box .conservative-logo {
+    width: 72%;
+    height: 72%;
+    object-fit: contain;
+    display: block;
+    border-radius: 50%;
+}
+
+/* Ensure selected calendar dates and time slots use the prescription blue inside the conservative case sheet */
+.conservative-case-sheet .login-box .calendar-date-btn.selected,
+.conservative-case-sheet .login-box .time-slot-btn.selected,
+.conservative-case-sheet .login-box .time-slot-btn:active {
+    background: #1e3a8a !important;
+    color: #ffffff !important;
+    border-color: transparent !important;
+}
+
+/* Change the grey calendar boxes to a light blue inside the conservative case sheet modal
+     Only color/visual change; layout and behavior remain unchanged. */
+.conservative-case-sheet .login-box .calendar-date-btn {
+    background-color: #e3f2fd !important; /* light blue */
+    color: #0b3a66 !important; /* darker blue text for contrast */
+    border-color: rgba(30,58,138,0.08) !important;
+}
+.conservative-case-sheet .login-box .calendar-date-btn.other-month,
+.conservative-case-sheet .login-box .calendar-date-btn.past,
+.conservative-case-sheet .login-box .calendar-date-btn.weekend {
+    background-color: #dbeafe !important; /* slightly lighter for non-current/past/weekend */
+    color: rgba(11,58,102,0.7) !important;
+}
+/* DentalPatientRecord.css */
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    background: #e2e8f0;
+    font-family: 'Inter', system-ui, 'Segoe UI', 'Roboto', Helvetica, Arial, sans-serif;
+    padding: 2rem 1.5rem;
+    color: #0a2540;
+}
+
+/* main container – clinical card style */
+.record-container {
+    max-width: 1280px;
+    margin: 0 auto;
+    background: white;
+    border-radius: 32px;
+    box-shadow: 0 25px 45px -12px rgba(0, 0, 0, 0.25);
+    overflow: hidden;
+    transition: all 0.2s ease;
+}
+
+/* header with college branding */
+.clinical-header {
+    background: linear-gradient(135deg, #0b3b3f 0%, #1b5e5a 100%);
+    padding: 1.6rem 2rem;
+    color: white;
+    border-bottom: 4px solid #e6b422;
+}
+
+.dept-title {
+    font-size: 0.9rem;
+    letter-spacing: 1px;
+    font-weight: 500;
+    opacity: 0.85;
+    text-transform: uppercase;
+    margin-bottom: 0.35rem;
+}
+
+.college-name {
+    font-size: 1.8rem;
+    font-weight: 700;
+    line-height: 1.2;
+    letter-spacing: -0.3px;
+}
+
+.header-id-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    flex-wrap: wrap;
+    margin-top: 0.75rem;
+    gap: 1rem;
+}
+
+.reg-stamp {
+    background: rgba(255, 255, 255, 0.15);
+    backdrop-filter: blur(4px);
+    padding: 0.4rem 1rem;
+    border-radius: 60px;
+    font-size: 0.85rem;
+    font-weight: 500;
+}
+
+/* main content grid */
+.record-content {
+    padding: 2rem 2rem 1.8rem;
+}
+
+/* two column sections */
+.two-col-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1.8rem;
+    margin-bottom: 2rem;
+}
+
+/* cards */
+.info-card {
+    background: #fefdf8;
+    border: 1px solid #e9edf0;
+    border-radius: 24px;
+    padding: 1.2rem 1.5rem;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03);
+    transition: box-shadow 0.2s;
+}
+
+.info-card:hover {
+    border-color: #cbdbe0;
+    box-shadow: 0 8px 20px -8px rgba(0, 0, 0, 0.08);
+}
+
+.card-title {
+    font-size: 1rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+    color: #1e6b5e;
+    border-left: 4px solid #e6b422;
+    padding-left: 0.8rem;
+    margin-bottom: 1rem;
+}
+
+.data-row {
+    display: flex;
+    flex-wrap: wrap;
+    margin-bottom: 0.8rem;
+    font-size: 0.92rem;
+    border-bottom: 1px dashed #eef2f4;
+    padding-bottom: 0.5rem;
+}
+
+.data-label {
+    width: 130px;
+    font-weight: 600;
+    color: #2c5f5a;
+}
+
+.data-value {
+    flex: 1;
+    color: #1f2e3a;
+    font-weight: 500;
+}
+
+.full-width-card {
+    background: #fefdf8;
+    border: 1px solid #e9edf0;
+    border-radius: 24px;
+    padding: 1.2rem 1.5rem;
+    margin-bottom: 1.8rem;
+}
+
+.grid-4-quadrants {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1rem;
+    margin: 1rem 0 0.5rem;
+}
+
+.quadrant {
+    background: #ffffffea;
+    border-radius: 18px;
+    border: 1px solid #e2e8f0;
+    padding: 0.75rem 0.5rem;
+    text-align: center;
+    font-weight: 600;
+    font-size: 0.9rem;
+    color: #15544b;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.02);
+}
+
+.quadrant span {
+    display: block;
+    font-size: 0.7rem;
+    font-weight: 400;
+    color: #5f7f7a;
+    margin-top: 6px;
+}
+
+.flex-badge {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin: 0.5rem 0 0;
+}
+
+.badge-habit {
+    background: #f1f5f9;
+    border-radius: 30px;
+    padding: 0.25rem 0.9rem;
+    font-size: 0.8rem;
+    font-weight: 500;
+    color: #2d3e42;
+}
+
+.allergy-warning {
+    background: #fff1f0;
+    border-left: 5px solid #d9534f;
+    padding: 0.5rem 1rem;
+    border-radius: 16px;
+    margin-top: 0.75rem;
+    font-size: 0.85rem;
+    font-weight: 500;
+    color: #b33;
+}
+
+/* extra oral / intra oral two-col within a card */
+.subgrid-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+}
+
+.examination-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    flex-wrap: wrap;
+    border-bottom: 1px solid #eff3f6;
+    padding: 0.4rem 0;
+}
+
+.exam-label {
+    font-weight: 600;
+    color: #1b4d47;
+}
+
+.exam-value {
+    font-family: monospace;
+    background: #f8fafc;
+    padding: 0.2rem 0.8rem;
+    border-radius: 20px;
+    font-size: 0.85rem;
+}
+
+.sinus-yesno {
+    font-weight: 600;
+}
+
+/* table style for treatment followup */
+.treatment-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 1rem 0 0.5rem;
+    font-size: 0.85rem;
+}
+
+.treatment-table th,
+.treatment-table td {
+    border: 1px solid #dfe6e9;
+    padding: 0.7rem 0.5rem;
+    text-align: left;
+    vertical-align: top;
+}
+
+.treatment-table th {
+    background: #eef3f2;
+    font-weight: 700;
+    color: #1f5e55;
+}
+
+.sign-line {
+    margin-top: 1rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 0.8rem;
+    border-top: 1px dashed #cbd5e1;
+    padding-top: 1rem;
+}
+
+.followup {
+    background: #fef7e0;
+    border-radius: 20px;
+    padding: 0.75rem 1.2rem;
+    margin-top: 1rem;
+    font-weight: 500;
+}
+
+hr {
+    margin: 1rem 0;
+    border-color: #eef2f8;
+}
+
+.note-text {
+    font-size: 0.75rem;
+    color: #6b7c85;
+    margin-top: 0.5rem;
+}
+
+@media (max-width: 780px) {
+    body {
+        padding: 1rem;
+    }
+
+    .two-col-grid {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+    }
+
+    .grid-4-quadrants {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .data-label {
+        width: 110px;
+    }
+
+    .record-content {
+        padding: 1.5rem;
+    }
+}
+
+/* allergy running banner (similar to Implant) */
+@keyframes allergyTextFlow {
+    0% { transform: translateX(-100%); }
+    100% { transform: translateX(100vw); }
+}
+
+.allergy-alert {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0; /* ensure it stretches to the right edge */
+    width: 100%;
+    margin: 0;
+    border-radius: 0;
+    padding: 0; /* no outer padding */
+    background: rgba(255,255,255,0.98);
+    color: #111;
+    box-sizing: border-box;
+    display: flex;
+    align-items: center;
+    z-index: 99999; /* ensure on top of other UI */
+    border: none;
+    box-shadow: none;
+    height: 48px; /* fixed height to match layout and push content below */
+}
+
+/* inner content wrapper gives visual spacing while keeping banner full-bleed */
+.allergy-alert .allergy-inner {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    width: 100%;
+    padding: 8px 16px; /* visual inner spacing, not outer */
+}
+
+.allergy-alert .alert-icon { font-size: 16px; color: #d97706; flex-shrink: 0; }
+.allergy-alert .allergy-flow-window { flex: 1; min-width: 0; overflow: hidden; white-space: nowrap; }
+.allergy-alert #allergyMessage { display: inline-block; white-space: nowrap; padding-right: 2rem; color: #111; font-weight: 600; animation: allergyTextFlow 12s linear infinite; }
+
+/* When page wrapper has allergy banner, push the login-box/card down so they do not overlap */
+.login-page.conservative-case-sheet.has-allergy .login-box {
+    margin-top: 48px; /* equals .allergy-alert height */
+}
+
+/* HIGH-SPECIFICITY OVERRIDES: ensure the portal banner is truly full-bleed edge-to-edge */
+#patientAllergyAlert.allergy-alert {
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    width: 100vw !important;
+    min-width: 100vw !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    border-radius: 0 !important;
+    display: flex !important;
+    box-sizing: border-box !important;
+    background: rgba(255,255,255,0.98) !important;
+    z-index: 2147483647 !important; /* max z-index to stay on top */
+    border: none !important;
+    overflow: visible !important;
+}
+
+/* Inner wrapper handles padding while outer container remains full-bleed */
+#patientAllergyAlert.allergy-alert .allergy-inner {
+    display: flex !important;
+    justify-content: space-between !important;
+    align-items: center !important;
+    width: 100% !important;
+    padding: 8px 16px !important; /* internal spacing only */
+}
+
+/* Ensure the displayed message can scroll without clipping */
+#patientAllergyAlert.allergy-alert .allergy-flow-window { overflow: hidden !important; white-space: nowrap !important; }
+
+/* Close button placement */
+#patientAllergyAlert.allergy-alert .close-btn { margin-left: 12px !important; }
+
+/* Scoped override applied to html/body/#root while the allergy banner is visible.
+   This uses !important to override other layout rules that add horizontal padding/margins. */
+.has-drug-allergy-banner, html.has-drug-allergy-banner, body.has-drug-allergy-banner, #root.has-drug-allergy-banner {
+    margin: 0 !important;
+    padding: 0 !important;
+    overflow-x: hidden !important;
+}

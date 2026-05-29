@@ -1599,6 +1599,15 @@ img {
   box-shadow: 0 2px 8px rgba(30, 58, 138, 0.2);
 }
 
+/* Ensure selected/active calendar date uses the prescription blue (no layout changes) */
+.calendar-date-btn.selected,
+.calendar-date-btn:active,
+.calendar-date-btn[aria-pressed="true"] {
+  background-color: #1e3a8a !important;
+  color: #ffffff !important;
+  border-color: transparent !important;
+}
+
 .calendar-date-btn:disabled {
   cursor: not-allowed;
   opacity: 0.6;
@@ -1867,6 +1876,15 @@ img {
   grid-template-columns: repeat(3, 1fr);
   gap: 20px;
   margin: 25px 0;
+
+/* Time slot button selected / active color matching calendar nav blue */
+.time-slot-btn,
+.time-slot-btn:active,
+.time-slot-btn.selected {
+  background: #1e3a8a;
+  color: #fff;
+  border: none;
+}
   animation: slideDown 0.3s ease;
 }
 
