@@ -1,4 +1,4 @@
-// PGDashboard.jsx
+﻿// PGDashboard.jsx
 import React, { useMemo, useState, useEffect, useRef } from 'react';
 import './ChiefDoctorDashboard.css';
 import './PGDashboard.css';
@@ -271,7 +271,7 @@ const PGDashboard = ({ brandTitleOverride }) => {
 
   const formatAppointmentComplaintDisplay = (value) => {
     const complaint = String(value || '').trim();
-    if (!complaint) return '—';
+    if (!complaint) return 'ΓÇö';
 
     if (/follow[\s-]*up/i.test(complaint)) {
       return 'Follow up';
@@ -485,7 +485,7 @@ const PGDashboard = ({ brandTitleOverride }) => {
     }
   };
 
-  // ✅ Calendar helper functions for reschedule modal
+  // Γ£à Calendar helper functions for reschedule modal
   const generateRescheduleCalendarDates = (month, year) => {
     const firstDay = new Date(year, month, 1);
     const lastDay = new Date(year, month + 1, 0);
@@ -683,7 +683,7 @@ const PGDashboard = ({ brandTitleOverride }) => {
         throw new Error(json?.message || 'Failed to reschedule appointment');
       }
 
-      // If PG/UG — backend returns requiresApproval: true (pending doctor approval)
+      // If PG/UG ΓÇö backend returns requiresApproval: true (pending doctor approval)
       if (json?.requiresApproval) {
         showMessage('Reschedule request submitted. Waiting for doctor approval.', 'success');
       } else {
@@ -1072,7 +1072,7 @@ const PGDashboard = ({ brandTitleOverride }) => {
             const patientName =
               [firstName, middleName, lastName].filter(Boolean).join(' ').trim() ||
               String(patientItem?.patientName || '').trim() ||
-              '—';
+              'ΓÇö';
 
             if (!patientId) {
               return null;
@@ -1996,7 +1996,7 @@ const PGDashboard = ({ brandTitleOverride }) => {
             title="Menu"
             onClick={() => setIsSideNavOpen((v) => !v)}
           >
-            ☰
+            Γÿ░
           </button>
 
           <div className="chief-brand">
@@ -2012,7 +2012,7 @@ const PGDashboard = ({ brandTitleOverride }) => {
             <div className="chief-brand-title">
               {brandTitleOverride || 'PG Dashboard'}
               {pgDepartmentLabel ? (
-                <span className="chief-brand-title-dept">— {formatDepartmentLabel(pgDepartmentLabel)}</span>
+                <span className="chief-brand-title-dept">ΓÇö {formatDepartmentLabel(pgDepartmentLabel)}</span>
               ) : null}
             </div>
           </div>
@@ -2033,7 +2033,7 @@ const PGDashboard = ({ brandTitleOverride }) => {
                 <span className="profile-name">{pgName || user?.name || 'PG'}</span>
                 <span className="profile-email">{pgEmail || user?.email || ''}</span>
               </div>
-              <div className="profile-arrow">{showLogoutDropdown ? '▲' : '▼'}</div>
+              <div className="profile-arrow">{showLogoutDropdown ? 'Γû▓' : 'Γû╝'}</div>
             </div>
 
             {showLogoutDropdown && (
@@ -2051,12 +2051,12 @@ const PGDashboard = ({ brandTitleOverride }) => {
 
                 <div className="dropdown-options">
                   <button className="dropdown-item" onClick={handleViewProfile} type="button">
-                    <span className="dropdown-icon">👤</span>
+                    <span className="dropdown-icon">≡ƒæñ</span>
                     <span>My Profile</span>
                   </button>
 
                   <button className="dropdown-item" onClick={handleChangePassword} type="button">
-                    <span className="dropdown-icon">🔒</span>
+                    <span className="dropdown-icon">≡ƒöÆ</span>
                     <span>Change Password</span>
                   </button>
 
@@ -2070,7 +2070,7 @@ const PGDashboard = ({ brandTitleOverride }) => {
                     }}
                     type="button"
                   >
-                    <span className="dropdown-icon">🚪</span>
+                    <span className="dropdown-icon">≡ƒÜ¬</span>
                     <span>Logout</span>
                   </button>
                 </div>
@@ -2094,7 +2094,7 @@ const PGDashboard = ({ brandTitleOverride }) => {
                   window.scrollTo({ top: 0, behavior: 'smooth' });
                 }}
               >
-                <span className="chief-nav-icon">🧾</span>
+                <span className="chief-nav-icon">≡ƒº╛</span>
                 <span>Patient Management</span>
               </button>
 
@@ -2107,7 +2107,7 @@ const PGDashboard = ({ brandTitleOverride }) => {
                   window.scrollTo({ top: 0, behavior: 'smooth' });
                 }}
               >
-                <span className="chief-nav-icon">📌</span>
+                <span className="chief-nav-icon">≡ƒôî</span>
                 <span className="pg-nav-label">
                   Case Sheet
                   <span className="pg-nav-alert-dot" data-status={assignedCasesAlertStatus} />
@@ -2123,7 +2123,7 @@ const PGDashboard = ({ brandTitleOverride }) => {
                   window.scrollTo({ top: 0, behavior: 'smooth' });
                 }}
               >
-                <span className="chief-nav-icon">📅</span>
+                <span className="chief-nav-icon">≡ƒôà</span>
                 <span>My Appointments</span>
               </button>
 
@@ -2136,7 +2136,7 @@ const PGDashboard = ({ brandTitleOverride }) => {
                   window.scrollTo({ top: 0, behavior: 'smooth' });
                 }}
               >
-                <span className="chief-nav-icon">📊</span>
+                <span className="chief-nav-icon">≡ƒôè</span>
                 <span>Analytics</span>
               </button>
             </div>
@@ -2167,7 +2167,7 @@ const PGDashboard = ({ brandTitleOverride }) => {
                       color: 'inherit',
                     }}
                   >
-                    ✕
+                    Γ£ò
                   </button>
                   {successMessage}
                 </div>
@@ -2215,10 +2215,10 @@ const PGDashboard = ({ brandTitleOverride }) => {
                     ) : generalCasePreview ? (
                       <div style={{ display: 'grid', gridTemplateColumns: '1fr auto', gap: 12 }}>
                         <div>
-                          <div style={{ marginBottom: 4 }}><strong>Chief Complaint:</strong> {generalCasePreview.chiefComplaint || '—'}</div>
-                          <div style={{ marginBottom: 4 }}><strong>Present Illness:</strong> {generalCasePreview.presentIllness || '—'}</div>
-                          <div style={{ marginBottom: 4 }}><strong>Clinical Findings:</strong> {generalCasePreview.clinicalFindings || '—'}</div>
-                          <div><strong>Final Diagnosis:</strong> {generalCasePreview.finalDiagnosis || generalCasePreview.provisionalDiagnosis || '—'}</div>
+                          <div style={{ marginBottom: 4 }}><strong>Chief Complaint:</strong> {generalCasePreview.chiefComplaint || 'ΓÇö'}</div>
+                          <div style={{ marginBottom: 4 }}><strong>Present Illness:</strong> {generalCasePreview.presentIllness || 'ΓÇö'}</div>
+                          <div style={{ marginBottom: 4 }}><strong>Clinical Findings:</strong> {generalCasePreview.clinicalFindings || 'ΓÇö'}</div>
+                          <div><strong>Final Diagnosis:</strong> {generalCasePreview.finalDiagnosis || generalCasePreview.provisionalDiagnosis || 'ΓÇö'}</div>
                         </div>
                         <div style={{ textAlign: 'center', minWidth: 80 }}>
                           <div style={{ fontSize: 12, marginBottom: 4, color: '#64748b' }}>X-ray</div>
@@ -2678,17 +2678,17 @@ const PGDashboard = ({ brandTitleOverride }) => {
                               className="pg-assigned-row"
                             >
                               <td style={{ textAlign: 'center', whiteSpace: 'nowrap' }}>{index + 1}</td>
-                              <td style={{ whiteSpace: 'nowrap' }}>{createdAt ? formatDate(createdAt) : '—'}</td>
-                              <td>{patientName || '—'}</td>
-                              <td>{patientId || '—'}</td>
-                              <td>{department || '—'}</td>
+                              <td style={{ whiteSpace: 'nowrap' }}>{createdAt ? formatDate(createdAt) : 'ΓÇö'}</td>
+                              <td>{patientName || 'ΓÇö'}</td>
+                              <td>{patientId || 'ΓÇö'}</td>
+                              <td>{department || 'ΓÇö'}</td>
                               <td>
                                 <span className={status === 'approved' || status === 'done' ? 'status-badge approved' : status === 'redo' ? 'status-badge redo' : 'status-badge pending'}>
                                   {status === 'approved' ? 'Approved' : status === 'redo' ? 'Redo' : status === 'done' ? 'Done' : 'Pending'}
                                 </span>
                               </td>
                               <td style={{ whiteSpace: 'normal', wordBreak: 'break-word' }}>
-                                {isPublicHealthDentistry ? '—' : (status === 'redo' ? (redoReason || approvalText || 'Redo requested by doctor.') : '—')}
+                                {isPublicHealthDentistry ? 'ΓÇö' : (status === 'redo' ? (redoReason || approvalText || 'Redo requested by doctor.') : 'ΓÇö')}
                               </td>
                               <td>
                                 <div className="pg-assigned-action-buttons">
@@ -2790,40 +2790,40 @@ const PGDashboard = ({ brandTitleOverride }) => {
                               <td style={{ padding: '6px 6px', textAlign: 'center', whiteSpace: 'nowrap' }}>{index + 1}</td>
                               <td
                                 style={{ padding: '6px 6px', textAlign: 'center', whiteSpace: 'nowrap' }}
-                                title={appointment?.doctorName || appointment?.doctorId || '—'}
+                                title={appointment?.doctorName || appointment?.doctorId || 'ΓÇö'}
                               >
-                                {appointment?.doctorName || appointment?.doctorId || '—'}
+                                {appointment?.doctorName || appointment?.doctorId || 'ΓÇö'}
                               </td>
                               <td
                                 style={{ padding: '6px 6px', textAlign: 'center', whiteSpace: 'normal', wordBreak: 'break-word' }}
-                                title={appointment?.patientName || '—'}
+                                title={appointment?.patientName || 'ΓÇö'}
                               >
-                                {appointment?.patientName || '—'}
+                                {appointment?.patientName || 'ΓÇö'}
                               </td>
                               <td
                                 style={{ padding: '6px 6px', textAlign: 'center', whiteSpace: 'nowrap' }}
-                                title={appointment?.patientId || '—'}
+                                title={appointment?.patientId || 'ΓÇö'}
                               >
-                                {appointment?.patientId || '—'}
+                                {appointment?.patientId || 'ΓÇö'}
                               </td>
                               <td style={{ padding: '6px 6px', textAlign: 'center', whiteSpace: 'nowrap' }}>
-                                {appointment?.appointmentDate || '—'}
-                                {appointment?.appointmentTime ? ` • ${appointment.appointmentTime}` : ''}
+                                {appointment?.appointmentDate || 'ΓÇö'}
+                                {appointment?.appointmentTime ? ` ΓÇó ${appointment.appointmentTime}` : ''}
                               </td>
                               <td
                                 style={{ padding: '6px 6px', textAlign: 'center', whiteSpace: 'normal', wordBreak: 'break-word' }}
                               >
-                                {formatAppointmentComplaintDisplay(appointment?.chiefComplaint) || '—'}
+                                {formatAppointmentComplaintDisplay(appointment?.chiefComplaint) || 'ΓÇö'}
                               </td>
                               <td style={{ padding: '6px 6px', textAlign: 'center', whiteSpace: 'nowrap' }}>
                                 {appointmentStatus === 'rescheduled' && hasApprovedReschedule ? (
                                   <span style={{ background: '#38a169', color: '#fff', borderRadius: '12px', padding: '3px 10px', fontSize: '12px', fontWeight: 600 }}>
-                                    ✓ Approved
+                                    Γ£ô Approved
                                   </span>
                                 ) : hasPendingReschedule ? (
                                   <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px' }}>
                                     <span style={{ background: '#ed8936', color: '#fff', borderRadius: '12px', padding: '3px 10px', fontSize: '12px', fontWeight: 600 }}>
-                                      ⏳ Pending Approval
+                                      ΓÅ│ Pending Approval
                                     </span>
                                     <span style={{ fontSize: '11px', color: '#888' }}>
                                       {appointment?.rescheduleRequest?.requestedDate} {appointment?.rescheduleRequest?.requestedTime}
@@ -2835,7 +2835,7 @@ const PGDashboard = ({ brandTitleOverride }) => {
                                   </span>
                                 ) : appointmentStatus === 'confirmed' ? (
                                   <span style={{ background: '#38a169', color: '#fff', borderRadius: '12px', padding: '3px 10px', fontSize: '12px', fontWeight: 600 }}>
-                                    ✓ Approved
+                                    Γ£ô Approved
                                   </span>
                                 ) : (
                                   <div style={{ display: 'inline-flex', gap: '6px', flexWrap: 'nowrap', justifyContent: 'center', alignItems: 'center' }}>
@@ -2892,7 +2892,7 @@ const PGDashboard = ({ brandTitleOverride }) => {
           <div className="pg-reschedule-modal" onClick={(e) => e.stopPropagation()} style={{ maxHeight: '90vh', overflowY: 'auto' }}>
             <h3>Reschedule Appointment</h3>
             <p>
-              {activeRescheduleAppointment?.patientName || 'Patient'} ({activeRescheduleAppointment?.patientId || '—'})
+              {activeRescheduleAppointment?.patientName || 'Patient'} ({activeRescheduleAppointment?.patientId || 'ΓÇö'})
             </p>
 
             {!rescheduleSelectedDate ? (
@@ -2922,7 +2922,7 @@ const PGDashboard = ({ brandTitleOverride }) => {
                       justifyContent: 'center'
                     }}
                   >
-                    ‹
+                    ΓÇ╣
                   </button>
                   
                   <h4 style={{ 
@@ -2954,7 +2954,7 @@ const PGDashboard = ({ brandTitleOverride }) => {
                       justifyContent: 'center'
                     }}
                   >
-                    ›
+                    ΓÇ║
                   </button>
                 </div>
 
@@ -3116,7 +3116,7 @@ const PGDashboard = ({ brandTitleOverride }) => {
               aria-label="Close"
               title="Close"
             >
-              ✕
+              Γ£ò
             </button>
             <h3>{messageTitle}</h3>
             <p>{messageContent}</p>
@@ -3452,7 +3452,7 @@ const PGDashboard = () => {
 
   const formatAppointmentComplaintDisplay = (value) => {
     const complaint = String(value || '').trim();
-    if (!complaint) return 'G��';
+    if (!complaint) return 'G╟÷';
 
     if (/follow[\s-]*up/i.test(complaint)) {
       return 'Follow up';
@@ -3594,10 +3594,10 @@ const PGDashboard = () => {
         throw new Error(json?.message || 'Failed to load appointments');
       }
 
-      console.log('=��� DEBUG: API Response:', json);
-      console.log('=��� DEBUG: Appointments array:', json.appointments);
-      console.log('=��� DEBUG: Is array?', Array.isArray(json.appointments));
-      console.log('=��� DEBUG: Length:', json.appointments?.length);
+      console.log('=â÷╤ DEBUG: API Response:', json);
+      console.log('=â÷╤ DEBUG: Appointments array:', json.appointments);
+      console.log('=â÷╤ DEBUG: Is array?', Array.isArray(json.appointments));
+      console.log('=â÷╤ DEBUG: Length:', json.appointments?.length);
       
       setPgAppointments(Array.isArray(json.appointments) ? json.appointments : []);
     } catch (error) {
@@ -3671,7 +3671,7 @@ const PGDashboard = () => {
     }
   };
 
-  // G�� Calendar helper functions for reschedule modal
+  // Gúα Calendar helper functions for reschedule modal
   const generateRescheduleCalendarDates = (month, year) => {
     const firstDay = new Date(year, month, 1);
     const lastDay = new Date(year, month + 1, 0);
@@ -3869,7 +3869,7 @@ const PGDashboard = () => {
         throw new Error(json?.message || 'Failed to reschedule appointment');
       }
 
-      // If PG/UG G�� backend returns requiresApproval: true (pending doctor approval)
+      // If PG/UG G╟÷ backend returns requiresApproval: true (pending doctor approval)
       if (json?.requiresApproval) {
         showMessage('Reschedule request submitted. Waiting for doctor approval.', 'success');
       } else {
@@ -4855,7 +4855,7 @@ const PGDashboard = () => {
             title="Menu"
             onClick={() => setIsSideNavOpen((v) => !v)}
           >
-            G��
+            G ª
           </button>
 
           <div className="chief-brand">
@@ -4871,7 +4871,7 @@ const PGDashboard = () => {
             <div className="chief-brand-title">
               PG Dashboard
               {pgDepartmentLabel ? (
-                <span className="chief-brand-title-dept">G�� {formatDepartmentLabel(pgDepartmentLabel)}</span>
+                <span className="chief-brand-title-dept">G╟÷ {formatDepartmentLabel(pgDepartmentLabel)}</span>
               ) : null}
             </div>
           </div>
@@ -4892,7 +4892,7 @@ const PGDashboard = () => {
                 <span className="profile-name">{pgName || user?.name || 'PG'}</span>
                 <span className="profile-email">{pgEmail || user?.email || ''}</span>
               </div>
-              <div className="profile-arrow">{showLogoutDropdown ? 'G��' : 'G�+'}</div>
+              <div className="profile-arrow">{showLogoutDropdown ? 'G√ª' : 'G√+'}</div>
             </div>
 
             {showLogoutDropdown && (
@@ -4913,12 +4913,12 @@ const PGDashboard = () => {
 
                 <div className="dropdown-options">
                   <button className="dropdown-item" onClick={handleViewProfile} type="button">
-                    <span className="dropdown-icon">=���</span>
+                    <span className="dropdown-icon">=âµ±</span>
                     <span>My Profile</span>
                   </button>
 
                   <button className="dropdown-item" onClick={handleChangePassword} type="button">
-                    <span className="dropdown-icon">=���</span>
+                    <span className="dropdown-icon">=â÷╞</span>
                     <span>Change Password</span>
                   </button>
 
@@ -4932,7 +4932,7 @@ const PGDashboard = () => {
                     }}
                     type="button"
                   >
-                    <span className="dropdown-icon">=�ܬ</span>
+                    <span className="dropdown-icon">=â▄¼</span>
                     <span>Logout</span>
                   </button>
                 </div>
@@ -4956,7 +4956,7 @@ const PGDashboard = () => {
                   window.scrollTo({ top: 0, behavior: 'smooth' });
                 }}
               >
-                <span className="chief-nav-icon">=��+</span>
+                <span className="chief-nav-icon">=â║+</span>
                 <span>Patient Management</span>
               </button>
 
@@ -4969,7 +4969,7 @@ const PGDashboard = () => {
                   window.scrollTo({ top: 0, behavior: 'smooth' });
                 }}
               >
-                <span className="chief-nav-icon">=���</span>
+                <span className="chief-nav-icon">=â⌠ε</span>
                 <span className="pg-nav-label">
                   Case Sheet
                   <span className="pg-nav-alert-dot" data-status={assignedCasesAlertStatus} />
@@ -4985,7 +4985,7 @@ const PGDashboard = () => {
                   window.scrollTo({ top: 0, behavior: 'smooth' });
                 }}
               >
-                <span className="chief-nav-icon">=���</span>
+                <span className="chief-nav-icon">=â⌠α</span>
                 <span>My Appointments</span>
               </button>
 
@@ -4998,7 +4998,7 @@ const PGDashboard = () => {
                   window.scrollTo({ top: 0, behavior: 'smooth' });
                 }}
               >
-                <span className="chief-nav-icon">=���</span>
+                <span className="chief-nav-icon">=â⌠Φ</span>
                 <span>Analytics</span>
               </button>
             </div>
@@ -5029,7 +5029,7 @@ const PGDashboard = () => {
                       color: 'inherit',
                     }}
                   >
-                    G��
+                    Gú≥
                   </button>
                   {successMessage}
                 </div>
@@ -5039,7 +5039,7 @@ const PGDashboard = () => {
               <div className="doctor-dashboard-content">
                 <h2 className="dashboard-title">Patient Details</h2>
 
-                {/* Patient Search G�� ID / Phone / Name */}
+                {/* Patient Search G╟÷ ID / Phone / Name */}
                 <div className="input-group" style={{ position: 'relative' }}>
                   <label>Search Patient</label>
                   <div style={{ display: 'flex', gap: 8, marginBottom: 8 }}>
@@ -5084,8 +5084,8 @@ const PGDashboard = () => {
                       borderRadius: 8, boxShadow: '0 8px 24px rgba(0,0,0,0.4)', maxHeight: 260, overflowY: 'auto',
                     }}>
                       {searchResults.map((p, i) => {
-                        const fullName = [p.personalInfo?.firstName, p.personalInfo?.lastName].filter(Boolean).join(' ') || p.patientName || 'G��';
-                        const phone = p.personalInfo?.phone || 'G��';
+                        const fullName = [p.personalInfo?.firstName, p.personalInfo?.lastName].filter(Boolean).join(' ') || p.patientName || 'G╟÷';
+                        const phone = p.personalInfo?.phone || 'G╟÷';
                         return (
                           <div key={p.patientId || i}
                             onClick={() => handleSelectSearchResult(p)}
@@ -5098,7 +5098,7 @@ const PGDashboard = () => {
                           >
                             <span style={{ fontWeight: 700, color: '#fff', fontSize: '0.9rem' }}>{fullName}</span>
                             <span style={{ fontSize: '0.78rem', color: 'rgba(255,255,255,0.6)' }}>
-                              ID: {p.patientId} &nbsp;-+&nbsp; =��P {phone}
+                              ID: {p.patientId} &nbsp;-+&nbsp; =â⌠P {phone}
                             </span>
                           </div>
                         );
@@ -5107,7 +5107,7 @@ const PGDashboard = () => {
                   )}
                   {searchLoading && (
                     <div style={{ position: 'absolute', right: 14, top: '50%', transform: 'translateY(-50%)', color: '#3C8DFF', fontSize: '0.8rem' }}>
-                      SearchingGǪ
+                      SearchingG╟¬
                     </div>
                   )}
                 </div>
@@ -5137,10 +5137,10 @@ const PGDashboard = () => {
                     ) : generalCasePreview ? (
                       <div style={{ display: 'grid', gridTemplateColumns: '1fr auto', gap: 12 }}>
                         <div>
-                          <div style={{ marginBottom: 4 }}><strong>Chief Complaint:</strong> {generalCasePreview.chiefComplaint || 'G��'}</div>
-                          <div style={{ marginBottom: 4 }}><strong>Present Illness:</strong> {generalCasePreview.presentIllness || 'G��'}</div>
-                          <div style={{ marginBottom: 4 }}><strong>Clinical Findings:</strong> {generalCasePreview.clinicalFindings || 'G��'}</div>
-                          <div><strong>Final Diagnosis:</strong> {generalCasePreview.finalDiagnosis || generalCasePreview.provisionalDiagnosis || 'G��'}</div>
+                          <div style={{ marginBottom: 4 }}><strong>Chief Complaint:</strong> {generalCasePreview.chiefComplaint || 'G╟÷'}</div>
+                          <div style={{ marginBottom: 4 }}><strong>Present Illness:</strong> {generalCasePreview.presentIllness || 'G╟÷'}</div>
+                          <div style={{ marginBottom: 4 }}><strong>Clinical Findings:</strong> {generalCasePreview.clinicalFindings || 'G╟÷'}</div>
+                          <div><strong>Final Diagnosis:</strong> {generalCasePreview.finalDiagnosis || generalCasePreview.provisionalDiagnosis || 'G╟÷'}</div>
                         </div>
                         <div style={{ textAlign: 'center', minWidth: 80 }}>
                           <div style={{ fontSize: 12, marginBottom: 4, color: '#64748b' }}>X-ray</div>
@@ -5318,7 +5318,7 @@ const PGDashboard = () => {
                     </div>
 
                     {/* HPI, Past Medical History, Personal Habits, Medical History
-                        G�� hidden for Oral Medicine department (captured in the oral case sheet) */}
+                        G╟÷ hidden for Oral Medicine department (captured in the oral case sheet) */}
                     {!String(pgDepartmentLabel).toLowerCase().replace(/[\s_]+/g, '').includes('oral') && (<>
 
                     {/* HPI */}
@@ -5572,17 +5572,17 @@ const PGDashboard = () => {
                               className="pg-assigned-row"
                             >
                               <td style={{ textAlign: 'center', whiteSpace: 'nowrap' }}>{index + 1}</td>
-                              <td style={{ whiteSpace: 'nowrap' }}>{createdAt ? formatDate(createdAt) : 'G��'}</td>
-                              <td>{patientName || 'G��'}</td>
-                              <td>{patientId || 'G��'}</td>
-                              <td>{department || 'G��'}</td>
+                              <td style={{ whiteSpace: 'nowrap' }}>{createdAt ? formatDate(createdAt) : 'G╟÷'}</td>
+                              <td>{patientName || 'G╟÷'}</td>
+                              <td>{patientId || 'G╟÷'}</td>
+                              <td>{department || 'G╟÷'}</td>
                               <td>
                                 <span className={status === 'approved' ? 'status-badge approved' : status === 'redo' ? 'status-badge redo' : 'status-badge pending'}>
                                   {status === 'approved' ? 'Approved' : status === 'redo' ? 'Redo' : 'Pending'}
                                 </span>
                               </td>
                               <td style={{ whiteSpace: 'normal', wordBreak: 'break-word' }}>
-                                {status === 'redo' ? (redoReason || approvalText || 'Redo requested by doctor.') : 'G��'}
+                                {status === 'redo' ? (redoReason || approvalText || 'Redo requested by doctor.') : 'G╟÷'}
                               </td>
                               <td>
                                 <div className="pg-assigned-action-buttons">
@@ -5671,7 +5671,7 @@ const PGDashboard = () => {
                           const hasApprovedReschedule = rescheduleReqStatus === 'approved';
                           const isAssignedAppointment = appointmentStatus === 'assigned' || appointmentStatus === 'in_progress';
                           
-                          // =��� FIX: Appointments are auto-confirmed when assigned
+                          // =â÷╤ FIX: Appointments are auto-confirmed when assigned
                           const isConfirmed = appointmentStatus === 'confirmed' || appointmentStatus === 'assigned' || appointmentStatus === 'in_progress' || appointmentStatus === 'rescheduled';
                           const canConfirmAppointment = appointmentStatus === 'assigned';
                           const canRescheduleAppointment = isAssignedAppointment && !hasPendingReschedule;
@@ -5681,33 +5681,33 @@ const PGDashboard = () => {
                               <td style={{ padding: '6px 6px', textAlign: 'center', whiteSpace: 'nowrap' }}>{index + 1}</td>
                               <td
                                 style={{ padding: '6px 6px', textAlign: 'center', whiteSpace: 'nowrap' }}
-                                title={appointment?.doctorName || appointment?.doctorId || 'G��'}
+                                title={appointment?.doctorName || appointment?.doctorId || 'G╟÷'}
                               >
-                                {appointment?.doctorName || appointment?.doctorId || 'G��'}
+                                {appointment?.doctorName || appointment?.doctorId || 'G╟÷'}
                               </td>
                               <td
                                 style={{ padding: '6px 6px', textAlign: 'center', whiteSpace: 'normal', wordBreak: 'break-word' }}
-                                title={appointment?.patientName || 'G��'}
+                                title={appointment?.patientName || 'G╟÷'}
                               >
-                                {appointment?.patientName || 'G��'}
+                                {appointment?.patientName || 'G╟÷'}
                               </td>
                               <td
                                 style={{ padding: '6px 6px', textAlign: 'center', whiteSpace: 'nowrap' }}
-                                title={appointment?.patientId || 'G��'}
+                                title={appointment?.patientId || 'G╟÷'}
                               >
-                                {appointment?.patientId || 'G��'}
+                                {appointment?.patientId || 'G╟÷'}
                               </td>
                               <td style={{ padding: '6px 6px', textAlign: 'center', whiteSpace: 'nowrap' }}>
-                                {appointment?.appointmentDate || 'G��'}
-                                {appointment?.appointmentTime ? ` G�� ${appointment.appointmentTime}` : ''}
+                                {appointment?.appointmentDate || 'G╟÷'}
+                                {appointment?.appointmentTime ? ` G╟≤ ${appointment.appointmentTime}` : ''}
                               </td>
                               <td
                                 style={{ padding: '6px 6px', textAlign: 'center', whiteSpace: 'normal', wordBreak: 'break-word' }}
                               >
-                                {formatAppointmentComplaintDisplay(appointment?.chiefComplaint) || 'G��'}
+                                {formatAppointmentComplaintDisplay(appointment?.chiefComplaint) || 'G╟÷'}
                               </td>
                               <td style={{ padding: '6px 6px', textAlign: 'center', whiteSpace: 'nowrap' }}>
-                                {/* =��� FIX: Show confirmation status */}
+                                {/* =â÷╤ FIX: Show confirmation status */}
                                 {isConfirmed ? (
                                   <span style={{ 
                                     background: '#48bb78', 
@@ -5718,7 +5718,7 @@ const PGDashboard = () => {
                                     fontWeight: 600,
                                     display: 'inline-block'
                                   }}>
-                                    G�� Confirmed
+                                    Gú⌠ Confirmed
                                   </span>
                                 ) : (
                                   <span style={{ 
@@ -5730,7 +5730,7 @@ const PGDashboard = () => {
                                     fontWeight: 600,
                                     display: 'inline-block'
                                   }}>
-                                    GŦ Pending
+                                    G┼ª Pending
                                   </span>
                                 )}
                               </td>
@@ -5738,7 +5738,7 @@ const PGDashboard = () => {
                                 {hasPendingReschedule ? (
                                   <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px' }}>
                                     <span style={{ background: '#ed8936', color: '#fff', borderRadius: '12px', padding: '3px 10px', fontSize: '12px', fontWeight: 600 }}>
-                                      GŦ Pending Approval
+                                      G┼ª Pending Approval
                                     </span>
                                     <span style={{ fontSize: '11px', color: '#888' }}>
                                       {appointment?.rescheduleRequest?.requestedDate} {appointment?.rescheduleRequest?.requestedTime}
@@ -5797,7 +5797,7 @@ const PGDashboard = () => {
           <div className="pg-reschedule-modal" onClick={(e) => e.stopPropagation()} style={{ maxHeight: '90vh', overflowY: 'auto' }}>
             <h3>Reschedule Appointment</h3>
             <p>
-              {activeRescheduleAppointment?.patientName || 'Patient'} ({activeRescheduleAppointment?.patientId || 'G��'})
+              {activeRescheduleAppointment?.patientName || 'Patient'} ({activeRescheduleAppointment?.patientId || 'G╟÷'})
             </p>
 
             {!rescheduleSelectedDate ? (
@@ -5827,7 +5827,7 @@ const PGDashboard = () => {
                       justifyContent: 'center'
                     }}
                   >
-                    GǦ
+                    G╟ª
                   </button>
                   
                   <h4 style={{ 
@@ -5859,7 +5859,7 @@ const PGDashboard = () => {
                       justifyContent: 'center'
                     }}
                   >
-                    GǦ
+                    G╟ª
                   </button>
                 </div>
 
@@ -6021,7 +6021,7 @@ const PGDashboard = () => {
               aria-label="Close"
               title="Close"
             >
-              G��
+              Gú≥
             </button>
             <h3>{messageTitle}</h3>
             <p>{messageContent}</p>
@@ -6041,4 +6041,5 @@ const PGDashboard = () => {
 };
 
 export default PGDashboard;
+
 
